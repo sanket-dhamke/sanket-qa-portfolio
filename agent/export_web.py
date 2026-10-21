@@ -7,6 +7,7 @@ from pathlib import Path
 
 from agent.handlers import FIXTURES, RECIPES
 from agent.kb import load_endpoints
+from agent.rca_engine import evaluate as evaluate_rca
 from agent.router import CANNED_CHIPS, rules_for_export
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -30,12 +31,14 @@ def build() -> dict:
             "users": _json("users.json"),
             "app_config": _json("app_config.json"),
             "suites": _json("suites.json"),
+            "tools": _json("tools.json"),
         },
         "recipes": {
             "postgres": (RECIPES / "postgres.yml").read_text(encoding="utf-8"),
             "oracle": (RECIPES / "oracle.yml").read_text(encoding="utf-8"),
         },
         "endpoints": load_endpoints(),
+        "rca_report": evaluate_rca(),
         "caveat": (
             "In-browser demo is a vanilla JS port of the Python router. "
             "Python plus tests/test_routing.py are the source of truth. "

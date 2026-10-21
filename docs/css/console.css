@@ -99,6 +99,10 @@ body.console {
   border-radius: 4px;
 }
 .chip.source { border: 1px solid var(--brass); color: var(--brass); }
+.chip.kind-handler { border: 1px solid var(--brass); color: var(--brass); }
+.chip.kind-kb { border: 1px solid var(--link); color: var(--link); }
+.chip.kind-suite { border: 1px solid #c792ea; color: #c792ea; }
+.chip.kind-fallback { border: 1px solid var(--muted); color: var(--muted); }
 .chip.ok { border: 1px solid var(--ok); color: var(--ok); }
 .chip.bad { border: 1px solid var(--bad); color: var(--bad); }
 .confirm { display: flex; gap: 8px; margin-top: 10px; }
@@ -148,8 +152,19 @@ th { color: var(--muted); font-weight: 500; }
   border-left: 3px solid var(--warn); padding: 10px 12px; background: #182233;
   font-size: 13px; border-radius: 0 8px 8px 0;
 }
-.finding.high { border-color: var(--bad); }
-.finding.low { border-color: var(--ok); }
+.finding.high, .finding.critical { border-color: var(--bad); }
+.finding.medium, .finding.warn { border-color: var(--warn); }
+.finding.low, .finding.info { border-color: var(--ok); }
+.finding.skipped { border-color: var(--line); opacity: 0.92; }
+.skipped-h {
+  margin: 12px 0 0;
+  padding: 0;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border: 0;
+}
 .finding strong { display: block; margin-bottom: 6px; font-size: 13px; }
 .finding dl { margin: 0; display: grid; grid-template-columns: 76px 1fr; gap: 4px 8px; font-size: 12px; }
 .finding dt { color: var(--muted); }

@@ -165,29 +165,58 @@
   }
 
   function rcaCard(f) {
-    return `<article class="finding ${f.severity || "high"}">
-      <strong>${f.component ? f.component + " · " : ""}${f.title || f.name || "Finding"}</strong>
+    const sev = String(f.severity || "high").toLowerCase();
+    const observation = f.observation || f.evidence || f.symptom || "";
+    const cause = f.likely_cause || f.cause || "";
+    const fix = f.suggested || f.recommendation || f.fix || "";
+    const id = f.id ? f.id + " · " : "";
+    return `<article class="finding ${sev}">
+      <strong>${id}${f.component ? f.component + " · " : ""}${f.title || f.name || "Finding"}</strong>
       <dl>
-        <dt>Symptom</dt><dd>${f.evidence || f.symptom || ""}</dd>
-        <dt>Cause</dt><dd>${f.likely_cause || f.cause || ""}</dd>
-        <dt>Fix</dt><dd><em>${f.suggested || f.fix || ""}</em></dd>
+        <dt>Symptom</dt><dd>${observation}</dd>
+        <dt>Cause</dt><dd>${cause}</dd>
+        <dt>Fix</dt><dd><em>${fix}</em></dd>
       </dl>
     </article>`;
   }
 
-  function renderRca(extra) {
-    const base = state.data.fixtures.rca.findings.map(rcaCard);
+  function renderRca(extra, engine) {
+    const report = engine || (state.data && state.data.rca_report);
+    const parts = [];
+    if (report && report.principle) {
+      parts.push(`<p class="hint">${report.principle}</p>`);
+    }
+    const fired = report && report.fired && report.fired.length
+      ? report.fired.map(rcaCard)
+      : (state.data.fixtures.rca.findings || []).map(rcaCard);
+    parts.push(fired.join(""));
     const more = (extra || []).map((r) =>
       rcaCard({
         severity: "high",
-        component: r.id,
+        id: r.id,
+        component: r.component,
         title: r.name,
         evidence: r.symptom,
         likely_cause: r.cause,
         suggested: r.fix,
       })
     );
-    $("rca-list").innerHTML = more.concat(base).join("");
+    if (more.length) parts.unshift(more.join(""));
+    if (report && report.skipped && report.skipped.length) {
+      parts.push('<h2 class="skipped-h">Evaluated, not fired</h2>');
+      parts.push(
+        '<p class="hint">A skipped rule is still a diagnosis: OOM vs probe, heap already set, no idle sizing all-clear.</p>'
+      );
+      parts.push(
+        report.skipped
+          .map(
+            (row) =>
+              `<article class="finding skipped"><strong>${row.id} not fired</strong><p>${row.why}</p></article>`
+          )
+          .join("")
+      );
+    }
+    $("rca-list").innerHTML = parts.join("");
   }
 
   function renderLegend() {
@@ -323,6 +352,12 @@
     if (result) {
       const chips = document.createElement("div");
       chips.className = "chips";
+      const kind = document.createElement("span");
+      const kindName = result.source_kind || "handler";
+      kind.className = "chip kind-" + kindName;
+      kind.dataset.testid = "source-kind";
+      kind.textContent = result.source_label || kindName;
+      chips.appendChild(kind);
       const source = document.createElement("span");
       source.className = "chip source";
       source.dataset.testid = "result-source";
@@ -384,6 +419,10 @@
       $("health-live").parentElement.classList.toggle("degraded", health === "DEGRADED");
       $("health-live").parentElement.classList.toggle("ok", health === "HEALTHY");
       if (result.health && result.health.sanity_report) renderSuitePanel(result.health.sanity_report);
+    }
+    if (result.ui === "rca") {
+      showTab("rca");
+      renderRca(null, result.rca);
     }
     if (result.ui === "capacity") {
       showTab("capacity");

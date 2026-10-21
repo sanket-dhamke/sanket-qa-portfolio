@@ -12,4 +12,4 @@ jobs:
           python-version: "3.12"
       - run: pip install -r requirements.txt
       - run: python -m agent.export_web
-      - run: pytest tests/test_routing.py tests/test_hybrid_agent.py tests/api
+      - run: pytest tests/test_routing.py tests/test_hybrid_agent.py tests/test_rca_engine.py tests/api

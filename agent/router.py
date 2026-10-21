@@ -25,6 +25,7 @@ CANNED_CHIPS = CANNED_QUESTIONS + [
     "Run API sanity suite",
     "Check UI sanity",
     "How many alerts are in DataHub?",
+    "Why is DataHub slow?",
     "What is the current state of the application?",
     "What configuration needs to be upgraded to ingest 10m or 1m assets?",
 ]
@@ -102,6 +103,23 @@ RULES: list[dict[str, Any]] = [
             "10m assets",
             "capacity",
             "scale to",
+        ],
+    },
+    {
+        "route": "perf_rca",
+        "source": "handler:perf_rca",
+        "handler": handlers.perf_rca,
+        "any": [
+            "why is it slow",
+            "why is datahub slow",
+            "why is the application slow",
+            "root cause",
+            "root-cause",
+            "perf rca",
+            "what is wrong",
+            "what's wrong",
+            "diagnose performance",
+            "why search is empty",
         ],
     },
     {
@@ -234,6 +252,23 @@ def _match_rule(question: str) -> dict[str, Any] | None:
     return None
 
 
+def annotate_source(result: dict[str, Any]) -> dict[str, Any]:
+    """Visible path: handler (fixtures), kb (cited file), suite (pytest catalog), fallback."""
+    source = str(result.get("source") or "")
+    route_name = str(result.get("route") or "")
+    if source.startswith("kb:") or route_name == "kb_retrieve":
+        kind, label = "kb", "Knowledge base · cited catalog"
+    elif route_name == "run_suite" or source.startswith("handler:run_suite"):
+        kind, label = "suite", "Suite catalog · pytest markers"
+    elif source.startswith("fallback") or route_name == "fallback":
+        kind, label = "fallback", "Fallback · no match"
+    else:
+        kind, label = "handler", "Handler · fixtures only"
+    result["source_kind"] = kind
+    result["source_label"] = label
+    return result
+
+
 def route(
     question: str,
     *,
@@ -254,7 +289,7 @@ def route(
             result["answer"] = maybe_rephrase(
                 result["answer"], model_available=model_available
             )
-            return result
+            return annotate_source(result)
         if _NO.search(text):
             result = handlers.skip_regression(text)
             result["question"] = text
@@ -262,14 +297,14 @@ def route(
             result["answer"] = maybe_rephrase(
                 result["answer"], model_available=model_available
             )
-            return result
+            return annotate_source(result)
 
     if not text:
         result = handlers.fallback("")
         result["answer"] = maybe_rephrase(
             result["answer"], model_available=model_available
         )
-        return result
+        return annotate_source(result)
 
     rule = _match_rule(text)
     if rule is None:
@@ -283,7 +318,7 @@ def route(
     result["question"] = text
     result["model_available"] = model_available
     result["answer"] = maybe_rephrase(result["answer"], model_available=model_available)
-    return result
+    return annotate_source(result)
 
 
 def rules_for_export() -> list[dict[str, Any]]:

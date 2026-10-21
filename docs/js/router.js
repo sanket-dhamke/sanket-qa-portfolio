@@ -283,6 +283,9 @@
     if (oom.length) {
       lines.push("OOMKilled in this fixture: " + oom.map((p) => "`" + p.component + "`").join(", ") + ".");
     }
+    if (data.rca_report && data.rca_report.principle) {
+      lines.push(data.rca_report.principle);
+    }
     lines.push("Root-cause notes from the RCA fixture:");
     rca.findings.forEach((f) => lines.push("- [" + f.severity + "] " + f.component + ": " + f.title));
     return {
@@ -417,6 +420,68 @@
       citations: [best.citation],
       match: { id: best.id, method: best.method, path: best.path, score: bestScore },
       ui: null,
+      caveat: caveat(),
+    };
+  }
+
+  function annotateSource(result) {
+    const source = String((result && result.source) || "");
+    const routeName = String((result && result.route) || "");
+    let kind = "handler";
+    let label = "Handler · fixtures only";
+    if (source.indexOf("kb:") === 0 || routeName === "kb_retrieve") {
+      kind = "kb";
+      label = "Knowledge base · cited catalog";
+    } else if (routeName === "run_suite" || source.indexOf("handler:run_suite") === 0) {
+      kind = "suite";
+      label = "Suite catalog · pytest markers";
+    } else if (source.indexOf("fallback") === 0 || routeName === "fallback") {
+      kind = "fallback";
+      label = "Fallback · no match";
+    }
+    result.source_kind = kind;
+    result.source_label = label;
+    return result;
+  }
+
+  function formatEngineReport(report) {
+    if (!report) return "No RCA report in this demo payload.";
+    const lines = [
+      "Deterministic RCA — rules first. No model chose a tool or a number.",
+      report.principle || "",
+      "",
+      "Fired (" + (report.fired || []).length + "):",
+    ];
+    (report.fired || []).forEach((row) => {
+      lines.push("[" + row.severity + "] " + row.id + " · " + row.component + " — " + row.title);
+      lines.push("  Observation: " + row.observation);
+      (row.evidence || []).forEach((item) => lines.push("    - " + item));
+      lines.push("  Cause: " + row.cause);
+      lines.push("  Fix: " + row.recommendation);
+      lines.push("");
+    });
+    lines.push("Evaluated, not fired (this is part of the diagnosis):");
+    (report.skipped || []).forEach((row) => {
+      lines.push("- " + row.id + ": " + row.why);
+    });
+    return lines.join("\n").trim();
+  }
+
+  function perfRca(data) {
+    const report = data.rca_report || { fired: [], skipped: [], principle: "", counts: {} };
+    return {
+      route: "perf_rca",
+      source: "handler:perf_rca",
+      tools: ["rule_rca:agent/rca_engine.py", "read_fixture:agent/fixtures/cluster.json"],
+      answer: formatEngineReport(report),
+      metrics: {
+        fired: (report.fired || []).map((row) => row.id),
+        skipped: (report.skipped || []).map((row) => row.id),
+        counts: report.counts || {},
+        unhealthy: report.unhealthy,
+      },
+      ui: "rca",
+      rca: report,
       caveat: caveat(),
     };
   }
@@ -565,7 +630,12 @@
       "Open DataHub incidents (alerts): " + alerts.open + ". Assets: " + data.fixtures.ingestion.totals.assets + ".",
       "Root cause (from fixtures):",
     ];
-    rca.findings.forEach((f) => lines.push("- " + f.severity + " " + f.component + ": " + f.title));
+    const fired = ((data.rca_report || {}).fired || []).length
+      ? data.rca_report.fired
+      : rca.findings;
+    fired.forEach((f) =>
+      lines.push("- " + f.severity + " " + (f.id ? f.id + " " : "") + (f.component || "") + ": " + f.title)
+    );
     lines.push(
       "Auto-ran smoke: " + smoke.verdict + " " + smoke.passed + "/" + smoke.total + " and sanity: " + sanity.verdict + " " + sanity.passed + "/" + sanity.total + "."
     );
@@ -660,19 +730,31 @@
     resource_metrics: resourceMetrics,
     ingestion_assets: ingestionAssets,
     kb_retrieve: kbRetrieve,
+    perf_rca: perfRca,
   };
 
   function route(data, question, session) {
     const text = String(question || "").trim();
     session = session || {};
     if (session.awaiting_regression && text) {
-      if (YES.test(text)) return Object.assign(runNamedSuite(data, text, "regression", null), { question: text, model_available: false });
-      if (NO.test(text)) return Object.assign(skipRegression(), { question: text, model_available: false });
+      if (YES.test(text)) {
+        return annotateSource(
+          Object.assign(runNamedSuite(data, text, "regression", null), {
+            question: text,
+            model_available: false,
+          })
+        );
+      }
+      if (NO.test(text)) {
+        return annotateSource(
+          Object.assign(skipRegression(), { question: text, model_available: false })
+        );
+      }
     }
     if (!text) {
       const empty = fallback();
       empty.question = "";
-      return empty;
+      return annotateSource(empty);
     }
     const rule = matchRule(text, data.rules);
     let result;
@@ -681,7 +763,7 @@
     else result = fallback();
     result.question = text;
     result.model_available = false;
-    return result;
+    return annotateSource(result);
   }
 
   root.LabRouter = { route, namedComponent };

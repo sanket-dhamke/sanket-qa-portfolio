@@ -220,6 +220,8 @@ def run_suite(suite: str, layer: str | None = None) -> dict[str, Any]:
 
 
 def app_health() -> dict[str, Any]:
+    from agent.rca_engine import evaluate as evaluate_rca
+
     cluster = load("cluster.json")
     rca = load("rca.json")
     alerts = load("alerts.json")
@@ -228,6 +230,7 @@ def app_health() -> dict[str, Any]:
     smoke = run_suite("smoke")
     sanity = run_suite("sanity")
     degraded = bool(unhealthy) or sanity["failed"] > 0 or smoke["failed"] > 0
+    rules = evaluate_rca(cluster=cluster)
     return {
         "cluster": cluster["cluster"],
         "namespace": cluster["namespace"],
@@ -239,11 +242,13 @@ def app_health() -> dict[str, Any]:
         "smoke": {k: smoke[k] for k in ("passed", "failed", "total", "verdict")},
         "sanity": {k: sanity[k] for k in ("passed", "failed", "total", "verdict")},
         "rca_titles": [
-            f"{f['severity']} {f['component']}: {f['title']}" for f in rca["findings"]
+            f"{row['severity']} {row['id']}: {row['title']}" for row in rules["fired"]
         ],
         "health": "DEGRADED" if degraded else "HEALTHY",
         "sanity_report": sanity,
         "smoke_report": smoke,
+        "rca": rules,
+        "rca_notes": rca.get("principle"),
     }
 
 

@@ -1,0 +1,96 @@
+{
+  "generated_at": "2026-10-01T12:00:00Z",
+  "note": "Lab tool catalog. GitHub Pages replays fixtures; Python handlers are the source of truth. DataHub OSS names only.",
+  "tools": [
+    {
+      "id": "pod_health",
+      "needs": "cluster fixture",
+      "gms": false,
+      "returns": "Ready/not-ready pods, restarts, last_reason, probes"
+    },
+    {
+      "id": "top_cpu_mem",
+      "needs": "metrics fixture",
+      "gms": false,
+      "returns": "CPU% and memory% of each pod's own limit — not node capacity"
+    },
+    {
+      "id": "crash_diagnose",
+      "needs": "cluster fixture",
+      "gms": false,
+      "returns": "CrashLoop / OOM / probe signatures"
+    },
+    {
+      "id": "evicted_oom",
+      "needs": "cluster fixture",
+      "gms": false,
+      "returns": "OOMKilled vs exit-137 probe kills, split on last_reason"
+    },
+    {
+      "id": "rollout_status",
+      "needs": "cluster fixture",
+      "gms": false,
+      "returns": "Replica readiness for GMS, consumers, frontend, actions"
+    },
+    {
+      "id": "gms_heap",
+      "needs": "platform.gms_java_opts",
+      "gms": false,
+      "returns": "Whether datahub-gms sets -Xmx (does not query GMS GraphQL)"
+    },
+    {
+      "id": "kafka_consumer_concurrency",
+      "needs": "platform.mae_kafka_listener_concurrency",
+      "gms": false,
+      "returns": "MAE/MCE listener concurrency (INDEXING when MAE is 1)"
+    },
+    {
+      "id": "ingestion_progress",
+      "needs": "ingestion fixture",
+      "gms": false,
+      "returns": "Which postgres/oracle source last ran"
+    },
+    {
+      "id": "catalog_stats",
+      "needs": "GMS GraphQL searchAcrossEntities",
+      "gms": true,
+      "returns": "Asset totals by type (datasets, containers, dataJobs)"
+    },
+    {
+      "id": "search_latency",
+      "needs": "GMS GraphQL",
+      "gms": true,
+      "returns": "searchAcrossEntities match count from the fixture"
+    },
+    {
+      "id": "list_incidents",
+      "needs": "GMS GraphQL listIncidents",
+      "gms": true,
+      "returns": "Open incidents (this lab's 'alerts')"
+    },
+    {
+      "id": "login_api",
+      "needs": "POST /logIn",
+      "gms": false,
+      "returns": "Session for fictional emuser / empass — never invented"
+    },
+    {
+      "id": "run_suite",
+      "needs": "suites.json markers",
+      "gms": false,
+      "returns": "smoke / sanity / regression replay with per-case RCA"
+    },
+    {
+      "id": "perf_rca",
+      "needs": "cluster + metrics + platform",
+      "gms": false,
+      "returns": "Fired rules plus skipped rules (PROBE-KILL vs OOM, GMS-HEAP, SIZING)"
+    },
+    {
+      "id": "capacity_plan",
+      "needs": "app_config.json",
+      "gms": false,
+      "returns": "1M / 10M upgrade table from the 140-asset fixture"
+    }
+  ]
+}

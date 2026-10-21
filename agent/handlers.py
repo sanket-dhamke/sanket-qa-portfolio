@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from agent import executor
+from agent import executor, rca_engine
 
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
 RECIPES = Path(__file__).resolve().parent / "recipes"
@@ -74,9 +74,14 @@ def pod_status(question: str) -> dict[str, Any]:
         lines.append(
             f"OOMKilled in this fixture: {', '.join('`' + p['component'] + '`' for p in oom)}."
         )
+    lines.append(rca_engine.evaluate()["principle"])
     lines.append("Root-cause notes from the RCA fixture:")
     for finding in rca["findings"]:
-        lines.append(f"- [{finding['severity']}] {finding['component']}: {finding['title']}")
+        rid = finding.get("id")
+        tag = f"{rid} " if rid else ""
+        lines.append(
+            f"- [{finding['severity']}] {tag}{finding['component']}: {finding['title']}"
+        )
     result = _base()
     result.update(
         {
@@ -499,6 +504,37 @@ def skip_regression(question: str) -> dict[str, Any]:
             "ui": "verdict",
             "awaiting_regression": False,
             "session_update": {"awaiting_regression": False},
+        }
+    )
+    return result
+
+
+def perf_rca(question: str) -> dict[str, Any]:
+    report = rca_engine.evaluate()
+    result = _base()
+    result.update(
+        {
+            "route": "perf_rca",
+            "source": "handler:perf_rca",
+            "tools": [
+                "rule_rca:agent/rca_engine.py",
+                "read_fixture:agent/fixtures/cluster.json",
+                "read_fixture:agent/fixtures/metrics.json",
+            ],
+            "answer": rca_engine.format_report(report),
+            "metrics": {
+                "fired": [row["id"] for row in report["fired"]],
+                "skipped": [row["id"] for row in report["skipped"]],
+                "counts": report["counts"],
+                "unhealthy": report["unhealthy"],
+            },
+            "ui": "rca",
+            "rca": report,
+            "citations": [
+                "agent/rca_engine.py",
+                "agent/fixtures/cluster.json",
+                "agent/fixtures/metrics.json",
+            ],
         }
     )
     return result

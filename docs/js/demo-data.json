@@ -9,6 +9,7 @@
     "Run API sanity suite",
     "Check UI sanity",
     "How many alerts are in DataHub?",
+    "Why is DataHub slow?",
     "What is the current state of the application?",
     "What configuration needs to be upgraded to ingest 10m or 1m assets?"
   ],
@@ -74,6 +75,22 @@
         "10m assets",
         "capacity",
         "scale to"
+      ]
+    },
+    {
+      "route": "perf_rca",
+      "source": "handler:perf_rca",
+      "any": [
+        "why is it slow",
+        "why is datahub slow",
+        "why is the application slow",
+        "root cause",
+        "root-cause",
+        "perf rca",
+        "what is wrong",
+        "what's wrong",
+        "diagnose performance",
+        "why search is empty"
       ]
     },
     {
@@ -186,6 +203,14 @@
       "namespace": "datahub",
       "generated_at": "2026-10-01T12:00:00Z",
       "note": "Synthetic fixture. Fictional demo tenant. Not collected from a live cluster.",
+      "platform": {
+        "has_metrics": true,
+        "metrics_server": true,
+        "gms_java_opts": "-Xms1g -Xmx2g",
+        "mae_kafka_listener_concurrency": 1,
+        "mce_kafka_listener_concurrency": 1,
+        "note": "Kafka listener concurrency of 1 on MAE is an INDEXING finding even at 140 assets. GMS already sets -Xmx, so GMS-HEAP does not fire."
+      },
       "pods": [
         {
           "name": "datahub-gms-7f8c9d-xk2q1",
@@ -344,18 +369,30 @@
     },
     "rca": {
       "generated_at": "2026-10-01T12:00:00Z",
-      "note": "Synthetic root-cause notes derived from the cluster and metrics fixtures.",
+      "note": "Human-readable notes that match the rule engine in agent/rca_engine.py. The engine is the source of truth for which rules fire.",
+      "principle": "Exit 137 is SIGKILL, not necessarily an OOM kill. Count memory pressure only when Kubernetes last_reason is OOMKilled. The rest is PROBE-KILL.",
       "findings": [
         {
-          "severity": "high",
+          "id": "MEM-PRESSURE",
+          "severity": "CRITICAL",
           "component": "datahub-mae-consumer",
           "title": "OOMKilled then CrashLoopBackOff",
-          "evidence": "7 restarts, last exit 137, liveness probe failed HTTP 000, memory at the 1536 MiB limit.",
+          "evidence": "7 restarts, last exit 137, last_reason=OOMKilled, liveness HTTP 000, memory at the 1536 MiB limit.",
           "likely_cause": "MAE consumer applying MetadataAuditEvent traffic while Elasticsearch bulk indexing lagged; heap plus off-heap buffers hit the pod limit.",
           "suggested": "Raise the mae-consumer memory limit toward 2Gi, inspect Kafka lag on MetadataAuditEvent_v4, confirm Elasticsearch is accepting bulk index requests."
         },
         {
-          "severity": "medium",
+          "id": "INDEXING",
+          "severity": "HIGH",
+          "component": "datahub-mae-consumer",
+          "title": "MAE Kafka listener concurrency is 1",
+          "evidence": "platform.mae_kafka_listener_concurrency=1 with MAE already OOM looping.",
+          "likely_cause": "Single-threaded apply cannot drain MetadataAuditEvent_v4, so UI search goes stale while GMS counts still look fine.",
+          "suggested": "Raise MAE listener concurrency with partition count; only after memory headroom exists."
+        },
+        {
+          "id": "EXECUTOR-MEM",
+          "severity": "HIGH",
           "component": "datahub-actions",
           "title": "Executor memory high between UI ingestions",
           "evidence": "1802 / 2048 MiB in the 5m fixture window; 1 restart on the executor pod.",
@@ -363,6 +400,7 @@
           "suggested": "Stagger postgres and oracle recipes; avoid overlapping hourly postgres-analytics with an on-demand run."
         },
         {
+          "id": "MCE-RECOVERED",
           "severity": "low",
           "component": "datahub-mce-consumer",
           "title": "Prior Error restart, now Running",
@@ -797,6 +835,102 @@
           }
         }
       ]
+    },
+    "tools": {
+      "generated_at": "2026-10-01T12:00:00Z",
+      "note": "Lab tool catalog. GitHub Pages replays fixtures; Python handlers are the source of truth. DataHub OSS names only.",
+      "tools": [
+        {
+          "id": "pod_health",
+          "needs": "cluster fixture",
+          "gms": false,
+          "returns": "Ready/not-ready pods, restarts, last_reason, probes"
+        },
+        {
+          "id": "top_cpu_mem",
+          "needs": "metrics fixture",
+          "gms": false,
+          "returns": "CPU% and memory% of each pod's own limit \u2014 not node capacity"
+        },
+        {
+          "id": "crash_diagnose",
+          "needs": "cluster fixture",
+          "gms": false,
+          "returns": "CrashLoop / OOM / probe signatures"
+        },
+        {
+          "id": "evicted_oom",
+          "needs": "cluster fixture",
+          "gms": false,
+          "returns": "OOMKilled vs exit-137 probe kills, split on last_reason"
+        },
+        {
+          "id": "rollout_status",
+          "needs": "cluster fixture",
+          "gms": false,
+          "returns": "Replica readiness for GMS, consumers, frontend, actions"
+        },
+        {
+          "id": "gms_heap",
+          "needs": "platform.gms_java_opts",
+          "gms": false,
+          "returns": "Whether datahub-gms sets -Xmx (does not query GMS GraphQL)"
+        },
+        {
+          "id": "kafka_consumer_concurrency",
+          "needs": "platform.mae_kafka_listener_concurrency",
+          "gms": false,
+          "returns": "MAE/MCE listener concurrency (INDEXING when MAE is 1)"
+        },
+        {
+          "id": "ingestion_progress",
+          "needs": "ingestion fixture",
+          "gms": false,
+          "returns": "Which postgres/oracle source last ran"
+        },
+        {
+          "id": "catalog_stats",
+          "needs": "GMS GraphQL searchAcrossEntities",
+          "gms": true,
+          "returns": "Asset totals by type (datasets, containers, dataJobs)"
+        },
+        {
+          "id": "search_latency",
+          "needs": "GMS GraphQL",
+          "gms": true,
+          "returns": "searchAcrossEntities match count from the fixture"
+        },
+        {
+          "id": "list_incidents",
+          "needs": "GMS GraphQL listIncidents",
+          "gms": true,
+          "returns": "Open incidents (this lab's 'alerts')"
+        },
+        {
+          "id": "login_api",
+          "needs": "POST /logIn",
+          "gms": false,
+          "returns": "Session for fictional emuser / empass \u2014 never invented"
+        },
+        {
+          "id": "run_suite",
+          "needs": "suites.json markers",
+          "gms": false,
+          "returns": "smoke / sanity / regression replay with per-case RCA"
+        },
+        {
+          "id": "perf_rca",
+          "needs": "cluster + metrics + platform",
+          "gms": false,
+          "returns": "Fired rules plus skipped rules (PROBE-KILL vs OOM, GMS-HEAP, SIZING)"
+        },
+        {
+          "id": "capacity_plan",
+          "needs": "app_config.json",
+          "gms": false,
+          "returns": "1M / 10M upgrade table from the 140-asset fixture"
+        }
+      ]
     }
   },
   "recipes": {
@@ -1183,5 +1317,147 @@
       ]
     }
   ],
+  "rca_report": {
+    "principle": "Exit 137 is SIGKILL, not necessarily an OOM kill. Count memory pressure only when Kubernetes last_reason is OOMKilled. The rest is PROBE-KILL. Conflating them sends you to tune memory when the hang is a probe timeout.",
+    "fired": [
+      {
+        "id": "MEM-PRESSURE",
+        "severity": "CRITICAL",
+        "component": "datahub-mae-consumer",
+        "title": "OOMKilled / evicted pod",
+        "observation": "1 pod(s) hit the memory limit: datahub-mae-consumer.",
+        "symptom": "1 pod(s) hit the memory limit: datahub-mae-consumer.",
+        "cause": "Container working set reached the pod memory limit. Kubernetes SIGKILL (137) with reason OOMKilled.",
+        "likely_cause": "Container working set reached the pod memory limit. Kubernetes SIGKILL (137) with reason OOMKilled.",
+        "recommendation": "Raise that component's memory limit and heap, then confirm Kafka lag drains. Do not scale ingest until this is green.",
+        "suggested": "Raise that component's memory limit and heap, then confirm Kafka lag drains. Do not scale ingest until this is green.",
+        "fix": "Raise that component's memory limit and heap, then confirm Kafka lag drains. Do not scale ingest until this is green.",
+        "evidence": [
+          "datahub-mae-consumer-6b7d-aa91 status=CrashLoopBackOff restarts=7 last_reason=OOMKilled exit=137"
+        ]
+      },
+      {
+        "id": "POD-CRASH",
+        "severity": "CRITICAL",
+        "component": "datahub-mae-consumer",
+        "title": "Pod not running / not ready",
+        "observation": "1 of 5 pods are not ready: datahub-mae-consumer.",
+        "symptom": "1 of 5 pods are not ready: datahub-mae-consumer.",
+        "cause": "Phase or readiness failed. Combined with MEM-PRESSURE this is CrashLoopBackOff after OOM.",
+        "likely_cause": "Phase or readiness failed. Combined with MEM-PRESSURE this is CrashLoopBackOff after OOM.",
+        "recommendation": "Restore the crashing component before trusting search, lineage, or MAE-backed UI paths.",
+        "suggested": "Restore the crashing component before trusting search, lineage, or MAE-backed UI paths.",
+        "fix": "Restore the crashing component before trusting search, lineage, or MAE-backed UI paths.",
+        "evidence": [
+          "datahub-mae-consumer-6b7d-aa91 status=CrashLoopBackOff ready=False restarts=7"
+        ]
+      },
+      {
+        "id": "POD-MEM",
+        "severity": "CRITICAL",
+        "component": "datahub-mae-consumer",
+        "title": "Memory at or above 80% of limit",
+        "observation": "`datahub-mae-consumer` memory 100.0% of its limit (1536 / 1536 MiB).",
+        "symptom": "`datahub-mae-consumer` memory 100.0% of its limit (1536 / 1536 MiB).",
+        "cause": "Working set is against the cgroup limit; the next spike OOMKills.",
+        "likely_cause": "Working set is against the cgroup limit; the next spike OOMKills.",
+        "recommendation": "Raise the memory limit (and heap if this is a JVM) before adding ingest load.",
+        "suggested": "Raise the memory limit (and heap if this is a JVM) before adding ingest load.",
+        "fix": "Raise the memory limit (and heap if this is a JVM) before adding ingest load.",
+        "evidence": [
+          "datahub-mae-consumer 100.0% (1536/1536 MiB)",
+          "datahub-actions 88.0% (1802/2048 MiB)"
+        ]
+      },
+      {
+        "id": "EXECUTOR-MEM",
+        "severity": "HIGH",
+        "component": "datahub-actions",
+        "title": "Ingestion executor memory high",
+        "observation": "datahub-actions 1802 / 2048 MiB (88.0%).",
+        "symptom": "datahub-actions 1802 / 2048 MiB (88.0%).",
+        "cause": "UI ingestion recipes run in-process on the actions executor.",
+        "likely_cause": "UI ingestion recipes run in-process on the actions executor.",
+        "recommendation": "Stagger postgres and oracle recipes; avoid overlapping hourly runs.",
+        "suggested": "Stagger postgres and oracle recipes; avoid overlapping hourly runs.",
+        "fix": "Stagger postgres and oracle recipes; avoid overlapping hourly runs.",
+        "evidence": [
+          "1802 / 2048 MiB"
+        ]
+      },
+      {
+        "id": "INDEXING",
+        "severity": "HIGH",
+        "component": "datahub-mae-consumer",
+        "title": "MAE Kafka listener concurrency is 1",
+        "observation": "KAFKA_LISTENER_CONCURRENCY=1 on datahub-mae-consumer. One partition/listener cannot drain MetadataAuditEvent_v4 under ingest.",
+        "symptom": "KAFKA_LISTENER_CONCURRENCY=1 on datahub-mae-consumer. One partition/listener cannot drain MetadataAuditEvent_v4 under ingest.",
+        "cause": "Single-threaded apply plus an OOM loop is why UI search is empty while GMS counts still look fine.",
+        "likely_cause": "Single-threaded apply plus an OOM loop is why UI search is empty while GMS counts still look fine.",
+        "recommendation": "Raise MAE listener concurrency with partition count; only after memory headroom exists.",
+        "suggested": "Raise MAE listener concurrency with partition count; only after memory headroom exists.",
+        "fix": "Raise MAE listener concurrency with partition count; only after memory headroom exists.",
+        "evidence": [
+          "mae_kafka_listener_concurrency=1"
+        ]
+      },
+      {
+        "id": "POD-CPU",
+        "severity": "HIGH",
+        "component": "datahub-mae-consumer",
+        "title": "CPU at or above 80% of limit",
+        "observation": "`datahub-mae-consumer` CPU 88.1% of its limit (percentage of the pod limit, not the node).",
+        "symptom": "`datahub-mae-consumer` CPU 88.1% of its limit (percentage of the pod limit, not the node).",
+        "cause": "Sustained CPU near the limit throttles that component.",
+        "likely_cause": "Sustained CPU near the limit throttles that component.",
+        "recommendation": "Raise the CPU limit or add a replica. A small limit at 95% can still be idle in absolute millicores.",
+        "suggested": "Raise the CPU limit or add a replica. A small limit at 95% can still be idle in absolute millicores.",
+        "fix": "Raise the CPU limit or add a replica. A small limit at 95% can still be idle in absolute millicores.",
+        "evidence": [
+          "datahub-mae-consumer 88.1%"
+        ]
+      },
+      {
+        "id": "RESTARTS",
+        "severity": "HIGH",
+        "component": "datahub-mae-consumer",
+        "title": "Repeated restarts",
+        "observation": "datahub-mae-consumer restarts=7",
+        "symptom": "datahub-mae-consumer restarts=7",
+        "cause": "Kubernetes is crash-looping the container. Search/index lag follows MAE restarts.",
+        "likely_cause": "Kubernetes is crash-looping the container. Search/index lag follows MAE restarts.",
+        "recommendation": "Fix the crash reason (see MEM-PRESSURE / PROBE-KILL) rather than deleting the pod on a loop.",
+        "suggested": "Fix the crash reason (see MEM-PRESSURE / PROBE-KILL) rather than deleting the pod on a loop.",
+        "fix": "Fix the crash reason (see MEM-PRESSURE / PROBE-KILL) rather than deleting the pod on a loop.",
+        "evidence": [
+          "datahub-mae-consumer-6b7d-aa91 restarts=7"
+        ]
+      }
+    ],
+    "skipped": [
+      {
+        "id": "PROBE-KILL",
+        "why": "Exit 137 on datahub-mae-consumer has last_reason=OOMKilled, so this is memory pressure, not a probe timeout. Raising the probe delay would be the wrong fix."
+      },
+      {
+        "id": "GMS-HEAP",
+        "why": "datahub-gms already sets heap (-Xms1g -Xmx2g)."
+      },
+      {
+        "id": "METRICS",
+        "why": "metrics-server flag is true in this fixture; samples exist."
+      },
+      {
+        "id": "SIZING",
+        "why": "Not an all-clear: at least one pressure, crash, or OOM finding is already firing."
+      }
+    ],
+    "counts": {
+      "CRITICAL": 3,
+      "HIGH": 4
+    },
+    "pod_count": 5,
+    "unhealthy": 1
+  },
   "caveat": "In-browser demo is a vanilla JS port of the Python router. Python plus tests/test_routing.py are the source of truth. Fictional DataHub demo tenant. Not a live cluster."
 }

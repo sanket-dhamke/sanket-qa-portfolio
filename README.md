@@ -9,8 +9,8 @@ Site (GitHub Pages, after publish): https://sanket-dhamke.github.io/sanket-qa-po
 ## What you can open
 
 - [Home](docs/index.html) — who I am (Lead SDET, 12 years, Pune) and three cards.
-- [Lab console](docs/console.html) — hybrid agent: visible `source` chip, live CPU/memory, suites (smoke/sanity/regression), login API, incidents, capacity for 1M/10M assets, postgres recipe YAML → simulated GraphQL ingest.
-- [Architecture](docs/architecture.html) — router, handlers, KB, “model never produces a number”.
+- [Lab console](docs/console.html) — hybrid agent: source **kind** chips (handler vs knowledge base vs suite), live CPU/memory, suites, rule RCA (fired + skipped), login API, incidents, capacity for 1M/10M assets, postgres recipe YAML → simulated GraphQL ingest.
+- [Architecture](docs/architecture.html) — router, handlers, KB, suite catalog, rule RCA. A model never produces a number.
 - [API framework](docs/api-framework.html) — folder map, pytest, sample HTML report.
 
 ## Run locally
@@ -20,7 +20,7 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 python -m agent.export_web
-pytest tests/test_routing.py tests/test_hybrid_agent.py tests/api \
+pytest tests/test_routing.py tests/test_hybrid_agent.py tests/test_rca_engine.py tests/api \
   --html=docs/reports/pytest-report.html --self-contained-html
 python -m http.server 8765 --directory docs
 # open http://127.0.0.1:8765/

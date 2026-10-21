@@ -3,6 +3,14 @@
   "namespace": "datahub",
   "generated_at": "2026-10-01T12:00:00Z",
   "note": "Synthetic fixture. Fictional demo tenant. Not collected from a live cluster.",
+  "platform": {
+    "has_metrics": true,
+    "metrics_server": true,
+    "gms_java_opts": "-Xms1g -Xmx2g",
+    "mae_kafka_listener_concurrency": 1,
+    "mce_kafka_listener_concurrency": 1,
+    "note": "Kafka listener concurrency of 1 on MAE is an INDEXING finding even at 140 assets. GMS already sets -Xmx, so GMS-HEAP does not fire."
+  },
   "pods": [
     {
       "name": "datahub-gms-7f8c9d-xk2q1",

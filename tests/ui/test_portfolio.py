@@ -22,8 +22,16 @@ def test_home_has_name_and_three_cards(page, site_url: str) -> None:
 def test_console_canned_oom_shows_handler_source(page, site_url: str) -> None:
     page.goto(site_url + "/console.html")
     page.get_by_role("button", name="Which pods are crashing or restarting after OOM?").click()
+    expect(page.locator('[data-testid="source-kind"]').last).to_contain_text("Handler")
     expect(page.locator('[data-testid="result-source"]').last).to_contain_text("handler:pod_status")
     expect(page.locator("#log")).to_contain_text("OOMKilled")
+
+
+def test_console_graphql_chip_is_knowledge_base(page, site_url: str) -> None:
+    page.goto(site_url + "/console.html")
+    page.get_by_role("button", name="What GraphQL mutation creates an ingestion source?").click()
+    expect(page.locator('[data-testid="source-kind"]').last).to_contain_text("Knowledge base")
+    expect(page.locator('[data-testid="result-source"]').last).to_contain_text("kb:")
 
 
 def test_console_enter_clears_question(page, site_url: str) -> None:

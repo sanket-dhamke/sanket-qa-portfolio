@@ -1,17 +1,29 @@
 {
   "generated_at": "2026-10-01T12:00:00Z",
-  "note": "Synthetic root-cause notes derived from the cluster and metrics fixtures.",
+  "note": "Human-readable notes that match the rule engine in agent/rca_engine.py. The engine is the source of truth for which rules fire.",
+  "principle": "Exit 137 is SIGKILL, not necessarily an OOM kill. Count memory pressure only when Kubernetes last_reason is OOMKilled. The rest is PROBE-KILL.",
   "findings": [
     {
-      "severity": "high",
+      "id": "MEM-PRESSURE",
+      "severity": "CRITICAL",
       "component": "datahub-mae-consumer",
       "title": "OOMKilled then CrashLoopBackOff",
-      "evidence": "7 restarts, last exit 137, liveness probe failed HTTP 000, memory at the 1536 MiB limit.",
+      "evidence": "7 restarts, last exit 137, last_reason=OOMKilled, liveness HTTP 000, memory at the 1536 MiB limit.",
       "likely_cause": "MAE consumer applying MetadataAuditEvent traffic while Elasticsearch bulk indexing lagged; heap plus off-heap buffers hit the pod limit.",
       "suggested": "Raise the mae-consumer memory limit toward 2Gi, inspect Kafka lag on MetadataAuditEvent_v4, confirm Elasticsearch is accepting bulk index requests."
     },
     {
-      "severity": "medium",
+      "id": "INDEXING",
+      "severity": "HIGH",
+      "component": "datahub-mae-consumer",
+      "title": "MAE Kafka listener concurrency is 1",
+      "evidence": "platform.mae_kafka_listener_concurrency=1 with MAE already OOM looping.",
+      "likely_cause": "Single-threaded apply cannot drain MetadataAuditEvent_v4, so UI search goes stale while GMS counts still look fine.",
+      "suggested": "Raise MAE listener concurrency with partition count; only after memory headroom exists."
+    },
+    {
+      "id": "EXECUTOR-MEM",
+      "severity": "HIGH",
       "component": "datahub-actions",
       "title": "Executor memory high between UI ingestions",
       "evidence": "1802 / 2048 MiB in the 5m fixture window; 1 restart on the executor pod.",
@@ -19,6 +31,7 @@
       "suggested": "Stagger postgres and oracle recipes; avoid overlapping hourly postgres-analytics with an on-demand run."
     },
     {
+      "id": "MCE-RECOVERED",
       "severity": "low",
       "component": "datahub-mce-consumer",
       "title": "Prior Error restart, now Running",
