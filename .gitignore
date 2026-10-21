@@ -4,11 +4,10 @@ __pycache__/
 .pytest_cache/
 .playwright-report/
 test-results/
-allure-results/
-!reports/allure-results/
-!reports/allure-results/.gitkeep
-!ui/reports/allure-results/
-!ui/reports/allure-results/.gitkeep
+allure-report/
+**/allure-results/**
+!**/allure-results/
+!**/allure-results/.gitkeep
 ui/reports/*.png
 .coverage
 htmlcov/

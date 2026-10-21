@@ -1,7 +1,12 @@
 # API reports
 
-`pytest --html=reports/pytest-report.html --self-contained-html` writes HTML here.
+Raw Allure results:
 
-`reports/allure-results/` is the Allure raw-results directory when you add `--alluredir=reports/allure-results`. Generated files are gitignored; `.gitkeep` holds the folder.
+```bash
+pytest tests/api --alluredir=reports/allure-results
+allure generate reports/allure-results -o docs/reports/allure-api --clean --single-file --name "API automation"
+```
 
-The GitHub Pages sample report stays at `docs/reports/pytest-report.html`.
+`reports/allure-results/` holds the JSON Allure writes. Generated files are gitignored; `.gitkeep` keeps the folder. The GitHub Pages Allure site is `docs/reports/allure-api/`.
+
+Or run `scripts/generate_allure.sh` (API + UI).

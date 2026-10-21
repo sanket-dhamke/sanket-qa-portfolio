@@ -10,7 +10,8 @@ pip install -r requirements.txt
 playwright install chromium
 pytest -m smoke
 pytest -m sanity
-pytest -m ui --html=reports/pytest-report.html --self-contained-html
+pytest -m ui --alluredir=reports/allure-results
+allure generate reports/allure-results -o ../docs/reports/allure-ui --clean --single-file --name "UI automation"
 ```
 
-See `AI-AGENT.md` for how the hybrid lab agent maps English to these suites.
+See `AI-AGENT.md` for how the Hybrid AI Agent for performance testing maps English to these suites.

@@ -57,14 +57,17 @@ tests/payloads/
 tests/helpers/
   auth.py
   graphql.py
+  reporting.py              Allure steps + JSON attachments
 utils/
   http.py
   jsonutil.py
   gms.py                    requests session to mock GMS
 reports/
   README.md
-  allure-results/           Allure raw-results placeholder
-docs/API.md                 how to run API-only</pre>
+  allure-results/           pytest --alluredir raw results
+docs/reports/allure-api/    committed Allure HTML
+docs/API.md                 how to run API-only
+scripts/generate_allure.sh</pre>
     <h2>How to run (API only)</h2>
     <pre>python3 -m venv .venv
 source .venv/bin/activate
@@ -72,14 +75,15 @@ pip install -r requirements-api.txt
 pytest -m smoke tests/api
 pytest -m sanity tests/api
 pytest -m regression tests/api
-pytest tests/api --html=reports/pytest-report.html --self-contained-html
+pytest tests/api --alluredir=reports/allure-results
+allure generate reports/allure-results -o docs/reports/allure-api --clean --single-file --name "API automation"
 # optional mock server for requests (not required for TestClient)
 uvicorn api.app:app --port 8080
 pytest tests/api --run-live -m live</pre>
     <p>Domain asserts: HTTP status, JSON shape, fixture asset counts (140), <code>durationMs</code> from the mock execution, elapsed time under 1s. How-to: <a href="https://github.com/sanket-dhamke/sanket-qa-portfolio/blob/main/docs/API.md">docs/API.md</a>.</p>
-    <h2>Sample HTML report</h2>
-    <p><a href="reports/pytest-report.html">Open the checked-in pytest-html report</a> · <a href="reports/results.html">compact results page</a></p>
-    <iframe title="pytest-html sample" src="reports/pytest-report.html" style="width:100%;height:420px;border:1px solid #d8d0c2;background:#fff"></iframe>
+    <h2>Allure report</h2>
+    <p><a href="reports/allure-api/index.html">Allure report</a> — static export (suites, steps, status, attachments). Raw results stay in <code>reports/allure-results/</code>.</p>
+    <iframe class="report-frame" title="API Allure report" src="reports/allure-api/index.html"></iframe>
   </main>
   <footer class="site-footer">
     <div class="wrap">

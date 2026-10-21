@@ -705,7 +705,7 @@ sink:
     });
     addMsg(
       "bot",
-      "Hybrid DataHub lab. Keyword router + suite catalog, not an LLM. The model does not choose tools, collect metrics, or set RCA. CPU is % of pod limit. Ask to log in as emuser/empass, list the lab tools, run API or UI sanity, check alerts, size for 1M assets, or ask the current application state (smoke+sanity, then confirm regression).",
+      "Hybrid AI Agent for performance testing. Keyword/hybrid router + suite catalog, not an LLM inventing metrics. The model does not choose tools, collect metrics, or set RCA. CPU is % of pod limit. Ask to log in as emuser/empass, list the lab tools, run API or UI sanity, check alerts, size for 1M assets, or ask the current application state (smoke+sanity, then confirm regression).",
       { source: "fallback:deterministic", route: "hello", tools: [] }
     );
   }

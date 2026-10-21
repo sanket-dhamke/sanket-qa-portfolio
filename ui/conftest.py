@@ -5,6 +5,7 @@ import socketserver
 import threading
 from pathlib import Path
 
+import allure
 import pytest
 
 ROOT = Path(__file__).resolve().parent
@@ -31,15 +32,29 @@ def site_url() -> str:
     httpd.shutdown()
 
 
+@pytest.hookimpl(tryfirst=True)
+def pytest_runtest_setup(item: pytest.Item) -> None:
+    allure.dynamic.epic("UI automation")
+    allure.dynamic.suite("ui/tests/ui")
+    for mark in ("smoke", "sanity", "regression", "ui"):
+        if item.get_closest_marker(mark):
+            allure.dynamic.feature(mark)
+            allure.dynamic.tag(mark)
+    allure.dynamic.story(item.name)
+
+
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo) -> None:
     outcome = yield
     report = outcome.get_result()
-    if report.when != "call" or not report.failed:
+    if report.when != "call":
         return
     page = item.funcargs.get("page")
     if page is None:
         return
-    from utils.screenshots import save
+    png = page.screenshot(full_page=True)
+    allure.attach(png, name=item.name, attachment_type=allure.attachment_type.PNG)
+    if report.failed:
+        from utils.screenshots import save
 
-    save(page, item.name)
+        save(page, item.name)

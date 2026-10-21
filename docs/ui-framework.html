@@ -25,7 +25,7 @@
   </header>
   <main class="wrap prose">
     <h1>UI automation</h1>
-    <p>Playwright + pytest against this public site. Page objects in <code>ui/pages/</code>. A model does not pick selectors or invent pass/fail. The hybrid agent can <em>ask</em> for UI sanity; pytest here is what actually drives the browser.</p>
+    <p>Playwright + pytest against this public site. Page objects in <code>ui/pages/</code>. A model does not pick selectors or invent pass/fail. The Hybrid AI Agent for performance testing can <em>ask</em> for UI sanity; pytest here is what actually drives the browser.</p>
     <h2>Folder map</h2>
     <pre class="folder">ui/
   pytest.ini
@@ -50,10 +50,11 @@
     test_framework_pages.py
   reports/
     README.md
-    allure-results/         placeholder
-  AI-AGENT.md               how the hybrid agent triggers UI suites
+    allure-results/         pytest --alluredir raw results
+  AI-AGENT.md
   SKILLS.md
   README.md
+docs/reports/allure-ui/     committed Allure HTML
 .cursor/skills/ui-automation/SKILL.md</pre>
     <h2>How to run</h2>
     <pre>cd ui
@@ -63,7 +64,11 @@ pip install -r requirements.txt
 playwright install chromium
 pytest -m smoke
 pytest -m sanity
-pytest -m ui --html=reports/pytest-report.html --self-contained-html</pre>
+pytest -m ui --alluredir=reports/allure-results
+allure generate reports/allure-results -o ../docs/reports/allure-ui --clean --single-file --name "UI automation"</pre>
+    <h2>Allure report</h2>
+    <p><a href="reports/allure-ui/index.html">Allure report</a> — static export (suites, steps, status, screenshot attachments). Raw results stay in <code>ui/reports/allure-results/</code>.</p>
+    <iframe class="report-frame" title="UI Allure report" src="reports/allure-ui/index.html"></iframe>
     <h2>AI-based agent</h2>
     <p>In the lab console, “Check UI sanity” is a keyword route to the suite catalog (<code>handler:run_suite</code>, layer <code>ui</code>). Pages replays fixtures. This tree is the Playwright implementation. Details: <a href="https://github.com/sanket-dhamke/sanket-qa-portfolio/blob/main/ui/AI-AGENT.md">ui/AI-AGENT.md</a>, <a href="https://github.com/sanket-dhamke/sanket-qa-portfolio/blob/main/ui/SKILLS.md">ui/SKILLS.md</a>, and <code>.cursor/skills/ui-automation/SKILL.md</code>.</p>
   </main>

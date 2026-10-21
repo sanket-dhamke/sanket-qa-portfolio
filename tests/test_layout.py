@@ -15,6 +15,7 @@ API_PATHS = [
     "config/settings.py",
     "tests/helpers/auth.py",
     "tests/helpers/graphql.py",
+    "tests/helpers/reporting.py",
     "tests/payloads/login.json",
     "tests/payloads/create_ingestion_source.json",
     "tests/payloads/postgres_recipe.yml",
@@ -36,6 +37,8 @@ API_PATHS = [
     "reports/allure-results/.gitkeep",
     "docs/API.md",
     "docs/api-framework.html",
+    "docs/reports/allure-api/index.html",
+    "scripts/generate_allure.sh",
 ]
 
 UI_PATHS = [
@@ -62,6 +65,7 @@ UI_PATHS = [
     "ui/reports/allure-results/.gitkeep",
     ".cursor/skills/ui-automation/SKILL.md",
     "docs/ui-framework.html",
+    "docs/reports/allure-ui/index.html",
 ]
 
 
@@ -80,10 +84,12 @@ def test_api_page_does_not_document_playwright() -> None:
     assert "Playwright" not in text
     assert "tests/ui/" not in text
     assert "pages/home_page.py" not in text
+    assert "pytest-html" not in text
     assert "tests/api/smoke/" in text
     assert "tests/payloads/" in text
     assert "tests/helpers/" in text
     assert "allure-results" in text
+    assert 'href="reports/allure-api/index.html">Allure report</a>' in text
 
 
 def test_ui_page_does_not_document_api_payloads() -> None:
@@ -94,29 +100,44 @@ def test_ui_page_does_not_document_api_payloads() -> None:
     assert "Playwright" in text
     assert "AI-AGENT.md" in text
     assert "SKILLS.md" in text
+    assert "pytest-html" not in text
+    assert 'href="reports/allure-ui/index.html">Allure report</a>' in text
 
 
 def test_home_cards_split_api_and_ui() -> None:
     text = (ROOT / "docs" / "index.html").read_text(encoding="utf-8")
     cards = text.split('class="cards"', 1)[1]
+    hybrid = cards.split("Hybrid AI Agent for performance testing", 1)[1].split("</a>", 1)[0]
     api_card = cards.split("API Automation", 1)[1].split("</a>", 1)[0]
     ui_card = cards.split("UI Automation", 1)[1].split("</a>", 1)[0]
     assert 'href="api-framework.html"' in cards
     assert 'href="ui-framework.html"' in cards
+    assert "not an LLM inventing metrics" in hybrid
+    assert "Playwright" not in hybrid
     assert "Playwright" not in api_card
     assert "tests/api/" in api_card
     assert "Playwright" in ui_card
     assert "ui/" in ui_card
     assert "tests/payloads" not in ui_card
+    assert "Open the Hybrid AI Agent for performance testing" in text
 
 
-def test_checked_in_api_report_is_api_only() -> None:
-    report = (ROOT / "docs" / "reports" / "pytest-report.html").read_text(
+def test_api_allure_report_is_api_only() -> None:
+    report = (ROOT / "docs" / "reports" / "allure-api" / "index.html").read_text(
         encoding="utf-8", errors="ignore"
     )
-    results = (ROOT / "docs" / "reports" / "results.html").read_text(encoding="utf-8")
-    for blob in (report, results):
-        assert "Playwright" not in blob
-        assert "tests/ui/" not in blob
-        assert "test_portfolio" not in blob
-        assert "playwright" not in blob.lower()
+    assert "allure-report-uuid" in report
+    assert "<title>API automation</title>" in report
+    assert "Playwright" not in report
+    assert "playwright" not in report.lower()
+    assert "tests/ui/" not in report
+    assert "test_portfolio" not in report
+
+
+def test_ui_allure_report_is_separate() -> None:
+    report = (ROOT / "docs" / "reports" / "allure-ui" / "index.html").read_text(
+        encoding="utf-8", errors="ignore"
+    )
+    assert "allure-report-uuid" in report
+    assert "<title>UI automation</title>" in report
+    assert "tests/payloads" not in report

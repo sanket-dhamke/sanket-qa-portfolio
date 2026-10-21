@@ -53,6 +53,7 @@ def test_home_copy_is_agentic_and_has_no_city() -> None:
     assert "Lead SDET in Pune" not in text
     assert "Pune" not in text
     assert "AI-based, agentic QA" in text
+    assert "Hybrid AI Agent for performance testing" in text
     assert "never from a model guessing" in text
     assert "RLHF" not in text
     assert "This site is an original public sample" not in text
@@ -122,6 +123,8 @@ def test_public_tree_has_no_forbidden_product_names() -> None:
             continue
         rel = path.relative_to(ROOT).as_posix()
         if "__pycache__" in rel:
+            continue
+        if rel.startswith("docs/reports/allure-"):
             continue
         text = path.read_text(encoding="utf-8", errors="ignore")
         if pattern.search(text):

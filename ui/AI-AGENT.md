@@ -1,4 +1,4 @@
-# How the hybrid agent triggers UI suites
+# How the Hybrid AI Agent for performance testing triggers UI suites
 
 The public console is **keyword/rule** first. A model never chooses the tool and never invents a pass/fail.
 

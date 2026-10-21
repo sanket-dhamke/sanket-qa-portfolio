@@ -1,3 +1,11 @@
-Playwright pytest-html and screenshots land here. Generated files are gitignored.
+# UI reports
 
-`allure-results/` is the Allure raw-results placeholder (`--alluredir=reports/allure-results`).
+Raw Allure results for Playwright + pytest:
+
+```bash
+cd ui
+pytest -m ui --alluredir=reports/allure-results
+allure generate reports/allure-results -o ../docs/reports/allure-ui --clean --single-file --name "UI automation"
+```
+
+`allure-results/` is gitignored except `.gitkeep`. The GitHub Pages Allure site is `docs/reports/allure-ui/`.
