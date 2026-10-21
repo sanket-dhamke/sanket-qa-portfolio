@@ -1,7 +1,9 @@
 name: GitHub Pages
+# Manual only. Cloud Agent tokens cannot enable Pages (needs administration).
+# Prefer Settings → Pages → Deploy from a branch → main → /docs.
+# Use this workflow only after Pages source is GitHub Actions.
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:
 permissions:
   contents: read
   pages: write
