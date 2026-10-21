@@ -55,6 +55,10 @@
     <p>Components: <code>datahub-gms</code>, <code>datahub-mae-consumer</code>, <code>datahub-mce-consumer</code>, <code>datahub-frontend</code>, <code>datahub-actions</code>. Ingestion uses recipe YAML (<code>type: postgres</code> / <code>type: oracle</code>), pipeline name, <code>schema_pattern</code> / <code>table_pattern</code>, sink <code>datahub-rest</code> to GMS. GraphQL: <code>listIngestionSources</code>, <code>createIngestionSource</code> (JSON-encoded recipe, <code>executorId</code>), <code>createIngestionExecutionRequest</code>. Aspects such as <code>schemaMetadata</code> and <code>upstreamLineage</code> show up in the fake run log. Public docs: <a href="https://datahubproject.io/docs/generated/ingestion/sources/postgres/">Postgres source</a>.</p>
     <p class="note">The in-browser console is a JS port of the Python router so GitHub Pages can run without a Python host. Python remains the source of truth.</p>
   </main>
-  <footer class="site-footer"><div class="wrap">Original portfolio sample of a hybrid router + API test framework. Not affiliated with any prior employer product.</div></footer>
+  <footer class="site-footer">
+    <div class="wrap">
+      <p class="note">Note. Open-source DataHub vocabulary. Not affiliated with any prior employer product. Metrics, sources, and ingest runs are simulated.</p>
+    </div>
+  </footer>
 </body>
 </html>

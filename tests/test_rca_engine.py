@@ -55,9 +55,18 @@ def test_home_copy_is_agentic_and_has_no_city() -> None:
     assert "AI-based, agentic QA" in text
     assert "never from a model guessing" in text
     assert "RLHF" not in text
-    for name in ("architecture.html", "about.html", "api-framework.html"):
+    assert "This site is an original public sample" not in text
+    main = text.split("<main", 1)[1].split("</main>", 1)[0]
+    assert "not affiliated with any prior employer" not in main.lower()
+    footer = text.split("<footer", 1)[1]
+    assert "Not affiliated" in footer
+    assert "simulated" in footer
+    for name in ("architecture.html", "about.html", "api-framework.html", "index.html"):
         page = (ROOT / "docs" / name).read_text(encoding="utf-8")
         assert "Pune" not in page
+        stripped = re.sub(r"<header[\s\S]*?</header>", "", page, count=1)
+        body = stripped.split("<body", 1)[-1]
+        assert not re.search(r">\s*This site is", body)
 
 
 def test_architecture_states_ai_boundary() -> None:

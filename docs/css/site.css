@@ -114,6 +114,12 @@ nav a[aria-current="page"], nav a:hover { color: #fff; border-bottom: 2px solid 
   color: var(--muted);
   font-size: 13px;
 }
+.site-footer .note {
+  margin: 0;
+  font-size: 12px;
+  background: transparent;
+  padding: 6px 10px;
+}
 
 @media (max-width: 800px) {
   .hero { grid-template-columns: 1fr; }

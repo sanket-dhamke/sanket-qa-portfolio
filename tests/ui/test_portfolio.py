@@ -23,6 +23,11 @@ def test_home_has_name_and_three_cards(page, site_url: str) -> None:
     expect(lede).to_contain_text("never from a model guessing")
     expect(lede).not_to_contain_text("Pune")
     expect(page.locator("body")).not_to_contain_text("Pune")
+    expect(page.locator("main")).not_to_contain_text(
+        "This site is an original public sample"
+    )
+    expect(page.locator("footer .note")).to_contain_text("Not affiliated")
+    expect(page.locator("footer .note")).to_contain_text("simulated")
 
 
 def test_console_canned_oom_shows_handler_source(page, site_url: str) -> None:
