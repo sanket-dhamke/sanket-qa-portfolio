@@ -9,7 +9,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 playwright install chromium
 pytest -m smoke
-pytest -m sanity
+pytest -m "sanity and not lab_issue"
 pytest -m ui --alluredir=reports/allure-results
 allure generate reports/allure-results -o ../docs/reports/allure-ui --clean --single-file --name "UI automation"
 ```

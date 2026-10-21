@@ -40,11 +40,13 @@ tests/api/smoke/
   test_health.py
   test_login.py
   test_list_sources.py
+  test_gms_pod.py           GMS Running — smoke stays green on this fixture
   test_live_requests.py     skipped unless --run-live
 tests/api/sanity/
   test_incidents.py
   test_ingestion.py
   test_aspects.py
+  test_mae_search_index.py  fails: mae-consumer OOM / MEM-PRESSURE (DEGRADED)
 tests/api/regression/
   test_login_failures.py
   test_graphql_unknown.py

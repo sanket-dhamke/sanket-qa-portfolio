@@ -2,9 +2,22 @@
 
 from __future__ import annotations
 
+import base64
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def _allure_decoded(path: Path) -> str:
+    raw = path.read_text(encoding="utf-8", errors="ignore")
+    parts = [raw]
+    for blob in re.findall(r"[A-Za-z0-9+/]{120,}={0,2}", raw):
+        try:
+            parts.append(base64.b64decode(blob).decode("utf-8", "ignore"))
+        except Exception:
+            continue
+    return "\n".join(parts)
 
 API_PATHS = [
     "pytest.ini",
@@ -29,6 +42,10 @@ API_PATHS = [
     "tests/api/sanity/test_ingestion.py",
     "tests/api/sanity/test_incidents.py",
     "tests/api/sanity/test_aspects.py",
+    "tests/api/sanity/test_mae_search_index.py",
+    "tests/api/smoke/test_gms_pod.py",
+    "tests/helpers/lab_evidence.py",
+    "tests/test_app_health.py",
     "tests/api/regression/test_login_failures.py",
     "tests/api/regression/test_graphql_unknown.py",
     "utils/http.py",
@@ -49,6 +66,7 @@ UI_PATHS = [
     "ui/config/settings.py",
     "ui/utils/waits.py",
     "ui/utils/screenshots.py",
+    "ui/utils/lab_evidence.py",
     "ui/pages/home_page.py",
     "ui/pages/console_page.py",
     "ui/pages/architecture_page.py",
@@ -56,6 +74,7 @@ UI_PATHS = [
     "ui/pages/ui_framework_page.py",
     "ui/tests/ui/test_home.py",
     "ui/tests/ui/test_console.py",
+    "ui/tests/ui/test_search_index.py",
     "ui/tests/ui/test_architecture.py",
     "ui/tests/ui/test_framework_pages.py",
     "ui/AI-AGENT.md",
@@ -86,6 +105,7 @@ def test_api_page_does_not_document_playwright() -> None:
     assert "pages/home_page.py" not in text
     assert "pytest-html" not in text
     assert "tests/api/smoke/" in text
+    assert "test_mae_search_index.py" in text
     assert "tests/payloads/" in text
     assert "tests/helpers/" in text
     assert "allure-results" in text
@@ -98,6 +118,7 @@ def test_ui_page_does_not_document_api_payloads() -> None:
     assert "tests/api/smoke" not in text
     assert "pages/" in text
     assert "Playwright" in text
+    assert "test_search_index.py" in text
     assert "AI-AGENT.md" in text
     assert "SKILLS.md" in text
     assert "pytest-html" not in text
@@ -123,15 +144,19 @@ def test_home_cards_split_api_and_ui() -> None:
 
 
 def test_api_allure_report_is_api_only() -> None:
-    report = (ROOT / "docs" / "reports" / "allure-api" / "index.html").read_text(
-        encoding="utf-8", errors="ignore"
-    )
+    path = ROOT / "docs" / "reports" / "allure-api" / "index.html"
+    report = path.read_text(encoding="utf-8", errors="ignore")
+    decoded = _allure_decoded(path)
     assert "allure-report-uuid" in report
     assert "<title>API automation</title>" in report
     assert "Playwright" not in report
     assert "playwright" not in report.lower()
     assert "tests/ui/" not in report
     assert "test_portfolio" not in report
+    assert "OOMKilled" in decoded
+    assert "MEM-PRESSURE" in decoded
+    assert "datahub-mae-consumer" in decoded
+    assert "test_mae_consumer_ready_so_search_index_is_current" in decoded
 
 
 def test_console_has_connect_gate_and_email_tab() -> None:
@@ -146,12 +171,26 @@ def test_console_has_connect_gate_and_email_tab() -> None:
     assert "On new issue" in text
     assert "smtp.gmail.com" not in text.lower()
     assert "Playwright" not in text
+    assert "how performance monitoring is done" not in text
+    assert (
+        "Click Connect to see the performance monitoring result for the DataHub "
+        "application deployed on the production environment."
+    ) in text
+    assert 'id="perf-rca"' in text
+    assert "MEM-PRESSURE" in text
+    js = (ROOT / "docs" / "js" / "console.js").read_text(encoding="utf-8")
+    assert 'textContent = "unknown"' not in js
+    assert "computeAppHealth" in (ROOT / "docs" / "js" / "router.js").read_text(encoding="utf-8")
 
 
 def test_ui_allure_report_is_separate() -> None:
-    report = (ROOT / "docs" / "reports" / "allure-ui" / "index.html").read_text(
-        encoding="utf-8", errors="ignore"
-    )
+    path = ROOT / "docs" / "reports" / "allure-ui" / "index.html"
+    report = path.read_text(encoding="utf-8", errors="ignore")
+    decoded = _allure_decoded(path)
     assert "allure-report-uuid" in report
     assert "<title>UI automation</title>" in report
     assert "tests/payloads" not in report
+    assert "OOMKilled" in decoded
+    assert "MEM-PRESSURE" in decoded
+    assert "datahub-mae-consumer" in decoded
+    assert "test_ui_dataset_search_empty_while_mae_oom" in decoded

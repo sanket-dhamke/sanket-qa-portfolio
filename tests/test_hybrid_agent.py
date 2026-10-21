@@ -29,13 +29,16 @@ def test_login_wrong_password() -> None:
     assert "RCA" in result["answer"]
 
 
-def test_api_sanity_suite_has_formatted_failure() -> None:
+def test_api_sanity_suite_reports_mae_rca() -> None:
     result = route("Run API sanity suite")
     assert result["route"] == "run_suite"
     assert result["metrics"]["suite"] == "sanity"
     assert result["metrics"]["layer"] == "api"
-    assert result["metrics"]["verdict"] == "PASS"
-    assert result["metrics"]["failed"] == 0
+    assert result["metrics"]["verdict"] == "FAIL"
+    assert "api.mae_search_index" in result["metrics"]["failed_ids"]
+    assert "OOM" in result["answer"] or "mae-consumer" in result["answer"]
+    assert "Cause:" in result["answer"]
+    assert "Fix:" in result["answer"]
 
 
 def test_ui_sanity_suite_reports_search_rca() -> None:
@@ -80,6 +83,9 @@ def test_app_status_runs_smoke_sanity_and_asks_regression() -> None:
     result = route("What is the current state of the application?")
     assert result["source"] == "handler:app_status"
     assert result["metrics"]["health"] == "DEGRADED"
+    assert result["metrics"]["smoke_verdict"] == "PASS"
+    assert result["metrics"]["sanity_verdict"] == "FAIL"
+    assert "DEGRADED" in result["answer"]
     assert result["awaiting_regression"] is True
     assert result["session_update"]["awaiting_regression"] is True
     assert "smoke" in result["answer"].lower()

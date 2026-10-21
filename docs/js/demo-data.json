@@ -708,6 +708,30 @@
           "rca": null
         },
         {
+          "id": "api.mae_search_index",
+          "name": "MAE consumer ready so search index stays current",
+          "layer": "api",
+          "suites": [
+            "sanity",
+            "regression"
+          ],
+          "endpoint": null,
+          "status": "fail",
+          "duration_ms": 28,
+          "expected": "datahub-mae-consumer Running, ready=true, last_reason empty",
+          "actual": "CrashLoopBackOff restarts=7 last_reason=OOMKilled exit=137",
+          "rca": {
+            "symptom": "Search documents go stale while GMS list/count APIs still return 115 datasets.",
+            "evidence": [
+              "datahub-mae-consumer status=CrashLoopBackOff, restarts=7, last_reason=OOMKilled",
+              "memory 1536 / 1536 MiB in the 5m fixture",
+              "RCA MEM-PRESSURE fired; PROBE-KILL skipped because last_reason is OOMKilled"
+            ],
+            "cause": "MAE consumer cannot apply MetadataAuditEvent_v4 after OOM. App health is DEGRADED, not HEALTHY.",
+            "fix": "Raise datahub-mae-consumer memory toward 2Gi, confirm Kafka lag on MetadataAuditEvent_v4, then reindex. Do not treat GMS /health passing as an all-clear."
+          }
+        },
+        {
           "id": "api.asset_counts",
           "name": "GraphQL searchAcrossEntities dataset total",
           "layer": "api",

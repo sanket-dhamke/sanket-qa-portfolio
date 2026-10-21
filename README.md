@@ -21,7 +21,7 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 python -m agent.export_web
-pytest -p no:playwright tests/test_routing.py tests/test_hybrid_agent.py tests/test_rca_engine.py tests/test_layout.py tests/api
+pytest -p no:playwright tests/test_routing.py tests/test_hybrid_agent.py tests/test_rca_engine.py tests/test_layout.py tests/test_app_health.py tests/api -m "not lab_issue"
 # Allure HTML (needs the Allure CLI):
 # scripts/generate_allure.sh
 python -m http.server 8765 --directory docs
@@ -46,7 +46,7 @@ Playwright (optional, UI automation against this site):
 cd ui
 pip install -r requirements.txt
 playwright install chromium
-pytest -m ui
+pytest -m "ui and not lab_issue"
 ```
 
 ## Honesty

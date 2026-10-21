@@ -219,7 +219,108 @@ def run_suite(suite: str, layer: str | None = None) -> dict[str, Any]:
     return summary
 
 
-def app_health() -> dict[str, Any]:
+def _suite_fail(summary: dict[str, Any] | None) -> bool:
+    return bool(summary) and summary.get("verdict") == "FAIL"
+
+
+def _suite_pass(summary: dict[str, Any] | None) -> bool:
+    return bool(summary) and summary.get("verdict") == "PASS"
+
+
+def compute_app_health(
+    cluster: dict[str, Any],
+    rca_report: dict[str, Any] | None,
+    smoke: dict[str, Any] | None,
+    sanity: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """HEALTHY / DEGRADED / CRITICAL from pods, RCA, smoke, and sanity if run.
+
+    CRITICAL only when smoke failed (GMS-level outage). Green smoke next to
+    CRITICAL would mean the suite is wrong.
+    DEGRADED: mae-consumer CrashLoop/OOM, restarts, log errors, sanity fail,
+    HIGH or CRITICAL component RCA, or a pod that is not Running.
+    HEALTHY only if every pod is Running, smoke passed, no CrashLoop/OOM,
+    and no CRITICAL RCA (sanity pass if it ran).
+    Never returns unknown.
+    """
+    pods = list(cluster.get("pods") or [])
+    fired = list((rca_report or {}).get("fired") or [])
+    reasons: list[str] = []
+
+    def blob(pod: dict[str, Any]) -> str:
+        return f"{pod.get('status') or ''} {pod.get('last_reason') or ''}".lower()
+
+    crashloop = any("crashloop" in str(pod.get("status") or "").lower() for pod in pods)
+    oom = any("oom" in blob(pod) for pod in pods)
+    smoke_fail = _suite_fail(smoke)
+    sanity_fail = _suite_fail(sanity)
+    critical_rca = any(str(row.get("severity") or "").upper() == "CRITICAL" for row in fired)
+    high_rca = any(str(row.get("severity") or "").upper() == "HIGH" for row in fired)
+    restarts = any(int(pod.get("restarts") or 0) > 0 for pod in pods)
+    errors = any(
+        bool(pod.get("last_reason")) and "oom" not in str(pod.get("last_reason")).lower()
+        for pod in pods
+    )
+    all_running = bool(pods) and all(
+        pod.get("status") == "Running" and pod.get("ready") for pod in pods
+    )
+    smoke_passed = _suite_pass(smoke)
+
+    if smoke_fail:
+        reasons.append("smoke FAIL")
+        health = "CRITICAL"
+    else:
+        if crashloop:
+            reasons.append("CrashLoopBackOff")
+        if oom:
+            reasons.append("OOMKilled")
+        if sanity_fail:
+            reasons.append("sanity FAIL")
+        if critical_rca:
+            reasons.append("CRITICAL RCA")
+        if high_rca:
+            reasons.append("HIGH RCA")
+        if restarts:
+            reasons.append("restarts")
+        if errors:
+            reasons.append("pod errors")
+        if not all_running:
+            reasons.append("pod not ready")
+        healthy_ok = (
+            all_running
+            and smoke_passed
+            and not crashloop
+            and not oom
+            and not critical_rca
+            and not high_rca
+            and not restarts
+            and not errors
+            and not sanity_fail
+        )
+        if healthy_ok:
+            health = "HEALTHY"
+            reasons.append("pods Running, smoke PASS, no CRITICAL RCA")
+        else:
+            health = "DEGRADED"
+
+    return {
+        "health": health,
+        "reasons": reasons,
+        "crashloop": crashloop,
+        "oom": oom,
+        "smoke_fail": smoke_fail,
+        "sanity_fail": sanity_fail,
+        "critical_rca": critical_rca,
+        "high_rca": high_rca,
+        "restarts": restarts,
+        "errors": errors,
+        "all_running": all_running,
+        "smoke_passed": smoke_passed,
+        "sanity_ran": sanity is not None,
+    }
+
+
+def app_health(*, run_sanity: bool = True) -> dict[str, Any]:
     from agent.rca_engine import evaluate as evaluate_rca
 
     cluster = load("cluster.json")
@@ -228,10 +329,10 @@ def app_health() -> dict[str, Any]:
     pods = cluster["pods"]
     unhealthy = [p for p in pods if p["status"] != "Running" or not p["ready"]]
     smoke = run_suite("smoke")
-    sanity = run_suite("sanity")
-    degraded = bool(unhealthy) or sanity["failed"] > 0 or smoke["failed"] > 0
+    sanity = run_suite("sanity") if run_sanity else None
     rules = evaluate_rca(cluster=cluster)
-    return {
+    snapshot = compute_app_health(cluster, rules, smoke, sanity)
+    payload: dict[str, Any] = {
         "cluster": cluster["cluster"],
         "namespace": cluster["namespace"],
         "pod_count": len(pods),
@@ -240,16 +341,23 @@ def app_health() -> dict[str, Any]:
         "open_incidents": alerts["open"],
         "assets": load("ingestion.json")["totals"]["assets"],
         "smoke": {k: smoke[k] for k in ("passed", "failed", "total", "verdict")},
-        "sanity": {k: sanity[k] for k in ("passed", "failed", "total", "verdict")},
         "rca_titles": [
             f"{row['severity']} {row['id']}: {row['title']}" for row in rules["fired"]
         ],
-        "health": "DEGRADED" if degraded else "HEALTHY",
-        "sanity_report": sanity,
+        "health": snapshot["health"],
+        "health_reasons": snapshot["reasons"],
         "smoke_report": smoke,
         "rca": rules,
         "rca_notes": rca.get("principle"),
+        "snapshot": snapshot,
     }
+    if sanity is not None:
+        payload["sanity"] = {k: sanity[k] for k in ("passed", "failed", "total", "verdict")}
+        payload["sanity_report"] = sanity
+    else:
+        payload["sanity"] = None
+        payload["sanity_report"] = None
+    return payload
 
 
 def capacity_plan(targets: list[int]) -> dict[str, Any]:

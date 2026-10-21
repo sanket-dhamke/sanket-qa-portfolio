@@ -519,6 +519,7 @@ def app_status(question: str) -> dict[str, Any]:
             "answer": "\n".join(lines),
             "metrics": {
                 "health": health["health"],
+                "health_reasons": health.get("health_reasons") or [],
                 "unhealthy": health["unhealthy"],
                 "open_incidents": health["open_incidents"],
                 "assets": health["assets"],
@@ -540,6 +541,8 @@ def app_status(question: str) -> dict[str, Any]:
 
 
 def skip_regression(question: str) -> dict[str, Any]:
+    health = executor.app_health()
+    verdict = health["health"]
     result = _base()
     result.update(
         {
@@ -548,13 +551,14 @@ def skip_regression(question: str) -> dict[str, Any]:
             "tools": [],
             "answer": (
                 "Regression skipped. Current quality verdict stays at the smoke + sanity "
-                "read: application is DEGRADED until datahub-mae-consumer is off OOMKilled "
+                f"read: application is {verdict} until datahub-mae-consumer is off OOMKilled "
                 "and UI search/lineage are green."
             ),
-            "metrics": {"regression": "skipped"},
+            "metrics": {"regression": "skipped", "health": verdict},
             "ui": "verdict",
             "awaiting_regression": False,
             "session_update": {"awaiting_regression": False},
+            "health": health,
         }
     )
     return result

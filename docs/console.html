@@ -54,7 +54,7 @@
       </div>
       <div class="connect-actions">
         <button type="button" id="btn-connect">Connect</button>
-        <span class="connect-help">(click Connect to see how performance monitoring is done)</span>
+        <span class="connect-help">Click Connect to see the performance monitoring result for the DataHub application deployed on the production environment.</span>
       </div>
       <ol id="connect-log" class="connect-log" hidden></ol>
     </div>
@@ -100,6 +100,11 @@
             </div>
           </div>
           <div class="legend" id="legend"></div>
+          <div class="perf-rca" id="perf-rca" data-testid="perf-rca">
+            <h2>Current issues / rule RCA</h2>
+            <p class="hint">From the live DataHub lab fixture — pods, logs, and fired rules. MEM-PRESSURE vs PROBE-KILL: exit 137 is OOM only when last_reason is OOMKilled.</p>
+            <div class="rca-list" id="perf-rca-list"></div>
+          </div>
           <table>
             <thead>
               <tr>

@@ -41,6 +41,15 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
             allure.dynamic.feature(mark)
             allure.dynamic.tag(mark)
     allure.dynamic.story(item.name)
+    if item.get_closest_marker("lab_issue"):
+        allure.dynamic.severity(allure.severity_level.CRITICAL)
+        allure.dynamic.tag("DEGRADED")
+        allure.dynamic.tag("MEM-PRESSURE")
+        allure.dynamic.description(
+            "Known DataHub lab fixture failure: UI dataset search is empty while "
+            "datahub-mae-consumer is CrashLoopBackOff / OOMKilled (MEM-PRESSURE; "
+            "PROBE-KILL skipped). App health is DEGRADED. Numbers come from fixtures."
+        )
 
 
 @pytest.hookimpl(hookwrapper=True)

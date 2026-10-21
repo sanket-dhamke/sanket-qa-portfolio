@@ -9,8 +9,9 @@ pip install -r requirements-api.txt
 # optional live mock:
 # uvicorn api.app:app --port 8080
 pytest -m smoke tests/api
-pytest -m sanity tests/api
+pytest -m "sanity and not lab_issue" tests/api
 pytest -m regression tests/api
+# lab_issue sanity fails on purpose: mae-consumer OOM / MEM-PRESSURE (Allure records it)
 pytest tests/api --alluredir=reports/allure-results
 allure generate reports/allure-results -o docs/reports/allure-api --clean --single-file --name "API automation"
 pytest tests/api --run-live -m live

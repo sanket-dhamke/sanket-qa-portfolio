@@ -17,7 +17,11 @@ def test_console_starts_on_connect_hides_monitoring(page, site_url: str) -> None
     console.open(site_url, connect=False)
     expect(page.locator("#connect-gate")).to_be_visible()
     expect(page.locator("#monitor")).to_be_hidden()
-    expect(page.get_by_text("(click Connect to see how performance monitoring is done)")).to_be_visible()
+    expect(
+        page.get_by_text(
+            "Click Connect to see the performance monitoring result for the DataHub application deployed on the production environment."
+        )
+    ).to_be_visible()
     expect(page.locator("#c-cluster")).to_have_value("datahub-lab-us-west-2")
     expect(page.locator("body")).not_to_contain_text("smtp.gmail.com")
     expect(page.locator("#cpu-chart")).to_be_hidden()

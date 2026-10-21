@@ -17,10 +17,19 @@ run_allure() {
 mkdir -p reports/allure-results ui/reports/allure-results
 find reports/allure-results ui/reports/allure-results -type f ! -name '.gitkeep' -delete
 
+set +e
 python3 -m pytest -p no:playwright tests/api --alluredir=reports/allure-results
-run_allure generate reports/allure-results -o docs/reports/allure-api --clean --single-file --name "API automation"
-
+api_rc=$?
 ( cd ui && python3 -m pytest -m ui --alluredir=reports/allure-results )
+ui_rc=$?
+set -e
+# 0 = green, 1 = expected lab_issue failures (mae-consumer OOM). Anything else is a runner error.
+for rc in "$api_rc" "$ui_rc"; do
+  if [[ "$rc" -ne 0 && "$rc" -ne 1 ]]; then
+    exit "$rc"
+  fi
+done
+run_allure generate reports/allure-results -o docs/reports/allure-api --clean --single-file --name "API automation"
 run_allure generate ui/reports/allure-results -o docs/reports/allure-ui --clean --single-file --name "UI automation"
 
 echo "Wrote docs/reports/allure-api and docs/reports/allure-ui"

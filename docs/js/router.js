@@ -668,6 +668,87 @@
     };
   }
 
+  function computeAppHealth(data, opts) {
+    opts = opts || {};
+    const cluster = ((data || {}).fixtures || {}).cluster || {};
+    const pods = cluster.pods || [];
+    const report = (data && data.rca_report) || {};
+    const fired =
+      report.fired && report.fired.length
+        ? report.fired
+        : ((((data || {}).fixtures || {}).rca || {}).findings) || [];
+    const lastSmoke = opts.lastSmoke !== undefined ? opts.lastSmoke : runSuite(data, "smoke", null);
+    const lastSanity = opts.lastSanity;
+    const reasons = [];
+
+    function blob(p) {
+      return ((p.status || "") + " " + (p.last_reason || "")).toLowerCase();
+    }
+
+    const crashloop = pods.some((p) => /crashloop/i.test(p.status || ""));
+    const oom = pods.some((p) => /oom/i.test(blob(p)));
+    const smokeFail = !!(lastSmoke && lastSmoke.verdict === "FAIL");
+    const sanityFail = !!(lastSanity && lastSanity.verdict === "FAIL");
+    const criticalRca = fired.some((f) => String(f.severity || "").toUpperCase() === "CRITICAL");
+    const highRca = fired.some((f) => String(f.severity || "").toUpperCase() === "HIGH");
+    const restarts = pods.some((p) => Number(p.restarts || 0) > 0);
+    const errors = pods.some((p) => {
+      const reason = String(p.last_reason || "");
+      return reason && !/oom/i.test(reason);
+    });
+    const allRunning =
+      pods.length > 0 && pods.every((p) => p.status === "Running" && p.ready);
+    const smokePassed = !!(lastSmoke && lastSmoke.verdict === "PASS");
+
+    let health;
+    if (smokeFail) {
+      reasons.push("smoke FAIL");
+      health = "CRITICAL";
+    } else {
+      if (crashloop) reasons.push("CrashLoopBackOff");
+      if (oom) reasons.push("OOMKilled");
+      if (sanityFail) reasons.push("sanity FAIL");
+      if (criticalRca) reasons.push("CRITICAL RCA");
+      if (highRca) reasons.push("HIGH RCA");
+      if (restarts) reasons.push("restarts");
+      if (errors) reasons.push("pod errors");
+      if (!allRunning) reasons.push("pod not ready");
+      const healthyOk =
+        allRunning &&
+        smokePassed &&
+        !crashloop &&
+        !oom &&
+        !criticalRca &&
+        !highRca &&
+        !restarts &&
+        !errors &&
+        !sanityFail;
+      if (healthyOk) {
+        health = "HEALTHY";
+        reasons.push("pods Running, smoke PASS, no CRITICAL RCA");
+      } else {
+        health = "DEGRADED";
+      }
+    }
+    return {
+      health: health,
+      reasons: reasons,
+      lastSmoke: lastSmoke,
+      lastSanity: lastSanity,
+      crashloop: crashloop,
+      oom: oom,
+      smokeFail: smokeFail,
+      sanityFail: sanityFail,
+      criticalRca: criticalRca,
+      highRca: highRca,
+      restarts: restarts,
+      errors: errors,
+      allRunning: allRunning,
+      smokePassed: smokePassed,
+      fired: fired,
+    };
+  }
+
   function appStatus(data) {
     const cluster = data.fixtures.cluster;
     const rca = data.fixtures.rca;
@@ -676,7 +757,8 @@
     const unhealthy = pods.filter((p) => p.status !== "Running" || !p.ready);
     const smoke = runSuite(data, "smoke", null);
     const sanity = runSuite(data, "sanity", null);
-    const health = unhealthy.length || sanity.failed || smoke.failed ? "DEGRADED" : "HEALTHY";
+    const snapshot = computeAppHealth(data, { lastSmoke: smoke, lastSanity: sanity });
+    const health = snapshot.health;
     const lines = [
       "Application verdict: " + health + " on `" + cluster.cluster + "` ns `" + cluster.namespace + "` (simulated).",
       "Pods: " + unhealthy.length + " / " + pods.length + " not ready (" + (unhealthy.map((p) => p.component).join(", ") || "none") + ").",
@@ -705,6 +787,7 @@
       answer: lines.join("\n"),
       metrics: {
         health,
+        health_reasons: snapshot.reasons,
         unhealthy: unhealthy.length,
         open_incidents: alerts.open,
         assets: data.fixtures.ingestion.totals.assets,
@@ -714,19 +797,25 @@
       ui: "verdict",
       awaiting_regression: true,
       session_update: { awaiting_regression: true },
-      health: { smoke_report: smoke, sanity_report: sanity, health },
+      health: { smoke_report: smoke, sanity_report: sanity, health, reasons: snapshot.reasons },
       caveat: caveat(),
     };
   }
 
-  function skipRegression() {
+  function skipRegression(data) {
+    const snapshot = computeAppHealth(data, {
+      lastSmoke: runSuite(data, "smoke", null),
+      lastSanity: runSuite(data, "sanity", null),
+    });
     return {
       route: "skip_regression",
       source: "handler:app_status",
       tools: [],
       answer:
-        "Regression skipped. Current quality verdict stays at the smoke + sanity read: application is DEGRADED until datahub-mae-consumer is off OOMKilled and UI search/lineage are green.",
-      metrics: { regression: "skipped" },
+        "Regression skipped. Current quality verdict stays at the smoke + sanity read: application is " +
+        snapshot.health +
+        " until datahub-mae-consumer is off OOMKilled and UI search/lineage are green.",
+      metrics: { regression: "skipped", health: snapshot.health, health_reasons: snapshot.reasons },
       ui: "verdict",
       awaiting_regression: false,
       session_update: { awaiting_regression: false },
@@ -801,7 +890,7 @@
       }
       if (NO.test(text)) {
         return annotateSource(
-          Object.assign(skipRegression(), { question: text, model_available: false })
+          Object.assign(skipRegression(data), { question: text, model_available: false })
         );
       }
     }
@@ -820,5 +909,5 @@
     return annotateSource(result);
   }
 
-  root.LabRouter = { route, namedComponent, runSuite };
+  root.LabRouter = { route, namedComponent, runSuite, computeAppHealth };
 })(window);

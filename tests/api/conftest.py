@@ -26,6 +26,19 @@ def payloads() -> Path:
     return PAYLOADS
 
 
+def _annotate_lab_issue(item: pytest.Item) -> None:
+    if not item.get_closest_marker("lab_issue"):
+        return
+    allure.dynamic.severity(allure.severity_level.CRITICAL)
+    allure.dynamic.tag("DEGRADED")
+    allure.dynamic.tag("MEM-PRESSURE")
+    allure.dynamic.description(
+        "Known DataHub lab fixture failure: datahub-mae-consumer CrashLoopBackOff / "
+        "OOMKilled. MEM-PRESSURE fires; PROBE-KILL is skipped because last_reason is "
+        "OOMKilled. App health is DEGRADED. Numbers come from agent/fixtures, not a model."
+    )
+
+
 @pytest.hookimpl(tryfirst=True)
 def pytest_runtest_setup(item: pytest.Item) -> None:
     allure.dynamic.epic("API automation")
@@ -35,4 +48,11 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
             allure.dynamic.feature(mark)
             allure.dynamic.tag(mark)
             allure.dynamic.story(item.name)
+            if mark == "smoke":
+                allure.dynamic.severity(allure.severity_level.NORMAL)
+            elif mark == "sanity":
+                allure.dynamic.severity(allure.severity_level.CRITICAL)
+            elif mark == "regression":
+                allure.dynamic.severity(allure.severity_level.NORMAL)
             break
+    _annotate_lab_issue(item)

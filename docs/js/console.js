@@ -17,6 +17,8 @@
     running: null,
     session: { awaiting_regression: false },
     lastSuite: null,
+    lastSmoke: null,
+    lastSanity: null,
     connected: false,
     email: {
       signatures: [],
@@ -223,7 +225,30 @@
           .join("")
       );
     }
-    $("rca-list").innerHTML = parts.join("");
+    const html = parts.join("");
+    ["rca-list", "perf-rca-list"].forEach((id) => {
+      const el = $(id);
+      if (el) el.innerHTML = html;
+    });
+  }
+
+  function paintAppHealth() {
+    if (!state.data || !window.LabRouter || !window.LabRouter.computeAppHealth) return null;
+    const snapshot = window.LabRouter.computeAppHealth(state.data, {
+      lastSmoke: state.lastSmoke,
+      lastSanity: state.lastSanity,
+    });
+    const health = snapshot.health || "DEGRADED";
+    const el = $("health-live");
+    if (!el) return snapshot;
+    el.textContent = health;
+    const kpi = el.parentElement;
+    if (kpi) {
+      kpi.classList.toggle("ok", health === "HEALTHY");
+      kpi.classList.toggle("degraded", health === "DEGRADED");
+      kpi.classList.toggle("critical", health === "CRITICAL");
+    }
+    return snapshot;
   }
 
   function renderLegend() {
@@ -443,15 +468,19 @@
     if (result.ui === "suite_report") {
       showTab("suites");
       renderSuitePanel(result.report);
-      if (result.report && result.report.rcas && result.report.rcas.length) showTab("suites");
+      if (result.report && result.report.suite === "smoke") state.lastSmoke = result.report;
+      if (result.report && result.report.suite === "sanity") state.lastSanity = result.report;
+      paintAppHealth();
     }
     if (result.ui === "verdict") {
-      showTab("rca");
-      const health = result.metrics && result.metrics.health;
-      $("health-live").textContent = health || "—";
-      $("health-live").parentElement.classList.toggle("degraded", health === "DEGRADED");
-      $("health-live").parentElement.classList.toggle("ok", health === "HEALTHY");
-      if (result.health && result.health.sanity_report) renderSuitePanel(result.health.sanity_report);
+      showTab("perf");
+      if (result.health && result.health.smoke_report) state.lastSmoke = result.health.smoke_report;
+      if (result.health && result.health.sanity_report) {
+        state.lastSanity = result.health.sanity_report;
+        renderSuitePanel(result.health.sanity_report);
+      }
+      paintAppHealth();
+      renderRca();
     }
     if (result.ui === "rca") {
       showTab("rca");
@@ -722,7 +751,11 @@ sink:
     $("asset-live").textContent = String(state.data.fixtures.ingestion.totals.assets);
     $("source-live").textContent = String(state.data.fixtures.ingestion.sources.length);
     $("alert-live").textContent = String(state.data.fixtures.alerts.open);
-    $("health-live").textContent = "unknown";
+    state.lastSmoke = window.LabRouter.runSuite(state.data, "smoke", null);
+    state.lastSanity = window.LabRouter.runSuite(state.data, "sanity", null);
+    const snapshot = paintAppHealth();
+    renderSuitePanel(state.lastSanity);
+    showTab("perf");
     const canned = $("canned");
     canned.innerHTML = "";
     state.data.canned.forEach((q) => {
@@ -744,7 +777,9 @@ sink:
         vals.cluster +
         "` ns `" +
         vals.namespace +
-        "` (simulated). Hybrid AI Agent for performance testing. Keyword/hybrid router + suite catalog, not an LLM inventing metrics. CPU is % of pod limit. Ask to log in as emuser/empass, list the lab tools, run API or UI sanity, check alerts, size for 1M assets, or ask the current application state.",
+        "` (simulated). App health is " +
+        ((snapshot && snapshot.health) || "DEGRADED") +
+        " from the live fixture (datahub-mae-consumer OOMKilled / CrashLoopBackOff). Smoke and sanity were replayed from the catalog — look at Performance for current issues and rule RCA (MEM-PRESSURE vs PROBE-KILL). Hybrid AI Agent for performance testing. Keyword/hybrid router + suite catalog, not an LLM inventing metrics. CPU is % of pod limit. Ask to log in as emuser/empass, list the lab tools, run API or UI sanity, check alerts, size for 1M assets, or ask the current application state.",
       { source: "fallback:deterministic", route: "hello", tools: [] }
     );
   }
@@ -849,13 +884,19 @@ sink:
       .replace(/>/g, "&gt;");
   }
 
+  function currentHealthSnapshot(suites) {
+    const list = suites || [];
+    const smoke = list.find((s) => s.suite === "smoke") || state.lastSmoke;
+    const sanity = list.find((s) => s.suite === "sanity") || state.lastSanity;
+    return window.LabRouter.computeAppHealth(state.data, { lastSmoke: smoke, lastSanity: sanity });
+  }
+
   function buildEmailHtml(suites) {
     const cluster = state.data.fixtures.cluster;
     const rca = state.data.rca_report || {};
     const fired = rca.fired || state.data.fixtures.rca.findings || [];
     const logs = podLogLines();
-    const health =
-      (cluster.pods || []).some((p) => p.status !== "Running" || !p.ready) ? "DEGRADED" : "HEALTHY";
+    const health = currentHealthSnapshot(suites).health;
     const podRows = (cluster.pods || [])
       .map((p) => {
         const live = current(p.component);
@@ -911,9 +952,7 @@ sink:
   }
 
   function emailSubject(suites) {
-    const health = (state.data.fixtures.cluster.pods || []).some((p) => p.status !== "Running" || !p.ready)
-      ? "DEGRADED"
-      : "HEALTHY";
+    const health = currentHealthSnapshot(suites).health;
     const smoke = suites.find((s) => s.suite === "smoke");
     const fail = suites.some((s) => s.failed);
     return (
@@ -935,7 +974,12 @@ sink:
     const to = $("email-to").value.trim() || "sanket.dhamke@gmail.com";
     $("email-to-view").textContent = to;
     const suites = runEmailSuites();
-    suites.forEach((summary) => renderSuitePanel(summary));
+    suites.forEach((summary) => {
+      if (summary.suite === "smoke") state.lastSmoke = summary;
+      if (summary.suite === "sanity") state.lastSanity = summary;
+      renderSuitePanel(summary);
+    });
+    paintAppHealth();
     const signature = issueSignature(suites);
     const hours = scheduleHours();
     const onIssue = $("email-on-issue").checked;
