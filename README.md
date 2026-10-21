@@ -9,7 +9,7 @@ Site (GitHub Pages, after publish): https://sanket-dhamke.github.io/sanket-qa-po
 ## What you can open
 
 - [Home](docs/index.html) — Lead SDET; Hybrid AI Agent for performance testing; three cards. No city in the copy.
-- [Lab console](docs/console.html) — Hybrid AI Agent for performance testing: source **kind** chips (handler vs knowledge base vs suite), CPU/memory as **% of pod limit**, Tools catalog, suites, rule RCA (fired + skipped), login API, incidents, capacity for 1M/10M assets, postgres recipe YAML → simulated GraphQL ingest.
+- [Lab console](docs/console.html) — Connect / Apply first (dummy cluster + AWS fields, memory-only). Then Hybrid AI Agent for performance testing: source **kind** chips, CPU/memory as **% of pod limit**, Tools, suites, rule RCA, Email report tab (simulated preview to `sanket.dhamke@gmail.com`, no SMTP).
 - [Architecture](docs/architecture.html) — keyword/hybrid router, handlers, KB, suite catalog, rule RCA. A model does not choose tools, collect metrics, or set RCA.
 - [API automation](docs/api-framework.html) — pytest + requests, smoke/sanity/regression tree under `tests/api/`. [Allure report](docs/reports/allure-api/index.html).
 - [UI automation](docs/ui-framework.html) — Playwright + pytest page objects in `ui/`. [Allure report](docs/reports/allure-ui/index.html).

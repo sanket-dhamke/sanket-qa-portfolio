@@ -113,7 +113,7 @@ body.console {
   display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 10px;
   border-top: 1px solid var(--line); max-height: 118px; overflow: auto;
 }
-.canned button, .composer button, .ingest-actions button, .confirm button, .tab {
+.canned button, .composer button, .ingest-actions button, .confirm button, .tab, .connect-actions button, .email-controls button {
   background: #22324a; color: var(--text); border: 1px solid var(--line);
   border-radius: 5px; padding: 6px 9px; font-size: 12px; cursor: pointer;
 }
@@ -175,7 +175,7 @@ th { color: var(--muted); font-weight: 500; }
 .ingest { grid-column: 1 / -1; }
 .ingest-body { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px; }
 label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 6px; }
-input[type="text"], textarea {
+input[type="text"], input[type="password"], input[type="email"], textarea {
   width: 100%; background: #0f1826; color: var(--text); border: 1px solid var(--line);
   border-radius: 4px; padding: 6px 8px; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px;
 }
@@ -199,10 +199,92 @@ textarea { min-height: 220px; resize: vertical; }
 .badge.gms { color: var(--link); }
 .badge.cluster { color: var(--brass); }
 
+.connect-gate {
+  max-width: 760px;
+  margin: 28px auto 40px;
+  padding: 0 16px;
+}
+.connect-card h2 { letter-spacing: 0.12em; }
+.connect-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 14px;
+  padding: 4px 14px 8px;
+}
+.connect-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px 14px;
+}
+.connect-help { color: var(--brass); font-size: 12px; }
+.connect-log {
+  margin: 0 14px 14px;
+  padding: 8px 18px;
+  font-size: 12px;
+  color: var(--text);
+  background: #0f1826;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+.connect-log li { margin: 4px 0; }
+.connect-log .ok { color: var(--ok); }
+.connect-log .run { color: var(--brass); }
+
+.email-controls {
+  display: grid;
+  gap: 10px;
+  padding: 10px 12px;
+}
+.email-suites, .email-schedule {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin: 0;
+}
+.email-schedule legend { color: var(--muted); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; }
+.email-controls .check, .email-schedule label {
+  font-size: 12px;
+  color: var(--text);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.email-controls input[type="checkbox"], .email-controls input[type="radio"] { width: auto; accent-color: var(--brass); }
+.email-chrome {
+  margin: 0 12px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f6f1e8;
+  color: #1a2332;
+}
+.email-headers { padding: 10px 14px; background: #ece6da; border-bottom: 1px solid #d8d0c2; font-size: 13px; }
+.email-headers div { display: grid; grid-template-columns: 72px 1fr; gap: 8px; margin: 3px 0; }
+.email-headers span { color: #5c6675; }
+.email-body { padding: 14px 16px 18px; font-size: 13px; line-height: 1.45; }
+.email-body h3 { margin: 14px 0 6px; font-size: 13px; }
+.email-body table { font-size: 12px; background: #fff; }
+.email-body th, .email-body td { border-bottom: 1px solid #d8d0c2; color: #1a2332; }
+.email-body .fail { color: #b42318; font-weight: 600; }
+.email-body .pass { color: #2f6f4e; font-weight: 600; }
+.email-body pre { background: #1a2332; color: #e8eef6; padding: 8px; font-size: 11px; overflow: auto; }
+.email-log-h {
+  border: 0;
+  padding: 4px 14px 0;
+  letter-spacing: 0.08em;
+}
+
 @media (max-width: 1100px) {
   .kpis { grid-template-columns: repeat(2, 1fr); }
   .layout { grid-template-columns: 1fr; }
   .chat, .dash { height: auto; min-height: 0; }
   .chat { max-height: 560px; }
-  .ingest-body, .charts-grid { grid-template-columns: 1fr; }
+  .ingest-body, .charts-grid, .connect-grid { grid-template-columns: 1fr; }
 }

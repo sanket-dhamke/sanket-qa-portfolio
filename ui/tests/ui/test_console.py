@@ -11,6 +11,44 @@ from pages.console_page import ConsolePage
 pytestmark = pytest.mark.ui
 
 
+@pytest.mark.smoke
+def test_console_starts_on_connect_hides_monitoring(page, site_url: str) -> None:
+    console = ConsolePage(page)
+    console.open(site_url, connect=False)
+    expect(page.locator("#connect-gate")).to_be_visible()
+    expect(page.locator("#monitor")).to_be_hidden()
+    expect(page.get_by_text("(click Connect to see how performance monitoring is done)")).to_be_visible()
+    expect(page.locator("#c-cluster")).to_have_value("datahub-lab-us-west-2")
+    expect(page.locator("body")).not_to_contain_text("smtp.gmail.com")
+    expect(page.locator("#cpu-chart")).to_be_hidden()
+
+
+@pytest.mark.smoke
+def test_console_connect_then_refresh_returns_to_connect(page, site_url: str) -> None:
+    console = ConsolePage(page)
+    console.open(site_url)
+    expect(page.locator("#monitor")).to_be_visible()
+    page.reload()
+    expect(page.locator("#connect-gate")).to_be_visible()
+    expect(page.locator("#monitor")).to_be_hidden()
+
+
+@pytest.mark.sanity
+def test_console_email_preview_default_to_sanket(page, site_url: str) -> None:
+    console = ConsolePage(page)
+    console.open(site_url)
+    console.open_email_tab()
+    expect(page.locator("#email-to")).to_have_value("sanket.dhamke@gmail.com")
+    console.send_email_preview()
+    expect(page.locator("#email-to-view")).to_have_text("sanket.dhamke@gmail.com")
+    expect(page.locator("#email-body")).to_contain_text("smoke")
+    expect(page.locator("#email-body")).to_contain_text("RCA")
+    expect(page.locator("#email-log")).to_contain_text("preview sent")
+    expect(page.locator("#email-log")).to_contain_text("SMTP=none")
+    console.send_email_preview()
+    expect(page.locator("#email-log")).to_contain_text("deduped On new issue")
+
+
 @pytest.mark.sanity
 def test_console_canned_oom_shows_handler_source(page, site_url: str) -> None:
     console = ConsolePage(page)

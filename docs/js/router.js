@@ -820,5 +820,5 @@
     return annotateSource(result);
   }
 
-  root.LabRouter = { route, namedComponent };
+  root.LabRouter = { route, namedComponent, runSuite };
 })(window);

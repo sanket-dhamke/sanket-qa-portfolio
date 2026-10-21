@@ -17,6 +17,13 @@
     running: null,
     session: { awaiting_regression: false },
     lastSuite: null,
+    connected: false,
+    email: {
+      signatures: [],
+      log: [],
+      lastSent: null,
+      nextAt: null,
+    },
   };
 
   const $ = (id) => document.getElementById(id);
@@ -643,11 +650,332 @@ sink:
   }
 
   function tick() {
-    if (!state.data) return;
+    if (!state.data || !state.connected) return;
     stepMetrics();
     drawChart("cpu-chart", "cpu", () => 100);
     drawChart("mem-chart", "mem", (name) => state.series[name].limit);
     renderPods();
+  }
+
+  function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  function connectValues() {
+    return {
+      cluster: $("c-cluster").value.trim(),
+      namespace: $("c-namespace").value.trim(),
+      access: $("c-access").value.trim(),
+      secret: $("c-secret").value.trim(),
+      token: $("c-token").value.trim(),
+      region: $("c-region").value.trim(),
+    };
+  }
+
+  function appendConnectStep(text, cls) {
+    const log = $("connect-log");
+    log.hidden = false;
+    const li = document.createElement("li");
+    li.textContent = text;
+    if (cls) li.className = cls;
+    log.appendChild(li);
+  }
+
+  async function runConnect() {
+    const btn = $("btn-connect");
+    if (btn.disabled) return;
+    const vals = connectValues();
+    const missing = ["cluster", "namespace", "access", "secret", "region"].filter((k) => !vals[k]);
+    $("connect-log").innerHTML = "";
+    $("connect-log").hidden = false;
+    if (missing.length) {
+      appendConnectStep("Validate failed — fill: " + missing.join(", ") + ". Dummy values are enough; nothing is sent.", "run");
+      return;
+    }
+    btn.disabled = true;
+    const steps = [
+      "Validate cluster `" + vals.cluster + "` ns `" + vals.namespace + "` region `" + vals.region + "`",
+      "Assume identity for dummy key " + vals.access.slice(0, 8) + "… (simulated — no AWS call)",
+      "Write in-memory kubeconfig for the DataHub lab context (not stored, gone on refresh)",
+      "Pod read check against the fixture (datahub-gms, frontend, mae-consumer, mce-consumer, actions)",
+      "Start performance monitoring + Hybrid AI Agent chatbot",
+    ];
+    for (const line of steps) {
+      appendConnectStep(line, "run");
+      await sleep(280);
+    }
+    appendConnectStep("Connected. Monitoring is on for this page session only.", "ok");
+    startMonitoring(vals);
+    btn.disabled = false;
+  }
+
+  function startMonitoring(vals) {
+    state.connected = true;
+    state.session.cluster = vals.cluster;
+    state.session.namespace = vals.namespace;
+    $("connect-gate").classList.add("hidden");
+    $("monitor").classList.remove("hidden");
+    seedSeries(state.data.fixtures.metrics.workers);
+    renderLegend();
+    renderRca();
+    renderTools();
+    $("asset-live").textContent = String(state.data.fixtures.ingestion.totals.assets);
+    $("source-live").textContent = String(state.data.fixtures.ingestion.sources.length);
+    $("alert-live").textContent = String(state.data.fixtures.alerts.open);
+    $("health-live").textContent = "unknown";
+    const canned = $("canned");
+    canned.innerHTML = "";
+    state.data.canned.forEach((q) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.dataset.q = q;
+      btn.textContent = q;
+      canned.appendChild(btn);
+    });
+    tick();
+    if (!state.tickTimer) state.tickTimer = setInterval(tick, 1000);
+    renderCapacity({
+      current_assets: state.data.fixtures.app_config.current_assets,
+      plans: [],
+    });
+    addMsg(
+      "bot",
+      "Connected to `" +
+        vals.cluster +
+        "` ns `" +
+        vals.namespace +
+        "` (simulated). Hybrid AI Agent for performance testing. Keyword/hybrid router + suite catalog, not an LLM inventing metrics. CPU is % of pod limit. Ask to log in as emuser/empass, list the lab tools, run API or UI sanity, check alerts, size for 1M assets, or ask the current application state.",
+      { source: "fallback:deterministic", route: "hello", tools: [] }
+    );
+  }
+
+  function scheduleHours() {
+    const picked = document.querySelector('input[name="email-every"]:checked');
+    return Number((picked && picked.value) || "1");
+  }
+
+  function issueSignature(suites) {
+    const fired = (((state.data.rca_report || {}).fired) || []).map((f) => f.id || f.title).join(",");
+    const fails = suites
+      .flatMap((s) => s.cases || [])
+      .filter((c) => c.status === "fail")
+      .map((c) => c.id)
+      .join(",");
+    const pods = (state.data.fixtures.cluster.pods || [])
+      .filter((p) => p.status !== "Running" || p.last_reason)
+      .map((p) => p.component + ":" + (p.last_reason || p.status))
+      .join(",");
+    return fired + "|" + fails + "|" + pods || "none";
+  }
+
+  function suiteOrder() {
+    const extra = [];
+    if ($("email-sanity").checked) extra.push("sanity");
+    if ($("email-regression").checked) extra.push("regression");
+    extra.push("smoke");
+    return extra;
+  }
+
+  function runEmailSuites() {
+    return suiteOrder().map((name) => window.LabRouter.runSuite(state.data, name, null));
+  }
+
+  function podLogLines() {
+    return (state.data.fixtures.cluster.pods || [])
+      .filter((p) => p.status !== "Running" || p.last_reason)
+      .map((p) => {
+        const bits = [
+          "[" + p.component + "]",
+          p.status,
+          p.last_reason ? "last_reason=" + p.last_reason : "",
+          p.last_exit_code != null ? "exit=" + p.last_exit_code : "",
+          p.probe || "",
+        ].filter(Boolean);
+        return bits.join(" ");
+      });
+  }
+
+  function suiteBlockHtml(summary) {
+    const rows = (summary.cases || [])
+      .map(
+        (c) =>
+          "<tr><td class='" +
+          (c.status === "pass" ? "pass" : "fail") +
+          "'>" +
+          c.status.toUpperCase() +
+          "</td><td>" +
+          c.layer +
+          "</td><td>" +
+          c.name +
+          "</td><td>" +
+          (c.status === "fail" ? escapeHtml((c.actual || "") + " — expected " + (c.expected || "")) : c.duration_ms + " ms") +
+          "</td></tr>"
+      )
+      .join("");
+    const rcas = (summary.rcas || [])
+      .map(
+        (r) =>
+          "<p><strong>Failure RCA — " +
+          escapeHtml(r.name || r.id || "") +
+          "</strong><br>Symptom: " +
+          escapeHtml(r.symptom || "") +
+          "<br>Cause: " +
+          escapeHtml(r.cause || "") +
+          "<br>Fix: " +
+          escapeHtml(r.fix || "") +
+          "</p>"
+      )
+      .join("");
+    return (
+      "<h3>" +
+      summary.suite +
+      " — " +
+      summary.verdict +
+      " (" +
+      summary.passed +
+      " passed / " +
+      summary.failed +
+      " failed)</h3><table><thead><tr><th>Result</th><th>Layer</th><th>Case</th><th>Detail</th></tr></thead><tbody>" +
+      rows +
+      "</tbody></table>" +
+      rcas
+    );
+  }
+
+  function escapeHtml(s) {
+    return String(s || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
+  function buildEmailHtml(suites) {
+    const cluster = state.data.fixtures.cluster;
+    const rca = state.data.rca_report || {};
+    const fired = rca.fired || state.data.fixtures.rca.findings || [];
+    const logs = podLogLines();
+    const health =
+      (cluster.pods || []).some((p) => p.status !== "Running" || !p.ready) ? "DEGRADED" : "HEALTHY";
+    const podRows = (cluster.pods || [])
+      .map((p) => {
+        const live = current(p.component);
+        return (
+          "<tr><td>" +
+          p.component +
+          "</td><td>" +
+          p.status +
+          "</td><td>" +
+          p.restarts +
+          "</td><td>" +
+          (p.last_reason || "—") +
+          "</td><td>" +
+          live.cpu.toFixed(1) +
+          "%</td></tr>"
+        );
+      })
+      .join("");
+    const rcaHtml = fired
+      .map(
+        (f) =>
+          "<p><strong>" +
+          escapeHtml((f.id ? f.id + " · " : "") + (f.title || "")) +
+          "</strong><br>Symptom: " +
+          escapeHtml(f.observation || f.symptom || "") +
+          "<br>Cause: " +
+          escapeHtml(f.likely_cause || f.cause || "") +
+          "<br>Fix: " +
+          escapeHtml(f.fix || f.recommendation || "") +
+          "</p>"
+      )
+      .join("");
+    const suiteHtml = suites.map(suiteBlockHtml).join("");
+    return (
+      "<p>Simulated DataHub lab report. Cluster <code>" +
+      escapeHtml(state.session.cluster || cluster.cluster) +
+      "</code> · ns <code>" +
+      escapeHtml(state.session.namespace || cluster.namespace) +
+      "</code>. Verdict: <strong>" +
+      health +
+      "</strong>.</p>" +
+      "<h3>Pod health</h3><table><thead><tr><th>Component</th><th>Status</th><th>Restarts</th><th>Last reason</th><th>CPU % limit</th></tr></thead><tbody>" +
+      podRows +
+      "</tbody></table>" +
+      "<h3>Errors from pod logs (fixture)</h3><pre>" +
+      escapeHtml(logs.join("\n") || "none") +
+      "</pre>" +
+      "<h3>RCA from those logs</h3>" +
+      (rcaHtml || "<p>No fired rules.</p>") +
+      suiteHtml +
+      "<p style='color:#5c6675;font-size:12px'>Not a live cluster. No SMTP was used. Keyword/hybrid agent — a model did not invent these numbers.</p>"
+    );
+  }
+
+  function emailSubject(suites) {
+    const health = (state.data.fixtures.cluster.pods || []).some((p) => p.status !== "Running" || !p.ready)
+      ? "DEGRADED"
+      : "HEALTHY";
+    const smoke = suites.find((s) => s.suite === "smoke");
+    const fail = suites.some((s) => s.failed);
+    return (
+      "[DataHub lab] " +
+      health +
+      " · mae-consumer OOMKilled · smoke " +
+      ((smoke && smoke.verdict) || "n/a") +
+      (fail ? " · failures attached" : "")
+    );
+  }
+
+  function appendEmailLog(line) {
+    state.email.log.unshift(line);
+    $("email-log").textContent = state.email.log.join("\n");
+  }
+
+  function sendEmailPreview() {
+    if (!state.connected) return;
+    const to = $("email-to").value.trim() || "sanket.dhamke@gmail.com";
+    $("email-to-view").textContent = to;
+    const suites = runEmailSuites();
+    suites.forEach((summary) => renderSuitePanel(summary));
+    const signature = issueSignature(suites);
+    const hours = scheduleHours();
+    const onIssue = $("email-on-issue").checked;
+    const now = new Date();
+    const next = new Date(now.getTime() + hours * 3600 * 1000);
+    const already = state.email.signatures.indexOf(signature) !== -1;
+    const html = buildEmailHtml(suites);
+    $("email-subject").textContent = emailSubject(suites);
+    $("email-body").innerHTML = html;
+    showTab("email");
+    if (already && onIssue) {
+      appendEmailLog(
+        now.toISOString() +
+          "  deduped On new issue — signature already emailed. Waiting for every " +
+          hours +
+          "h schedule (next " +
+          (state.email.nextAt || next.toISOString()) +
+          "). Preview refreshed. To=" +
+          to +
+          " SMTP=none"
+      );
+      return;
+    }
+    state.email.signatures.push(signature);
+    state.email.lastSent = now.toISOString();
+    state.email.nextAt = next.toISOString();
+    appendEmailLog(
+      now.toISOString() +
+        "  preview sent To=" +
+        to +
+        " signature=" +
+        signature.split("|")[0] +
+        " next=" +
+        state.email.nextAt +
+        " every=" +
+        hours +
+        "h onNewIssue=" +
+        onIssue +
+        " SMTP=none"
+    );
   }
 
   function bind() {
@@ -675,41 +1003,18 @@ sink:
     });
     $("btn-starter").addEventListener("click", () => fillFormFromYaml(state.data.recipes.postgres));
     $("btn-submit").addEventListener("click", submitRecipe);
+    $("btn-connect").addEventListener("click", () => {
+      runConnect();
+    });
+    $("btn-email-preview").addEventListener("click", sendEmailPreview);
   }
 
   async function main() {
     const res = await fetch("js/demo-data.json");
     state.data = await res.json();
-    seedSeries(state.data.fixtures.metrics.workers);
-    renderLegend();
-    renderRca();
-    renderTools();
-    $("asset-live").textContent = String(state.data.fixtures.ingestion.totals.assets);
-    $("source-live").textContent = String(state.data.fixtures.ingestion.sources.length);
-    $("alert-live").textContent = String(state.data.fixtures.alerts.open);
-    $("health-live").textContent = "unknown";
-    const canned = $("canned");
-    state.data.canned.forEach((q) => {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.dataset.q = q;
-      btn.textContent = q;
-      canned.appendChild(btn);
-    });
     bind();
-    tick();
-    setInterval(tick, 1000);
-    renderCapacity({
-      current_assets: state.data.fixtures.app_config.current_assets,
-      plans: [],
-    });
-    addMsg(
-      "bot",
-      "Hybrid AI Agent for performance testing. Keyword/hybrid router + suite catalog, not an LLM inventing metrics. The model does not choose tools, collect metrics, or set RCA. CPU is % of pod limit. Ask to log in as emuser/empass, list the lab tools, run API or UI sanity, check alerts, size for 1M assets, or ask the current application state (smoke+sanity, then confirm regression).",
-      { source: "fallback:deterministic", route: "hello", tools: [] }
-    );
   }
 
-  window.LabConsole = { ask, state };
+  window.LabConsole = { ask, state, runConnect, sendEmailPreview };
   main();
 })();

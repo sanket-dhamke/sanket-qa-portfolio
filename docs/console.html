@@ -27,116 +27,187 @@
     Suites replay the pytest catalog. CPU/memory are % of each pod limit. Numbers come from fixtures.
     Not affiliated with any prior employer product.
   </div>
-  <div class="kpis" id="kpis">
-    <div class="kpi"><span>Assets</span><strong id="asset-live">140</strong></div>
-    <div class="kpi"><span>Sources</span><strong id="source-live">2</strong></div>
-    <div class="kpi"><span>Open incidents</span><strong id="alert-live">—</strong></div>
-    <div class="kpi"><span>App health</span><strong id="health-live">—</strong></div>
-    <div class="kpi"><span>Last suite</span><strong id="suite-live">idle</strong></div>
-  </div>
-  <div class="layout">
-    <section class="panel chat">
-      <h2>Hybrid AI Agent for performance testing</h2>
-      <div class="log" id="log"></div>
-      <div class="canned" id="canned"></div>
-      <div class="composer">
-        <input id="q" type="text" placeholder="Ask, then press Enter — the box clears. Try login, sanity, alerts, 1M config…" aria-label="Question">
-        <button type="button" id="ask">Ask</button>
-      </div>
-    </section>
 
-    <section class="panel dash">
-      <div class="tabs" role="tablist">
-        <button type="button" class="tab on" data-tab="perf" aria-selected="true">Performance</button>
-        <button type="button" class="tab" data-tab="suites" aria-selected="false">Suites</button>
-        <button type="button" class="tab" data-tab="rca" aria-selected="false">RCA</button>
-        <button type="button" class="tab" data-tab="capacity" aria-selected="false">Capacity</button>
-        <button type="button" class="tab" data-tab="tools" aria-selected="false">Tools</button>
+  <section id="connect-gate" class="connect-gate" data-testid="connect-gate">
+    <div class="panel connect-card">
+      <h2>Connect / Apply</h2>
+      <p class="hint">Dummy DataHub lab only. Fields are pre-filled fake values you can edit. Credentials stay in this page’s memory — a hard refresh returns here. Nothing is sent to AWS, a cluster, or an SMTP host.</p>
+      <div class="connect-grid">
+        <label>Kubernetes cluster name
+          <input id="c-cluster" type="text" value="datahub-lab-us-west-2" autocomplete="off">
+        </label>
+        <label>Namespace
+          <input id="c-namespace" type="text" value="tenant-lab-demo" autocomplete="off">
+        </label>
+        <label>AWS access key id
+          <input id="c-access" type="text" value="AKIADEMOEXAMPLEKEY12" autocomplete="off">
+        </label>
+        <label>AWS secret key
+          <input id="c-secret" type="password" value="demoSecretKeyDoNotUseAnywhere000" autocomplete="off">
+        </label>
+        <label>Session token (optional)
+          <input id="c-token" type="text" value="" placeholder="optional — not stored" autocomplete="off">
+        </label>
+        <label>Region
+          <input id="c-region" type="text" value="us-west-2" autocomplete="off">
+        </label>
       </div>
-      <div class="tab-panel on" id="tab-perf">
-        <div class="charts-grid">
-          <div class="chart-box">
-            <p>CPU % of pod limit (not node)</p>
-            <canvas id="cpu-chart"></canvas>
-          </div>
-          <div class="chart-box">
-            <p>Memory MiB (vs pod limit)</p>
-            <canvas id="mem-chart"></canvas>
-          </div>
-        </div>
-        <div class="legend" id="legend"></div>
-        <table>
-          <thead>
-            <tr>
-              <th>Component</th><th>Status</th><th>Restarts</th><th>Last reason</th><th>CPU % limit</th><th>Memory</th>
-            </tr>
-          </thead>
-          <tbody id="pod-body"></tbody>
-        </table>
-        <pre class="gql" id="error-log"></pre>
+      <div class="connect-actions">
+        <button type="button" id="btn-connect">Connect</button>
+        <span class="connect-help">(click Connect to see how performance monitoring is done)</span>
       </div>
-      <div class="tab-panel" id="tab-suites">
-        <p class="hint" id="suite-hint">Ask the agent to run smoke, API sanity, UI sanity, or regression. Results land here with pass/fail bars and RCA for failures.</p>
-        <div class="charts-grid">
-          <div class="chart-box">
-            <p>Last suite pass / fail</p>
-            <canvas id="suite-chart"></canvas>
-          </div>
-          <div class="chart-box">
-            <p>Layer mix</p>
-            <canvas id="layer-chart"></canvas>
-          </div>
-        </div>
-        <div id="suite-table"></div>
-      </div>
-      <div class="tab-panel" id="tab-rca">
-        <div class="rca-list" id="rca-list"></div>
-      </div>
-      <div class="tab-panel" id="tab-capacity">
-        <p class="hint">Ask how many assets, or what to upgrade for 1 million / 10 million. The bar is the 140-asset fixture against those targets.</p>
-        <div class="chart-box">
-          <p>Assets vs ingest targets (log-friendly scale)</p>
-          <canvas id="cap-chart"></canvas>
-        </div>
-        <div id="cap-table"></div>
-      </div>
-      <div class="tab-panel" id="tab-tools">
-        <p class="hint" id="tool-hint">The keyword table chooses which tool runs. A model never does. Cluster tools read fixtures; GMS GraphQL tools need the metadata fixture. <code>gms_heap</code> does not query GMS.</p>
-        <div id="tool-table"></div>
-      </div>
-    </section>
+      <ol id="connect-log" class="connect-log" hidden></ol>
+    </div>
+  </section>
 
-    <section class="panel ingest hidden" id="ingest-panel">
-      <h2>Postgres ingestion · recipe YAML → createIngestionSource + execution request</h2>
-      <div class="ingest-body">
-        <div>
-          <label>pipeline_name <input id="f-pipeline" type="text"></label>
-          <label>host_port <input id="f-host" type="text"></label>
-          <label>username <input id="f-user" type="text"></label>
-          <label>database <input id="f-db" type="text"></label>
-          <label>schema_pattern.allow (comma) <input id="f-schema" type="text"></label>
-          <label>table_pattern.allow (comma) <input id="f-table" type="text"></label>
-          <label>Recipe YAML
-            <textarea id="recipe-yaml" spellcheck="false"></textarea>
-          </label>
-          <div class="ingest-actions">
-            <button type="button" id="btn-starter">Reset starter recipe</button>
-            <button type="button" id="btn-submit">Submit recipe (simulated GraphQL)</button>
+  <div id="monitor" class="hidden" data-testid="monitor">
+    <div class="kpis" id="kpis">
+      <div class="kpi"><span>Assets</span><strong id="asset-live">140</strong></div>
+      <div class="kpi"><span>Sources</span><strong id="source-live">2</strong></div>
+      <div class="kpi"><span>Open incidents</span><strong id="alert-live">—</strong></div>
+      <div class="kpi"><span>App health</span><strong id="health-live">—</strong></div>
+      <div class="kpi"><span>Last suite</span><strong id="suite-live">idle</strong></div>
+    </div>
+    <div class="layout">
+      <section class="panel chat">
+        <h2>Hybrid AI Agent for performance testing</h2>
+        <div class="log" id="log"></div>
+        <div class="canned" id="canned"></div>
+        <div class="composer">
+          <input id="q" type="text" placeholder="Ask, then press Enter — the box clears. Try login, sanity, alerts, 1M config…" aria-label="Question">
+          <button type="button" id="ask">Ask</button>
+        </div>
+      </section>
+
+      <section class="panel dash">
+        <div class="tabs" role="tablist">
+          <button type="button" class="tab on" data-tab="perf" aria-selected="true">Performance</button>
+          <button type="button" class="tab" data-tab="suites" aria-selected="false">Suites</button>
+          <button type="button" class="tab" data-tab="rca" aria-selected="false">RCA</button>
+          <button type="button" class="tab" data-tab="capacity" aria-selected="false">Capacity</button>
+          <button type="button" class="tab" data-tab="email" aria-selected="false">Email report</button>
+          <button type="button" class="tab" data-tab="tools" aria-selected="false">Tools</button>
+        </div>
+        <div class="tab-panel on" id="tab-perf">
+          <div class="charts-grid">
+            <div class="chart-box">
+              <p>CPU % of pod limit (not node)</p>
+              <canvas id="cpu-chart"></canvas>
+            </div>
+            <div class="chart-box">
+              <p>Memory MiB (vs pod limit)</p>
+              <canvas id="mem-chart"></canvas>
+            </div>
+          </div>
+          <div class="legend" id="legend"></div>
+          <table>
+            <thead>
+              <tr>
+                <th>Component</th><th>Status</th><th>Restarts</th><th>Last reason</th><th>CPU % limit</th><th>Memory</th>
+              </tr>
+            </thead>
+            <tbody id="pod-body"></tbody>
+          </table>
+          <pre class="gql" id="error-log"></pre>
+        </div>
+        <div class="tab-panel" id="tab-suites">
+          <p class="hint" id="suite-hint">Ask the agent to run smoke, API sanity, UI sanity, or regression. Results land here with pass/fail bars and RCA for failures.</p>
+          <div class="charts-grid">
+            <div class="chart-box">
+              <p>Last suite pass / fail</p>
+              <canvas id="suite-chart"></canvas>
+            </div>
+            <div class="chart-box">
+              <p>Layer mix</p>
+              <canvas id="layer-chart"></canvas>
+            </div>
+          </div>
+          <div id="suite-table"></div>
+        </div>
+        <div class="tab-panel" id="tab-rca">
+          <div class="rca-list" id="rca-list"></div>
+        </div>
+        <div class="tab-panel" id="tab-capacity">
+          <p class="hint">Ask how many assets, or what to upgrade for 1 million / 10 million. The bar is the 140-asset fixture against those targets.</p>
+          <div class="chart-box">
+            <p>Assets vs ingest targets (log-friendly scale)</p>
+            <canvas id="cap-chart"></canvas>
+          </div>
+          <div id="cap-table"></div>
+        </div>
+        <div class="tab-panel" id="tab-email">
+          <p class="hint">How the email looks. Simulated only — no SMTP host is contacted. Smoke is always attached. Check sanity or regression to run those suites first and add their blocks.</p>
+          <div class="email-controls">
+            <label>To
+              <input id="email-to" type="email" value="sanket.dhamke@gmail.com" autocomplete="off">
+            </label>
+            <div class="email-suites">
+              <label class="check"><input id="email-smoke" type="checkbox" checked disabled> smoke (always)</label>
+              <label class="check"><input id="email-sanity" type="checkbox"> sanity</label>
+              <label class="check"><input id="email-regression" type="checkbox"> regression</label>
+            </div>
+            <fieldset class="email-schedule">
+              <legend>Schedule</legend>
+              <label><input type="radio" name="email-every" value="1" checked> every 1h</label>
+              <label><input type="radio" name="email-every" value="3"> 3h</label>
+              <label><input type="radio" name="email-every" value="6"> 6h</label>
+              <label><input type="radio" name="email-every" value="12"> 12h</label>
+              <label><input type="radio" name="email-every" value="24"> 24h</label>
+              <label class="check"><input id="email-on-issue" type="checkbox" checked> On new issue</label>
+            </fieldset>
+            <button type="button" id="btn-email-preview">Send preview now</button>
+          </div>
+          <div class="email-chrome" id="email-chrome">
+            <div class="email-headers">
+              <div><span>From</span><strong id="email-from">DataHub lab reports &lt;noreply@datahub-lab.example&gt;</strong></div>
+              <div><span>To</span><strong id="email-to-view">sanket.dhamke@gmail.com</strong></div>
+              <div><span>Subject</span><strong id="email-subject">— click Send preview now —</strong></div>
+            </div>
+            <div class="email-body" id="email-body">
+              <p class="hint">Click Send preview now to render the HTML body (pod health, log errors, RCA, smoke results).</p>
+            </div>
+          </div>
+          <h2 class="email-log-h">Last sent / next scheduled</h2>
+          <pre class="gql" id="email-log">No preview sent yet. On new issue is on; duplicate signatures are skipped until the time schedule.</pre>
+        </div>
+        <div class="tab-panel" id="tab-tools">
+          <p class="hint" id="tool-hint">The keyword table chooses which tool runs. A model never does. Cluster tools read fixtures; GMS GraphQL tools need the metadata fixture. <code>gms_heap</code> does not query GMS.</p>
+          <div id="tool-table"></div>
+        </div>
+      </section>
+
+      <section class="panel ingest hidden" id="ingest-panel">
+        <h2>Postgres ingestion · recipe YAML → createIngestionSource + execution request</h2>
+        <div class="ingest-body">
+          <div>
+            <label>pipeline_name <input id="f-pipeline" type="text"></label>
+            <label>host_port <input id="f-host" type="text"></label>
+            <label>username <input id="f-user" type="text"></label>
+            <label>database <input id="f-db" type="text"></label>
+            <label>schema_pattern.allow (comma) <input id="f-schema" type="text"></label>
+            <label>table_pattern.allow (comma) <input id="f-table" type="text"></label>
+            <label>Recipe YAML
+              <textarea id="recipe-yaml" spellcheck="false"></textarea>
+            </label>
+            <div class="ingest-actions">
+              <button type="button" id="btn-starter">Reset starter recipe</button>
+              <button type="button" id="btn-submit">Submit recipe (simulated GraphQL)</button>
+            </div>
+          </div>
+          <div>
+            <p class="run-meta" id="run-meta">No run yet. Submit a complete postgres recipe. Missing fields are not invented.</p>
+            <div class="progress"><span id="bar"></span></div>
+            <p class="run-meta">Ingestion progress <span id="progress-label">0%</span></p>
+            <p class="run-meta">createIngestionSource</p>
+            <pre class="gql" id="gql-create">Waiting for submit.</pre>
+            <p class="run-meta">createIngestionExecutionRequest</p>
+            <pre class="gql" id="gql-run">Waiting for submit.</pre>
+            <p class="run-meta">datahub-actions / GMS stream</p>
+            <pre class="gql" id="run-log"></pre>
           </div>
         </div>
-        <div>
-          <p class="run-meta" id="run-meta">No run yet. Submit a complete postgres recipe. Missing fields are not invented.</p>
-          <div class="progress"><span id="bar"></span></div>
-          <p class="run-meta">Ingestion progress <span id="progress-label">0%</span></p>
-          <p class="run-meta">createIngestionSource</p>
-          <pre class="gql" id="gql-create">Waiting for submit.</pre>
-          <p class="run-meta">createIngestionExecutionRequest</p>
-          <pre class="gql" id="gql-run">Waiting for submit.</pre>
-          <p class="run-meta">datahub-actions / GMS stream</p>
-          <pre class="gql" id="run-log"></pre>
-        </div>
-      </div>
-    </section>
+      </section>
+    </div>
   </div>
   <script src="js/router.js"></script>
   <script src="js/console.js"></script>

@@ -13,11 +13,25 @@ class ConsolePage:
         self.page = page
 
     @allure.step("Open lab console")
-    def open(self, site_url: str) -> None:
+    def open(self, site_url: str, *, connect: bool = True) -> None:
         self.page.goto(site_url + "/console.html")
         expect(self.page.locator(".console-header .title")).to_contain_text(
             "Hybrid AI Agent for performance testing"
         )
+        expect(self.page.locator("#connect-gate")).to_be_visible()
+        expect(self.page.locator("#monitor")).to_be_hidden()
+        if connect:
+            self.connect()
+
+    @allure.step("Connect dummy lab")
+    def connect(self) -> None:
+        expect(self.page.locator("#c-cluster")).to_have_value("datahub-lab-us-west-2")
+        expect(self.page.locator("#c-namespace")).to_have_value("tenant-lab-demo")
+        expect(self.page.locator("#c-access")).to_have_value("AKIADEMOEXAMPLEKEY12")
+        self.page.get_by_role("button", name="Connect", exact=True).click()
+        expect(self.page.locator("#monitor")).to_be_visible(timeout=10_000)
+        expect(self.page.locator("#connect-gate")).to_be_hidden()
+        expect(self.page.locator("#log")).to_contain_text("Hybrid AI Agent for performance testing")
 
     @allure.step("Click canned question: {name}")
     def click_canned(self, name: str) -> None:
@@ -48,6 +62,19 @@ class ConsolePage:
         expect(self.page.get_by_text("CPU % of pod limit (not node)")).to_be_visible()
         self.page.get_by_role("button", name="Tools", exact=True).click()
         expect(self.page.locator("#tool-table")).to_contain_text("gms_heap")
+
+    @allure.step("Open Email report tab")
+    def open_email_tab(self) -> None:
+        self.page.get_by_role("button", name="Email report").click()
+        expect(self.page.locator("#tab-email")).to_be_visible()
+        expect(self.page.locator("#email-to")).to_have_value("sanket.dhamke@gmail.com")
+
+    @allure.step("Send email preview")
+    def send_email_preview(self) -> None:
+        self.page.get_by_role("button", name="Send preview now").click()
+        expect(self.page.locator("#email-body")).to_contain_text("Pod health")
+        expect(self.page.locator("#email-body")).to_contain_text("OOMKilled")
+        expect(self.page.locator("#email-subject")).not_to_have_text("— click Send preview now —")
 
     @allure.step("Submit postgres recipe")
     def submit_postgres_recipe(self) -> None:

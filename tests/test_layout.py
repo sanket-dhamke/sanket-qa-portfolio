@@ -134,6 +134,20 @@ def test_api_allure_report_is_api_only() -> None:
     assert "test_portfolio" not in report
 
 
+def test_console_has_connect_gate_and_email_tab() -> None:
+    text = (ROOT / "docs" / "console.html").read_text(encoding="utf-8")
+    assert 'id="connect-gate"' in text
+    assert "AKIADEMOEXAMPLEKEY12" in text
+    assert "datahub-lab-us-west-2" in text
+    assert "tenant-lab-demo" in text
+    assert "sanket.dhamke@gmail.com" in text
+    assert 'data-tab="email"' in text
+    assert "Send preview now" in text
+    assert "On new issue" in text
+    assert "smtp.gmail.com" not in text.lower()
+    assert "Playwright" not in text
+
+
 def test_ui_allure_report_is_separate() -> None:
     report = (ROOT / "docs" / "reports" / "allure-ui" / "index.html").read_text(
         encoding="utf-8", errors="ignore"
