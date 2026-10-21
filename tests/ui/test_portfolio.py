@@ -17,6 +17,12 @@ def test_home_has_name_and_three_cards(page, site_url: str) -> None:
     expect(page.get_by_role("link", name="Hybrid Agent")).to_be_visible()
     expect(page.get_by_role("link", name="API Automation")).to_be_visible()
     expect(page.get_by_role("link", name="UI Automation")).to_be_visible()
+    lede = page.locator(".lede")
+    expect(lede).to_contain_text("Lead SDET")
+    expect(lede).to_contain_text("AI-based, agentic QA")
+    expect(lede).to_contain_text("never from a model guessing")
+    expect(lede).not_to_contain_text("Pune")
+    expect(page.locator("body")).not_to_contain_text("Pune")
 
 
 def test_console_canned_oom_shows_handler_source(page, site_url: str) -> None:

@@ -8,7 +8,7 @@ Site (GitHub Pages, after publish): https://sanket-dhamke.github.io/sanket-qa-po
 
 ## What you can open
 
-- [Home](docs/index.html) — who I am (Lead SDET, 12 years, Pune) and three cards.
+- [Home](docs/index.html) — Lead SDET; hybrid agentic QA; three cards. No city in the copy.
 - [Lab console](docs/console.html) — hybrid agent: source **kind** chips (handler vs knowledge base vs suite), CPU/memory as **% of pod limit**, Tools catalog, suites, rule RCA (fired + skipped), login API, incidents, capacity for 1M/10M assets, postgres recipe YAML → simulated GraphQL ingest.
 - [Architecture](docs/architecture.html) — router, handlers, KB, suite catalog, rule RCA. A model does not choose tools, collect metrics, or set RCA.
 - [API framework](docs/api-framework.html) — folder map, pytest, sample HTML report.
