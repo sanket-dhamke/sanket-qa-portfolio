@@ -7,7 +7,10 @@ from pathlib import Path
 
 import pytest
 
-DOCS = Path(__file__).resolve().parents[2] / "docs"
+ROOT = Path(__file__).resolve().parent
+DOCS = ROOT.parent / "docs"
+
+socketserver.TCPServer.allow_reuse_address = True
 
 
 class Handler(http.server.SimpleHTTPRequestHandler):
@@ -26,3 +29,17 @@ def site_url() -> str:
     thread.start()
     yield f"http://127.0.0.1:{port}"
     httpd.shutdown()
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo) -> None:
+    outcome = yield
+    report = outcome.get_result()
+    if report.when != "call" or not report.failed:
+        return
+    page = item.funcargs.get("page")
+    if page is None:
+        return
+    from utils.screenshots import save
+
+    save(page, item.name)

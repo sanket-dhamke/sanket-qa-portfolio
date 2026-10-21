@@ -11,7 +11,8 @@ Site (GitHub Pages, after publish): https://sanket-dhamke.github.io/sanket-qa-po
 - [Home](docs/index.html) — Lead SDET; hybrid agentic QA; three cards. No city in the copy.
 - [Lab console](docs/console.html) — hybrid agent: source **kind** chips (handler vs knowledge base vs suite), CPU/memory as **% of pod limit**, Tools catalog, suites, rule RCA (fired + skipped), login API, incidents, capacity for 1M/10M assets, postgres recipe YAML → simulated GraphQL ingest.
 - [Architecture](docs/architecture.html) — router, handlers, KB, suite catalog, rule RCA. A model does not choose tools, collect metrics, or set RCA.
-- [API framework](docs/api-framework.html) — folder map, pytest, sample HTML report.
+- [API automation](docs/api-framework.html) — pytest + requests, smoke/sanity/regression tree under `tests/api/`.
+- [UI automation](docs/ui-framework.html) — Playwright + pytest page objects in `ui/`.
 
 ## Run locally
 
@@ -20,7 +21,7 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 python -m agent.export_web
-pytest tests/test_routing.py tests/test_hybrid_agent.py tests/test_rca_engine.py tests/api \
+pytest -p no:playwright tests/test_routing.py tests/test_hybrid_agent.py tests/test_rca_engine.py tests/test_layout.py tests/api \
   --html=docs/reports/pytest-report.html --self-contained-html
 python -m http.server 8765 --directory docs
 # open http://127.0.0.1:8765/
@@ -41,8 +42,10 @@ uvicorn api.app:app --port 8080
 Playwright (optional, UI automation against this site):
 
 ```bash
+cd ui
+pip install -r requirements.txt
 playwright install chromium
-pytest -m ui tests/ui
+pytest -m ui
 ```
 
 ## Honesty

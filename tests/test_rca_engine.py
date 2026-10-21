@@ -61,7 +61,13 @@ def test_home_copy_is_agentic_and_has_no_city() -> None:
     footer = text.split("<footer", 1)[1]
     assert "Not affiliated" in footer
     assert "simulated" in footer
-    for name in ("architecture.html", "about.html", "api-framework.html", "index.html"):
+    for name in (
+        "architecture.html",
+        "about.html",
+        "api-framework.html",
+        "ui-framework.html",
+        "index.html",
+    ):
         page = (ROOT / "docs" / name).read_text(encoding="utf-8")
         assert "Pune" not in page
         stripped = re.sub(r"<header[\s\S]*?</header>", "", page, count=1)
@@ -82,7 +88,19 @@ def test_architecture_states_ai_boundary() -> None:
 def test_public_tree_has_no_forbidden_product_names() -> None:
     # Scan shipped lab files only — not this test's own pattern string.
     pattern = re.compile(r"\b(beacon|bmc|odin|kubectl|eks|gatezo)\b", re.I)
-    roots = [ROOT / "agent", ROOT / "docs", ROOT / "api", ROOT / "README.md"]
+    roots = [
+        ROOT / "agent",
+        ROOT / "docs",
+        ROOT / "api",
+        ROOT / "config",
+        ROOT / "utils",
+        ROOT / "ui",
+        ROOT / "tests" / "api",
+        ROOT / "tests" / "helpers",
+        ROOT / "tests" / "payloads",
+        ROOT / ".cursor",
+        ROOT / "README.md",
+    ]
     hits: list[str] = []
     files: list[Path] = []
     for root in roots:

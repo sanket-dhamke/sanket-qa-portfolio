@@ -12,4 +12,16 @@ jobs:
           python-version: "3.12"
       - run: pip install -r requirements.txt
       - run: python -m agent.export_web
-      - run: pytest tests/test_routing.py tests/test_hybrid_agent.py tests/test_rca_engine.py tests/api
+      - run: pytest -p no:playwright tests/test_routing.py tests/test_hybrid_agent.py tests/test_rca_engine.py tests/test_layout.py tests/api
+  playwright:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r ui/requirements.txt
+      - run: python -m agent.export_web
+      - run: playwright install chromium --with-deps
+      - run: pytest -m ui
+        working-directory: ui

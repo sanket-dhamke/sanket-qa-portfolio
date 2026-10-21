@@ -1,0 +1,7 @@
+{
+  "proposal": {
+    "entityType": "dataset",
+    "entityUrn": "urn:li:dataset:(urn:li:dataPlatform:postgres,analytics.public.orders,PROD)",
+    "aspectName": "datasetProperties"
+  }
+}

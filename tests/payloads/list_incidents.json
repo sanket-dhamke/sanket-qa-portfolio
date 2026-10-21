@@ -1,0 +1,3 @@
+{
+  "query": "query { listIncidents { open total incidents { title severity entity } } }"
+}

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>API framework — Sanket Dhamke</title>
+  <title>API automation — Sanket Dhamke</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -18,38 +18,68 @@
         <a href="console.html">Lab console</a>
         <a href="architecture.html">Architecture</a>
         <a href="api-framework.html" aria-current="page">API tests</a>
+        <a href="ui-framework.html">UI tests</a>
         <a href="about.html">About</a>
       </nav>
     </div>
   </header>
   <main class="wrap prose">
     <h1>API automation</h1>
-    <p>pytest + requests (FastAPI TestClient) against a <strong>bundled mock DataHub-like GraphQL/REST</strong> in <code>api/app.py</code>. It is not a real DataHub cloud. Tests cover health, login (<code>emuser</code>/<code>empass</code>), incidents, list ingestion sources, asset counts, create source from YAML, and poll execution until SUCCESS.</p>
+    <p>pytest + requests against a bundled mock DataHub GraphQL/REST in <code>api/app.py</code> (FastAPI TestClient in CI; <code>requests</code> against uvicorn when you pass <code>--run-live</code>). Not a real DataHub cloud. Markers: <code>smoke</code>, <code>sanity</code>, <code>regression</code>. Lab login is fictional <code>emuser</code> / <code>empass</code>.</p>
     <h2>Folder map</h2>
-    <pre class="folder">agent/          router, handlers, KB, fixtures, recipes
-api/app.py      mock GMS: /health /config /logIn POST /api/graphql
-agent/fixtures/suites.json   smoke / sanity / regression catalog
-tests/test_routing.py     no-network source assertions
-tests/test_hybrid_agent.py  login, suites, alerts, capacity, verdict
-tests/api/test_login.py   smoke login + sanity incidents
-tests/api/test_ingestion.py  sanity list / counts / YAML / poll
-tests/ui/                 Playwright against this site
-docs/reports/             checked-in pytest-html snapshot</pre>
-    <h2>How to run</h2>
+    <pre class="folder">pytest.ini
+requirements.txt
+requirements-api.txt        API-only pin file
+conftest.py                 tests/conftest.py — --run-live flag
+config/
+  .env.example
+  settings.py               GMS_BASE_URL, LAB_USER, PAYLOADS
+api/app.py                  mock GMS: /health /config /logIn POST /api/graphql
+tests/api/conftest.py       TestClient + payloads fixture
+tests/api/smoke/
+  test_health.py
+  test_login.py
+  test_list_sources.py
+  test_live_requests.py     skipped unless --run-live
+tests/api/sanity/
+  test_incidents.py
+  test_ingestion.py
+  test_aspects.py
+tests/api/regression/
+  test_login_failures.py
+  test_graphql_unknown.py
+tests/payloads/
+  login.json
+  list_incidents.json
+  create_ingestion_source.json
+  ingest_proposal.json
+  postgres_recipe.yml
+tests/helpers/
+  auth.py
+  graphql.py
+utils/
+  http.py
+  jsonutil.py
+  gms.py                    requests session to mock GMS
+reports/
+  README.md
+  allure-results/           Allure raw-results placeholder
+docs/API.md                 how to run API-only</pre>
+    <h2>How to run (API only)</h2>
     <pre>python3 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
-pytest -m "smoke or sanity" tests/test_routing.py tests/api \
-  --html=docs/reports/pytest-report.html --self-contained-html
-# UI (optional)
-playwright install chromium
-pytest -m ui tests/ui</pre>
-    <p>Markers: <code>smoke</code>, <code>sanity</code>, <code>regression</code>, <code>ui</code>. Ask the console agent to run those suites; it replays the catalog and prints RCA on failures. Domain asserts: HTTP status, JSON shape, fixture asset counts, durationMs from the mock execution, elapsed time under 1s.</p>
+pip install -r requirements-api.txt
+pytest -m smoke tests/api
+pytest -m sanity tests/api
+pytest -m regression tests/api
+pytest tests/api --html=reports/pytest-report.html --self-contained-html
+# optional mock server for requests (not required for TestClient)
+uvicorn api.app:app --port 8080
+pytest tests/api --run-live -m live</pre>
+    <p>Domain asserts: HTTP status, JSON shape, fixture asset counts (140), <code>durationMs</code> from the mock execution, elapsed time under 1s. How-to: <a href="https://github.com/sanket-dhamke/sanket-qa-portfolio/blob/main/docs/API.md">docs/API.md</a>.</p>
     <h2>Sample HTML report</h2>
     <p><a href="reports/pytest-report.html">Open the checked-in pytest-html report</a> · <a href="reports/results.html">compact results page</a></p>
     <iframe title="pytest-html sample" src="reports/pytest-report.html" style="width:100%;height:420px;border:1px solid #d8d0c2;background:#fff"></iframe>
-    <h2 id="ui">UI automation</h2>
-    <p>Playwright smokes: home cards, canned OOM source chip, Enter clears the chat box, lab login chip. That is UI automation against this public sample — not a claim of a large product grid.</p>
   </main>
   <footer class="site-footer">
     <div class="wrap">

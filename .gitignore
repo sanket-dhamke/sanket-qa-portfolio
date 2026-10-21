@@ -5,6 +5,11 @@ __pycache__/
 .playwright-report/
 test-results/
 allure-results/
+!reports/allure-results/
+!reports/allure-results/.gitkeep
+!ui/reports/allure-results/
+!ui/reports/allure-results/.gitkeep
+ui/reports/*.png
 .coverage
 htmlcov/
 *.egg-info/

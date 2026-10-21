@@ -1,73 +1,21 @@
 from __future__ import annotations
 
 import json
-import time
 from pathlib import Path
 
 import pytest
 import yaml
 from fastapi.testclient import TestClient
 
-LIST_SOURCES = """
-query {
-  listIngestionSources(input: { start: 0, count: 20 }) {
-    total
-    ingestionSources {
-      urn
-      name
-      type
-      assets
-    }
-  }
-}
-"""
-
-ASSET_COUNTS = """
-query {
-  assetCounts
-}
-"""
-
-CREATE_EXEC = """
-mutation($input: CreateIngestionExecutionRequestInput!) {
-  createIngestionExecutionRequest(input: $input)
-}
-"""
-
-POLL = """
-query($urn: String!) {
-  listExecutionRequests(urn: $urn) {
-    executionRequests {
-      urn
-      result { status durationMs }
-    }
-  }
-}
-"""
-
-
-@pytest.mark.smoke
-def test_list_ingestion_sources_postgres_and_oracle(client: TestClient) -> None:
-    started = time.perf_counter()
-    response = client.post("/api/graphql", json={"query": LIST_SOURCES})
-    elapsed = time.perf_counter() - started
-    assert response.status_code == 200
-    payload = response.json()["data"]["listIngestionSources"]
-    names = {row["name"]: row for row in payload["ingestionSources"]}
-    assert "postgres-analytics" in names
-    assert names["postgres-analytics"]["type"] == "postgres"
-    assert names["postgres-analytics"]["assets"] == 86
-    assert names["oracle-finance"]["type"] == "oracle"
-    assert names["oracle-finance"]["assets"] == 54
-    assert payload["total"] == 2
-    assert elapsed < 1.0
+from tests.helpers.graphql import ASSET_COUNTS, CREATE_EXEC, POLL_EXEC, gql
+from utils.jsonutil import dig
 
 
 @pytest.mark.sanity
 def test_asset_counts_match_fixture(client: TestClient) -> None:
-    response = client.post("/api/graphql", json={"query": ASSET_COUNTS})
+    response = client.post("/api/graphql", json=gql(ASSET_COUNTS))
     assert response.status_code == 200
-    counts = response.json()["data"]["assetCounts"]
+    counts = dig(response.json(), "data", "assetCounts")
     assert counts["assets"] == 140
     assert counts["datasets"] == 115
     assert set(counts) >= {"assets", "datasets", "containers", "dataJobs", "lineage_edges"}
@@ -92,26 +40,23 @@ def test_create_source_from_yaml_then_poll_execution(
 
     created = client.post("/api/graphql", json=create)
     assert created.status_code == 200
-    source_urn = created.json()["data"]["createIngestionSource"]
+    source_urn = dig(created.json(), "data", "createIngestionSource")
     assert source_urn.startswith("urn:li:dataHubIngestionSource:")
 
     exec_resp = client.post(
         "/api/graphql",
-        json={
-            "query": CREATE_EXEC,
-            "variables": {"input": {"ingestionSourceUrn": source_urn}},
-        },
+        json=gql(CREATE_EXEC, {"input": {"ingestionSourceUrn": source_urn}}),
     )
     assert exec_resp.status_code == 200
-    run_id = exec_resp.json()["data"]["createIngestionExecutionRequest"]
+    run_id = dig(exec_resp.json(), "data", "createIngestionExecutionRequest")
     assert run_id.startswith("urn:li:dataHubExecutionRequest:")
 
     statuses = []
     body = None
     for _ in range(4):
-        poll = client.post("/api/graphql", json={"query": POLL, "variables": {"urn": run_id}})
+        poll = client.post("/api/graphql", json=gql(POLL_EXEC, {"urn": run_id}))
         assert poll.status_code == 200
-        body = poll.json()["data"]["listExecutionRequests"]["executionRequests"][0]
+        body = dig(poll.json(), "data", "listExecutionRequests")["executionRequests"][0]
         statuses.append(body["result"]["status"])
         if body["result"]["status"] == "SUCCESS":
             break

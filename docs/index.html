@@ -18,6 +18,7 @@
         <a href="console.html">Lab console</a>
         <a href="architecture.html">Architecture</a>
         <a href="api-framework.html">API tests</a>
+        <a href="ui-framework.html">UI tests</a>
         <a href="about.html">About</a>
       </nav>
     </div>
@@ -43,11 +44,11 @@
       </a>
       <a class="card" href="api-framework.html">
         <h2>API Automation</h2>
-        <p>pytest + requests against a bundled mock DataHub GraphQL/REST (list sources, asset counts, create source from YAML, poll execution). Markers smoke/sanity. Sample HTML report checked in.</p>
+        <p>pytest + requests against a bundled mock DataHub GraphQL/REST. smoke / sanity / regression under <code>tests/api/</code>, with payloads, helpers, and reports.</p>
       </a>
-      <a class="card" href="api-framework.html#ui">
+      <a class="card" href="ui-framework.html">
         <h2>UI Automation</h2>
-        <p>A short Playwright suite against this public site — home cards and the console chat/source chip. Honest: two smokes, not a product-grade UI grid.</p>
+        <p>Playwright + pytest with page objects under <code>ui/</code>. Hybrid agent can request UI sanity; this tree is what drives the browser.</p>
       </a>
     </section>
   </main>
