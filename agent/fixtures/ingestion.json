@@ -1,0 +1,49 @@
+{
+  "tenant": "datahub-lab-demo",
+  "generated_at": "2026-10-01T12:00:00Z",
+  "note": "Synthetic fixture. Fake sources and asset counts for this public sample.",
+  "sources": [
+    {
+      "urn": "urn:li:dataHubIngestionSource:postgres-analytics",
+      "name": "postgres-analytics",
+      "type": "postgres",
+      "pipeline_name": "postgres-analytics-hourly",
+      "executor_id": "default",
+      "host_port": "db.lab.example:5432",
+      "database": "analytics",
+      "username": "datahub_reader",
+      "schema_pattern_allow": ["public", "reporting"],
+      "assets": 86,
+      "datasets": 74,
+      "containers": 8,
+      "dataJobs": 4,
+      "last_run_status": "SUCCESS",
+      "last_execution_urn": "urn:li:dataHubExecutionRequest:exec-pg-1042"
+    },
+    {
+      "urn": "urn:li:dataHubIngestionSource:oracle-finance",
+      "name": "oracle-finance",
+      "type": "oracle",
+      "pipeline_name": "oracle-finance-daily",
+      "executor_id": "default",
+      "host_port": "oracle.lab.example:1521",
+      "service_name": "FINLAB",
+      "username": "datahub_reader",
+      "schema_pattern_allow": ["FINAPP", "REFDATA"],
+      "assets": 54,
+      "datasets": 41,
+      "containers": 6,
+      "dataJobs": 7,
+      "last_run_status": "SUCCESS",
+      "last_execution_urn": "urn:li:dataHubExecutionRequest:exec-or-0771"
+    }
+  ],
+  "totals": {
+    "assets": 140,
+    "datasets": 115,
+    "containers": 14,
+    "dataJobs": 11,
+    "lineage_edges": 67,
+    "ingestion_sources": 2
+  }
+}

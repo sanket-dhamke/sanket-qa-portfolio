@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DataHub ops lab — Sanket Dhamke</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/console.css">
+</head>
+<body class="console">
+  <header class="console-header">
+    <div class="title">DataHub ops lab <span>fictional demo tenant · simulated</span></div>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="architecture.html">Architecture</a>
+      <a href="api-framework.html">API tests</a>
+      <a href="about.html">About</a>
+    </nav>
+  </header>
+  <div class="banner">
+    Open-source DataHub vocabulary only
+    (<a href="https://datahubproject.io" style="color:#c4a35a">datahubproject.io</a>).
+    Keyword/rule router — not an LLM. Numbers come from fixtures or this simulation, never from a model.
+    Not affiliated with any prior employer product.
+    Live assets <strong id="asset-live">140</strong> · sources <strong id="source-live">2</strong>
+  </div>
+  <div class="layout">
+    <section class="panel chat">
+      <h2>Agent chat</h2>
+      <div class="log" id="log"></div>
+      <div class="canned" id="canned"></div>
+      <div class="composer">
+        <input id="q" type="text" placeholder="Ask about pods, CPU, sources, or ingest postgres…" aria-label="Question">
+        <button type="button" id="ask">Ask</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Live CPU and memory · simulated time series</h2>
+      <div class="charts-grid">
+        <div class="chart-box">
+          <p>CPU %</p>
+          <canvas id="cpu-chart"></canvas>
+        </div>
+        <div class="chart-box">
+          <p>Memory MiB (vs pod limit)</p>
+          <canvas id="mem-chart"></canvas>
+        </div>
+      </div>
+      <div class="legend" id="legend"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Pod health · restarts · recent errors</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Component</th><th>Status</th><th>Restarts</th><th>Last reason</th><th>CPU</th><th>Memory</th>
+          </tr>
+        </thead>
+        <tbody id="pod-body"></tbody>
+      </table>
+      <pre class="gql" id="error-log" style="margin:8px;min-height:48px"></pre>
+    </section>
+
+    <section class="panel">
+      <h2>Root-cause analysis</h2>
+      <div class="rca-list" id="rca-list"></div>
+    </section>
+
+    <section class="panel ingest hidden" id="ingest-panel">
+      <h2>Postgres ingestion · recipe YAML → createIngestionSource + execution request</h2>
+      <div class="ingest-body">
+        <div>
+          <label>pipeline_name <input id="f-pipeline" type="text"></label>
+          <label>host_port <input id="f-host" type="text"></label>
+          <label>username <input id="f-user" type="text"></label>
+          <label>database <input id="f-db" type="text"></label>
+          <label>schema_pattern.allow (comma) <input id="f-schema" type="text"></label>
+          <label>table_pattern.allow (comma) <input id="f-table" type="text"></label>
+          <label>Recipe YAML
+            <textarea id="recipe-yaml" spellcheck="false"></textarea>
+          </label>
+          <div class="ingest-actions">
+            <button type="button" id="btn-starter">Reset starter recipe</button>
+            <button type="button" id="btn-submit">Submit recipe (simulated GraphQL)</button>
+          </div>
+        </div>
+        <div>
+          <p class="run-meta" id="run-meta">No run yet. Submit a complete postgres recipe. Missing fields are not invented.</p>
+          <div class="progress"><span id="bar"></span></div>
+          <p class="run-meta">Ingestion progress <span id="progress-label">0%</span></p>
+          <p class="run-meta">createIngestionSource</p>
+          <pre class="gql" id="gql-create">Waiting for submit.</pre>
+          <p class="run-meta">createIngestionExecutionRequest</p>
+          <pre class="gql" id="gql-run">Waiting for submit.</pre>
+          <p class="run-meta">datahub-actions / GMS stream</p>
+          <pre class="gql" id="run-log" style="min-height:160px"></pre>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script src="js/router.js"></script>
+  <script src="js/console.js"></script>
+</body>
+</html>

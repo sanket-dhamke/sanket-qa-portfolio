@@ -1,0 +1,245 @@
+[
+  {
+    "id": "graphql.listIngestionSources",
+    "title": "List ingestion sources",
+    "method": "POST",
+    "path": "/api/graphql",
+    "summary": "GraphQL query listIngestionSources(input: ListIngestionSourcesInput!). Returns urn, name, type, schedule, nested executions.",
+    "citation": "graphql.md#listingestionsources",
+    "keywords": ["list ingestion sources", "listingestionsources", "list sources"]
+  },
+  {
+    "id": "graphql.createIngestionSource",
+    "title": "Create an ingestion source",
+    "method": "POST",
+    "path": "/api/graphql",
+    "summary": "GraphQL mutation createIngestionSource(input: UpdateIngestionSourceInput!). type must match the recipe (postgres, oracle). config.recipe is a JSON-encoded recipe. config.executorId is the datahub-actions executor.",
+    "citation": "graphql.md#createingestionsource",
+    "keywords": ["create ingestion source", "createingestionsource", "mutation creates an ingestion", "graphql mutation creates", "creates an ingestion source"]
+  },
+  {
+    "id": "graphql.updateIngestionSource",
+    "title": "Update an ingestion source",
+    "method": "POST",
+    "path": "/api/graphql",
+    "summary": "GraphQL mutation updateIngestionSource(urn, input: UpdateIngestionSourceInput!).",
+    "citation": "graphql.md#createingestionsource",
+    "keywords": ["update ingestion source", "updateingestionsource"]
+  },
+  {
+    "id": "graphql.createIngestionExecutionRequest",
+    "title": "Create an ingestion execution request",
+    "method": "POST",
+    "path": "/api/graphql",
+    "summary": "GraphQL mutation createIngestionExecutionRequest. Required input: ingestionSourceUrn. Returns the run / execution-request urn. datahub-actions executes it.",
+    "citation": "graphql.md#createingestionexecutionrequest",
+    "keywords": ["createingestionexecutionrequest", "execution request", "run ingestion", "trigger ingestion"]
+  },
+  {
+    "id": "graphql.listExecutionRequests",
+    "title": "List execution requests",
+    "method": "POST",
+    "path": "/api/graphql",
+    "summary": "GraphQL query listExecutionRequests. Poll result.status PENDING | RUNNING | SUCCESS | FAILURE.",
+    "citation": "graphql.md#listingestionsources",
+    "keywords": ["list execution requests", "listexecutionrequests", "poll execution", "run history"]
+  },
+  {
+    "id": "graphql.ingestionSource",
+    "title": "Get one ingestion source",
+    "method": "POST",
+    "path": "/api/graphql",
+    "summary": "GraphQL query ingestionSource(urn: String!).",
+    "citation": "graphql.md#listingestionsources",
+    "keywords": ["ingestion source urn", "get ingestion source"]
+  },
+  {
+    "id": "graphql.searchAcrossEntities",
+    "title": "Search across entities",
+    "method": "POST",
+    "path": "/api/graphql",
+    "summary": "GraphQL query searchAcrossEntities. Use types DATASET, CONTAINER, DATA_JOB for asset counts in this lab. Not used for INGESTION_SOURCE run history.",
+    "citation": "aspects.md#aspects-datasets-lineage-lab-notes",
+    "keywords": ["searchacrossentities", "search datasets", "asset search"]
+  },
+  {
+    "id": "graphql.dataset",
+    "title": "Get a dataset by urn",
+    "method": "POST",
+    "path": "/api/graphql",
+    "summary": "GraphQL query dataset(urn). Aspects such as schemaMetadata, upstreamLineage, datasetProperties.",
+    "citation": "aspects.md#aspects-datasets-lineage-lab-notes",
+    "keywords": ["get dataset", "dataset urn", "schemaMetadata"]
+  },
+  {
+    "id": "rest.health",
+    "title": "GMS health",
+    "method": "GET",
+    "path": "/health",
+    "summary": "datahub-gms process health. Mock returns ok=true.",
+    "citation": "components.md#datahub-components-in-this-lab",
+    "keywords": ["health", "gms health", "liveness"]
+  },
+  {
+    "id": "rest.config",
+    "title": "GMS config",
+    "method": "GET",
+    "path": "/config",
+    "summary": "Public GMS config payload (stateful ingestion flags, etc.). Mock returns a stub.",
+    "citation": "components.md#datahub-components-in-this-lab",
+    "keywords": ["gms config", "/config"]
+  },
+  {
+    "id": "rest.ingestProposal",
+    "title": "Ingest a metadata change proposal",
+    "method": "POST",
+    "path": "/aspects?action=ingestProposal",
+    "summary": "REST MCP apply. Alternative to GraphQL entity emit. Used by some CLI sinks.",
+    "citation": "aspects.md#aspects-datasets-lineage-lab-notes",
+    "keywords": ["ingestproposal", "ingest proposal", "mcp", "aspects action"]
+  },
+  {
+    "id": "rest.entities.search",
+    "title": "Legacy entity search",
+    "method": "POST",
+    "path": "/entities?action=search",
+    "summary": "Older GMS search action. Prefer GraphQL searchAcrossEntities in new tests.",
+    "citation": "aspects.md#aspects-datasets-lineage-lab-notes",
+    "keywords": ["entities search", "legacy search"]
+  },
+  {
+    "id": "recipe.postgres",
+    "title": "Postgres recipe coordinates",
+    "method": "YAML",
+    "path": "source.type: postgres",
+    "summary": "host_port, username, database, schema_pattern.allow, table_pattern.allow. Sink datahub-rest to datahub-gms.",
+    "citation": "recipes.md#postgres-type-postgres",
+    "keywords": ["postgres recipe", "type: postgres", "host_port", "schema_pattern"]
+  },
+  {
+    "id": "recipe.oracle",
+    "title": "Oracle recipe coordinates",
+    "method": "YAML",
+    "path": "source.type: oracle",
+    "summary": "host_port, username, service_name or database (not both), schema_pattern.allow.",
+    "citation": "recipes.md#oracle-type-oracle",
+    "keywords": ["oracle recipe", "type: oracle", "service_name"]
+  },
+  {
+    "id": "component.gms",
+    "title": "datahub-gms",
+    "method": "GET",
+    "path": "/api/graphql",
+    "summary": "Generalized Metadata Service. Serves GraphQL and REST. CPU/memory in this lab come from the metrics fixture.",
+    "citation": "components.md#datahub-components-in-this-lab",
+    "keywords": ["datahub-gms", "gms"]
+  },
+  {
+    "id": "component.mae",
+    "title": "datahub-mae-consumer",
+    "method": "N/A",
+    "path": "MetadataAuditEvent_v4",
+    "summary": "Standalone MAE consumer. In this fixture it is CrashLoopBackOff after OOMKilled.",
+    "citation": "components.md#datahub-components-in-this-lab",
+    "keywords": ["datahub-mae-consumer", "mae-consumer", "metadata audit"]
+  },
+  {
+    "id": "component.mce",
+    "title": "datahub-mce-consumer",
+    "method": "N/A",
+    "path": "MetadataChangeEvent_v4",
+    "summary": "Standalone MCE consumer applying proposals.",
+    "citation": "components.md#datahub-components-in-this-lab",
+    "keywords": ["datahub-mce-consumer", "mce-consumer"]
+  },
+  {
+    "id": "component.frontend",
+    "title": "datahub-frontend",
+    "method": "GET",
+    "path": ":9002",
+    "summary": "React UI. Public k8s docs port-forward 9002.",
+    "citation": "components.md#datahub-components-in-this-lab",
+    "keywords": ["datahub-frontend", "frontend"]
+  },
+  {
+    "id": "component.actions",
+    "title": "datahub-actions executor",
+    "method": "N/A",
+    "path": "executor action",
+    "summary": "Runs UI and scheduled recipes. createIngestionExecutionRequest lands here.",
+    "citation": "components.md#datahub-components-in-this-lab",
+    "keywords": ["datahub-actions", "executor", "actions"]
+  },
+  {
+    "id": "lineage.upstream",
+    "title": "Upstream lineage aspect",
+    "method": "POST",
+    "path": "/api/graphql",
+    "summary": "upstreamLineage aspect on a dataset. Postgres views use include_view_lineage.",
+    "citation": "aspects.md#aspects-datasets-lineage-lab-notes",
+    "keywords": ["upstream lineage", "lineage edges", "view lineage"]
+  },
+  {
+    "id": "aspect.schemaMetadata",
+    "title": "schemaMetadata aspect",
+    "method": "POST",
+    "path": "/aspects?action=ingestProposal",
+    "summary": "Column-level schema for a Dataset. SchemaField nullability and types.",
+    "citation": "aspects.md#aspects-datasets-lineage-lab-notes",
+    "keywords": ["schemaMetadata", "schema field", "columns"]
+  },
+  {
+    "id": "entity.container",
+    "title": "Container entities",
+    "method": "POST",
+    "path": "/api/graphql",
+    "summary": "Database and schema map to Container subtypes DATABASE and SCHEMA.",
+    "citation": "recipes.md#postgres-type-postgres",
+    "keywords": ["container", "database container", "schema container"]
+  },
+  {
+    "id": "entity.datajob",
+    "title": "DataJob stored procedures",
+    "method": "POST",
+    "path": "/api/graphql",
+    "summary": "Postgres stored procedures ingest as DataJob under a DataFlow per schema when include_stored_procedures is true.",
+    "citation": "recipes.md#postgres-type-postgres",
+    "keywords": ["datajob", "stored procedure", "dataflow"]
+  },
+  {
+    "id": "rest.openapi.entities",
+    "title": "OpenAPI entity read",
+    "method": "GET",
+    "path": "/openapi/v2/entity/{urn}",
+    "summary": "OpenAPI v2 entity GET. Mock returns a stub dataset document.",
+    "citation": "aspects.md#aspects-datasets-lineage-lab-notes",
+    "keywords": ["openapi", "entity get", "v2 entity"]
+  },
+  {
+    "id": "graphql.browseV2",
+    "title": "browseV2",
+    "method": "POST",
+    "path": "/api/graphql",
+    "summary": "Browse containers in the UI. Not required for this lab's API tests.",
+    "citation": "aspects.md#aspects-datasets-lineage-lab-notes",
+    "keywords": ["browsev2", "browse containers"]
+  },
+  {
+    "id": "recipe.sink.rest",
+    "title": "datahub-rest sink",
+    "method": "YAML",
+    "path": "sink.type: datahub-rest",
+    "summary": "Recipe sink that posts to datahub-gms. server: http://datahub-gms:8080 in this lab.",
+    "citation": "recipes.md#sink",
+    "keywords": ["datahub-rest", "sink", "gms url"]
+  },
+  {
+    "id": "graphql.aggregate",
+    "title": "aggregateAcrossEntities",
+    "method": "POST",
+    "path": "/api/graphql",
+    "summary": "Facet counts. This lab's mock also answers a compact assetCounts query used by tests.",
+    "citation": "aspects.md#aspects-datasets-lineage-lab-notes",
+    "keywords": ["aggregateacrossentities", "asset counts", "facet"]
+  }
+]

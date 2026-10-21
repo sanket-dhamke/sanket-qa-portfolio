@@ -1,0 +1,64 @@
+{
+  "cluster": "datahub-lab-demo",
+  "namespace": "datahub",
+  "generated_at": "2026-10-01T12:00:00Z",
+  "note": "Synthetic fixture. Fictional demo tenant. Not collected from a live cluster.",
+  "pods": [
+    {
+      "name": "datahub-gms-7f8c9d-xk2q1",
+      "component": "datahub-gms",
+      "status": "Running",
+      "ready": true,
+      "restarts": 1,
+      "last_reason": "",
+      "probe": "liveness http 200 /health",
+      "cpu_request": "100m",
+      "memory_limit_mib": 2048
+    },
+    {
+      "name": "datahub-frontend-84c58-5bgwx",
+      "component": "datahub-frontend",
+      "status": "Running",
+      "ready": true,
+      "restarts": 0,
+      "last_reason": "",
+      "probe": "readiness http 200 /admin",
+      "cpu_request": "100m",
+      "memory_limit_mib": 1400
+    },
+    {
+      "name": "datahub-mae-consumer-6b7d-aa91",
+      "component": "datahub-mae-consumer",
+      "status": "CrashLoopBackOff",
+      "ready": false,
+      "restarts": 7,
+      "last_reason": "OOMKilled",
+      "last_exit_code": 137,
+      "probe": "liveness probe failed: HTTP 000",
+      "cpu_request": "100m",
+      "memory_limit_mib": 1536
+    },
+    {
+      "name": "datahub-mce-consumer-8c57-vjv9m",
+      "component": "datahub-mce-consumer",
+      "status": "Running",
+      "ready": true,
+      "restarts": 2,
+      "last_reason": "Error",
+      "probe": "liveness http 200",
+      "cpu_request": "100m",
+      "memory_limit_mib": 1536
+    },
+    {
+      "name": "datahub-actions-0-executor",
+      "component": "datahub-actions",
+      "status": "Running",
+      "ready": true,
+      "restarts": 1,
+      "last_reason": "",
+      "probe": "liveness tcp 9093",
+      "cpu_request": "300m",
+      "memory_limit_mib": 2048
+    }
+  ]
+}

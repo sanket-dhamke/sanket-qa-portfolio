@@ -1,0 +1,42 @@
+{
+  "generated_at": "2026-10-01T12:00:00Z",
+  "window": "5m",
+  "note": "Synthetic fixture. Simulated baselines for the in-browser time series. Not scraped from a live cluster.",
+  "workers": [
+    {
+      "component": "datahub-gms",
+      "pod": "datahub-gms-7f8c9d-xk2q1",
+      "cpu_pct": 41.2,
+      "memory_mib": 1488,
+      "memory_limit_mib": 2048
+    },
+    {
+      "component": "datahub-frontend",
+      "pod": "datahub-frontend-84c58-5bgwx",
+      "cpu_pct": 9.4,
+      "memory_mib": 512,
+      "memory_limit_mib": 1400
+    },
+    {
+      "component": "datahub-mae-consumer",
+      "pod": "datahub-mae-consumer-6b7d-aa91",
+      "cpu_pct": 88.1,
+      "memory_mib": 1536,
+      "memory_limit_mib": 1536
+    },
+    {
+      "component": "datahub-mce-consumer",
+      "pod": "datahub-mce-consumer-8c57-vjv9m",
+      "cpu_pct": 27.6,
+      "memory_mib": 640,
+      "memory_limit_mib": 1536
+    },
+    {
+      "component": "datahub-actions",
+      "pod": "datahub-actions-0-executor",
+      "cpu_pct": 22.0,
+      "memory_mib": 1802,
+      "memory_limit_mib": 2048
+    }
+  ]
+}

@@ -1,0 +1,645 @@
+{
+  "canned": [
+    "Which pods are crashing or restarting after OOM?",
+    "Show CPU and memory of datahub-gms",
+    "Show postgres and oracle ingestion sources and total assets",
+    "Ingest a postgres source",
+    "What GraphQL mutation creates an ingestion source?"
+  ],
+  "rules": [
+    {
+      "route": "ingest_recipe",
+      "source": "handler:ingest_recipe",
+      "any": [
+        "ingest a postgres",
+        "ingest postgres source",
+        "ingest a postgres source",
+        "recipe yaml",
+        "starter recipe",
+        "ask for recipe",
+        "run postgres ingestion",
+        "create ingestion source from recipe",
+        "postgres recipe"
+      ]
+    },
+    {
+      "route": "pod_status",
+      "source": "handler:pod_status",
+      "any": [
+        "crash",
+        "crashing",
+        "crashloop",
+        "oom",
+        "oomkilled",
+        "failing pod",
+        "which pod",
+        "pod status",
+        "pods are",
+        "restarting",
+        "restarts",
+        "probe fail",
+        "liveness",
+        "readiness probe"
+      ]
+    },
+    {
+      "route": "resource_metrics",
+      "source": "handler:resource_metrics",
+      "any": [
+        "cpu",
+        "memory",
+        " ram",
+        "utilization",
+        "resource usage",
+        "datahub-gms",
+        "datahub-mae-consumer",
+        "datahub-mce-consumer",
+        "datahub-frontend",
+        "datahub-actions",
+        "mae-consumer",
+        "mce-consumer"
+      ]
+    },
+    {
+      "route": "ingestion_assets",
+      "source": "handler:ingestion_assets",
+      "any": [
+        "ingestion sources",
+        "data sources",
+        "oracle",
+        "total assets",
+        "asset count",
+        "how many dataset",
+        "dataset count",
+        "postgres and oracle"
+      ]
+    },
+    {
+      "route": "kb_retrieve",
+      "source": "kb",
+      "any": [
+        "graphql",
+        "mutation",
+        "createingestionsource",
+        "createingestionexecutionrequest",
+        "listingestionsources",
+        "rest call",
+        "which endpoint",
+        "what rest",
+        "api call",
+        "which api",
+        "ingestproposal",
+        "aspect"
+      ]
+    }
+  ],
+  "fixtures": {
+    "cluster": {
+      "cluster": "datahub-lab-demo",
+      "namespace": "datahub",
+      "generated_at": "2026-10-01T12:00:00Z",
+      "note": "Synthetic fixture. Fictional demo tenant. Not collected from a live cluster.",
+      "pods": [
+        {
+          "name": "datahub-gms-7f8c9d-xk2q1",
+          "component": "datahub-gms",
+          "status": "Running",
+          "ready": true,
+          "restarts": 1,
+          "last_reason": "",
+          "probe": "liveness http 200 /health",
+          "cpu_request": "100m",
+          "memory_limit_mib": 2048
+        },
+        {
+          "name": "datahub-frontend-84c58-5bgwx",
+          "component": "datahub-frontend",
+          "status": "Running",
+          "ready": true,
+          "restarts": 0,
+          "last_reason": "",
+          "probe": "readiness http 200 /admin",
+          "cpu_request": "100m",
+          "memory_limit_mib": 1400
+        },
+        {
+          "name": "datahub-mae-consumer-6b7d-aa91",
+          "component": "datahub-mae-consumer",
+          "status": "CrashLoopBackOff",
+          "ready": false,
+          "restarts": 7,
+          "last_reason": "OOMKilled",
+          "last_exit_code": 137,
+          "probe": "liveness probe failed: HTTP 000",
+          "cpu_request": "100m",
+          "memory_limit_mib": 1536
+        },
+        {
+          "name": "datahub-mce-consumer-8c57-vjv9m",
+          "component": "datahub-mce-consumer",
+          "status": "Running",
+          "ready": true,
+          "restarts": 2,
+          "last_reason": "Error",
+          "probe": "liveness http 200",
+          "cpu_request": "100m",
+          "memory_limit_mib": 1536
+        },
+        {
+          "name": "datahub-actions-0-executor",
+          "component": "datahub-actions",
+          "status": "Running",
+          "ready": true,
+          "restarts": 1,
+          "last_reason": "",
+          "probe": "liveness tcp 9093",
+          "cpu_request": "300m",
+          "memory_limit_mib": 2048
+        }
+      ]
+    },
+    "metrics": {
+      "generated_at": "2026-10-01T12:00:00Z",
+      "window": "5m",
+      "note": "Synthetic fixture. Simulated baselines for the in-browser time series. Not scraped from a live cluster.",
+      "workers": [
+        {
+          "component": "datahub-gms",
+          "pod": "datahub-gms-7f8c9d-xk2q1",
+          "cpu_pct": 41.2,
+          "memory_mib": 1488,
+          "memory_limit_mib": 2048
+        },
+        {
+          "component": "datahub-frontend",
+          "pod": "datahub-frontend-84c58-5bgwx",
+          "cpu_pct": 9.4,
+          "memory_mib": 512,
+          "memory_limit_mib": 1400
+        },
+        {
+          "component": "datahub-mae-consumer",
+          "pod": "datahub-mae-consumer-6b7d-aa91",
+          "cpu_pct": 88.1,
+          "memory_mib": 1536,
+          "memory_limit_mib": 1536
+        },
+        {
+          "component": "datahub-mce-consumer",
+          "pod": "datahub-mce-consumer-8c57-vjv9m",
+          "cpu_pct": 27.6,
+          "memory_mib": 640,
+          "memory_limit_mib": 1536
+        },
+        {
+          "component": "datahub-actions",
+          "pod": "datahub-actions-0-executor",
+          "cpu_pct": 22.0,
+          "memory_mib": 1802,
+          "memory_limit_mib": 2048
+        }
+      ]
+    },
+    "ingestion": {
+      "tenant": "datahub-lab-demo",
+      "generated_at": "2026-10-01T12:00:00Z",
+      "note": "Synthetic fixture. Fake sources and asset counts for this public sample.",
+      "sources": [
+        {
+          "urn": "urn:li:dataHubIngestionSource:postgres-analytics",
+          "name": "postgres-analytics",
+          "type": "postgres",
+          "pipeline_name": "postgres-analytics-hourly",
+          "executor_id": "default",
+          "host_port": "db.lab.example:5432",
+          "database": "analytics",
+          "username": "datahub_reader",
+          "schema_pattern_allow": [
+            "public",
+            "reporting"
+          ],
+          "assets": 86,
+          "datasets": 74,
+          "containers": 8,
+          "dataJobs": 4,
+          "last_run_status": "SUCCESS",
+          "last_execution_urn": "urn:li:dataHubExecutionRequest:exec-pg-1042"
+        },
+        {
+          "urn": "urn:li:dataHubIngestionSource:oracle-finance",
+          "name": "oracle-finance",
+          "type": "oracle",
+          "pipeline_name": "oracle-finance-daily",
+          "executor_id": "default",
+          "host_port": "oracle.lab.example:1521",
+          "service_name": "FINLAB",
+          "username": "datahub_reader",
+          "schema_pattern_allow": [
+            "FINAPP",
+            "REFDATA"
+          ],
+          "assets": 54,
+          "datasets": 41,
+          "containers": 6,
+          "dataJobs": 7,
+          "last_run_status": "SUCCESS",
+          "last_execution_urn": "urn:li:dataHubExecutionRequest:exec-or-0771"
+        }
+      ],
+      "totals": {
+        "assets": 140,
+        "datasets": 115,
+        "containers": 14,
+        "dataJobs": 11,
+        "lineage_edges": 67,
+        "ingestion_sources": 2
+      }
+    },
+    "rca": {
+      "generated_at": "2026-10-01T12:00:00Z",
+      "note": "Synthetic root-cause notes derived from the cluster and metrics fixtures.",
+      "findings": [
+        {
+          "severity": "high",
+          "component": "datahub-mae-consumer",
+          "title": "OOMKilled then CrashLoopBackOff",
+          "evidence": "7 restarts, last exit 137, liveness probe failed HTTP 000, memory at the 1536 MiB limit.",
+          "likely_cause": "MAE consumer applying MetadataAuditEvent traffic while Elasticsearch bulk indexing lagged; heap plus off-heap buffers hit the pod limit.",
+          "suggested": "Raise the mae-consumer memory limit toward 2Gi, inspect Kafka lag on MetadataAuditEvent_v4, confirm Elasticsearch is accepting bulk index requests."
+        },
+        {
+          "severity": "medium",
+          "component": "datahub-actions",
+          "title": "Executor memory high between UI ingestions",
+          "evidence": "1802 / 2048 MiB in the 5m fixture window; 1 restart on the executor pod.",
+          "likely_cause": "acryl-datahub-actions runs UI ingestion recipes in-process (the executor action).",
+          "suggested": "Stagger postgres and oracle recipes; avoid overlapping hourly postgres-analytics with an on-demand run."
+        },
+        {
+          "severity": "low",
+          "component": "datahub-mce-consumer",
+          "title": "Prior Error restart, now Running",
+          "evidence": "2 restarts, last_reason=Error, currently ready.",
+          "likely_cause": "Transient MCE apply failure (proposal rejected or GMS timeout) that recovered.",
+          "suggested": "Watch mce-consumer logs on the next ingestion; no config change from this fixture alone."
+        }
+      ]
+    }
+  },
+  "recipes": {
+    "postgres": "pipeline_name: postgres-lab-demo\nsource:\n  type: postgres\n  config:\n    host_port: db.lab.example:5432\n    database: analytics\n    username: datahub_reader\n    password: ${POSTGRES_PASSWORD}\n    include_tables: true\n    include_views: true\n    schema_pattern:\n      allow:\n        - public\n        - reporting\n    table_pattern:\n      allow:\n        - public.orders\n        - public.customers\n        - public.inventory\n        - reporting.daily_kpis\nsink:\n  type: datahub-rest\n  config:\n    server: http://datahub-gms:8080\n",
+    "oracle": "pipeline_name: oracle-finance-daily\nsource:\n  type: oracle\n  config:\n    host_port: oracle.lab.example:1521\n    username: datahub_reader\n    password: ${ORACLE_PASSWORD}\n    service_name: FINLAB\n    include_tables: true\n    include_views: true\n    schema_pattern:\n      allow:\n        - FINAPP\n        - REFDATA\nsink:\n  type: datahub-rest\n  config:\n    server: http://datahub-gms:8080\n"
+  },
+  "endpoints": [
+    {
+      "id": "graphql.listIngestionSources",
+      "title": "List ingestion sources",
+      "method": "POST",
+      "path": "/api/graphql",
+      "summary": "GraphQL query listIngestionSources(input: ListIngestionSourcesInput!). Returns urn, name, type, schedule, nested executions.",
+      "citation": "graphql.md#listingestionsources",
+      "keywords": [
+        "list ingestion sources",
+        "listingestionsources",
+        "list sources"
+      ]
+    },
+    {
+      "id": "graphql.createIngestionSource",
+      "title": "Create an ingestion source",
+      "method": "POST",
+      "path": "/api/graphql",
+      "summary": "GraphQL mutation createIngestionSource(input: UpdateIngestionSourceInput!). type must match the recipe (postgres, oracle). config.recipe is a JSON-encoded recipe. config.executorId is the datahub-actions executor.",
+      "citation": "graphql.md#createingestionsource",
+      "keywords": [
+        "create ingestion source",
+        "createingestionsource",
+        "mutation creates an ingestion",
+        "graphql mutation creates",
+        "creates an ingestion source"
+      ]
+    },
+    {
+      "id": "graphql.updateIngestionSource",
+      "title": "Update an ingestion source",
+      "method": "POST",
+      "path": "/api/graphql",
+      "summary": "GraphQL mutation updateIngestionSource(urn, input: UpdateIngestionSourceInput!).",
+      "citation": "graphql.md#createingestionsource",
+      "keywords": [
+        "update ingestion source",
+        "updateingestionsource"
+      ]
+    },
+    {
+      "id": "graphql.createIngestionExecutionRequest",
+      "title": "Create an ingestion execution request",
+      "method": "POST",
+      "path": "/api/graphql",
+      "summary": "GraphQL mutation createIngestionExecutionRequest. Required input: ingestionSourceUrn. Returns the run / execution-request urn. datahub-actions executes it.",
+      "citation": "graphql.md#createingestionexecutionrequest",
+      "keywords": [
+        "createingestionexecutionrequest",
+        "execution request",
+        "run ingestion",
+        "trigger ingestion"
+      ]
+    },
+    {
+      "id": "graphql.listExecutionRequests",
+      "title": "List execution requests",
+      "method": "POST",
+      "path": "/api/graphql",
+      "summary": "GraphQL query listExecutionRequests. Poll result.status PENDING | RUNNING | SUCCESS | FAILURE.",
+      "citation": "graphql.md#listingestionsources",
+      "keywords": [
+        "list execution requests",
+        "listexecutionrequests",
+        "poll execution",
+        "run history"
+      ]
+    },
+    {
+      "id": "graphql.ingestionSource",
+      "title": "Get one ingestion source",
+      "method": "POST",
+      "path": "/api/graphql",
+      "summary": "GraphQL query ingestionSource(urn: String!).",
+      "citation": "graphql.md#listingestionsources",
+      "keywords": [
+        "ingestion source urn",
+        "get ingestion source"
+      ]
+    },
+    {
+      "id": "graphql.searchAcrossEntities",
+      "title": "Search across entities",
+      "method": "POST",
+      "path": "/api/graphql",
+      "summary": "GraphQL query searchAcrossEntities. Use types DATASET, CONTAINER, DATA_JOB for asset counts in this lab. Not used for INGESTION_SOURCE run history.",
+      "citation": "aspects.md#aspects-datasets-lineage-lab-notes",
+      "keywords": [
+        "searchacrossentities",
+        "search datasets",
+        "asset search"
+      ]
+    },
+    {
+      "id": "graphql.dataset",
+      "title": "Get a dataset by urn",
+      "method": "POST",
+      "path": "/api/graphql",
+      "summary": "GraphQL query dataset(urn). Aspects such as schemaMetadata, upstreamLineage, datasetProperties.",
+      "citation": "aspects.md#aspects-datasets-lineage-lab-notes",
+      "keywords": [
+        "get dataset",
+        "dataset urn",
+        "schemaMetadata"
+      ]
+    },
+    {
+      "id": "rest.health",
+      "title": "GMS health",
+      "method": "GET",
+      "path": "/health",
+      "summary": "datahub-gms process health. Mock returns ok=true.",
+      "citation": "components.md#datahub-components-in-this-lab",
+      "keywords": [
+        "health",
+        "gms health",
+        "liveness"
+      ]
+    },
+    {
+      "id": "rest.config",
+      "title": "GMS config",
+      "method": "GET",
+      "path": "/config",
+      "summary": "Public GMS config payload (stateful ingestion flags, etc.). Mock returns a stub.",
+      "citation": "components.md#datahub-components-in-this-lab",
+      "keywords": [
+        "gms config",
+        "/config"
+      ]
+    },
+    {
+      "id": "rest.ingestProposal",
+      "title": "Ingest a metadata change proposal",
+      "method": "POST",
+      "path": "/aspects?action=ingestProposal",
+      "summary": "REST MCP apply. Alternative to GraphQL entity emit. Used by some CLI sinks.",
+      "citation": "aspects.md#aspects-datasets-lineage-lab-notes",
+      "keywords": [
+        "ingestproposal",
+        "ingest proposal",
+        "mcp",
+        "aspects action"
+      ]
+    },
+    {
+      "id": "rest.entities.search",
+      "title": "Legacy entity search",
+      "method": "POST",
+      "path": "/entities?action=search",
+      "summary": "Older GMS search action. Prefer GraphQL searchAcrossEntities in new tests.",
+      "citation": "aspects.md#aspects-datasets-lineage-lab-notes",
+      "keywords": [
+        "entities search",
+        "legacy search"
+      ]
+    },
+    {
+      "id": "recipe.postgres",
+      "title": "Postgres recipe coordinates",
+      "method": "YAML",
+      "path": "source.type: postgres",
+      "summary": "host_port, username, database, schema_pattern.allow, table_pattern.allow. Sink datahub-rest to datahub-gms.",
+      "citation": "recipes.md#postgres-type-postgres",
+      "keywords": [
+        "postgres recipe",
+        "type: postgres",
+        "host_port",
+        "schema_pattern"
+      ]
+    },
+    {
+      "id": "recipe.oracle",
+      "title": "Oracle recipe coordinates",
+      "method": "YAML",
+      "path": "source.type: oracle",
+      "summary": "host_port, username, service_name or database (not both), schema_pattern.allow.",
+      "citation": "recipes.md#oracle-type-oracle",
+      "keywords": [
+        "oracle recipe",
+        "type: oracle",
+        "service_name"
+      ]
+    },
+    {
+      "id": "component.gms",
+      "title": "datahub-gms",
+      "method": "GET",
+      "path": "/api/graphql",
+      "summary": "Generalized Metadata Service. Serves GraphQL and REST. CPU/memory in this lab come from the metrics fixture.",
+      "citation": "components.md#datahub-components-in-this-lab",
+      "keywords": [
+        "datahub-gms",
+        "gms"
+      ]
+    },
+    {
+      "id": "component.mae",
+      "title": "datahub-mae-consumer",
+      "method": "N/A",
+      "path": "MetadataAuditEvent_v4",
+      "summary": "Standalone MAE consumer. In this fixture it is CrashLoopBackOff after OOMKilled.",
+      "citation": "components.md#datahub-components-in-this-lab",
+      "keywords": [
+        "datahub-mae-consumer",
+        "mae-consumer",
+        "metadata audit"
+      ]
+    },
+    {
+      "id": "component.mce",
+      "title": "datahub-mce-consumer",
+      "method": "N/A",
+      "path": "MetadataChangeEvent_v4",
+      "summary": "Standalone MCE consumer applying proposals.",
+      "citation": "components.md#datahub-components-in-this-lab",
+      "keywords": [
+        "datahub-mce-consumer",
+        "mce-consumer"
+      ]
+    },
+    {
+      "id": "component.frontend",
+      "title": "datahub-frontend",
+      "method": "GET",
+      "path": ":9002",
+      "summary": "React UI. Public k8s docs port-forward 9002.",
+      "citation": "components.md#datahub-components-in-this-lab",
+      "keywords": [
+        "datahub-frontend",
+        "frontend"
+      ]
+    },
+    {
+      "id": "component.actions",
+      "title": "datahub-actions executor",
+      "method": "N/A",
+      "path": "executor action",
+      "summary": "Runs UI and scheduled recipes. createIngestionExecutionRequest lands here.",
+      "citation": "components.md#datahub-components-in-this-lab",
+      "keywords": [
+        "datahub-actions",
+        "executor",
+        "actions"
+      ]
+    },
+    {
+      "id": "lineage.upstream",
+      "title": "Upstream lineage aspect",
+      "method": "POST",
+      "path": "/api/graphql",
+      "summary": "upstreamLineage aspect on a dataset. Postgres views use include_view_lineage.",
+      "citation": "aspects.md#aspects-datasets-lineage-lab-notes",
+      "keywords": [
+        "upstream lineage",
+        "lineage edges",
+        "view lineage"
+      ]
+    },
+    {
+      "id": "aspect.schemaMetadata",
+      "title": "schemaMetadata aspect",
+      "method": "POST",
+      "path": "/aspects?action=ingestProposal",
+      "summary": "Column-level schema for a Dataset. SchemaField nullability and types.",
+      "citation": "aspects.md#aspects-datasets-lineage-lab-notes",
+      "keywords": [
+        "schemaMetadata",
+        "schema field",
+        "columns"
+      ]
+    },
+    {
+      "id": "entity.container",
+      "title": "Container entities",
+      "method": "POST",
+      "path": "/api/graphql",
+      "summary": "Database and schema map to Container subtypes DATABASE and SCHEMA.",
+      "citation": "recipes.md#postgres-type-postgres",
+      "keywords": [
+        "container",
+        "database container",
+        "schema container"
+      ]
+    },
+    {
+      "id": "entity.datajob",
+      "title": "DataJob stored procedures",
+      "method": "POST",
+      "path": "/api/graphql",
+      "summary": "Postgres stored procedures ingest as DataJob under a DataFlow per schema when include_stored_procedures is true.",
+      "citation": "recipes.md#postgres-type-postgres",
+      "keywords": [
+        "datajob",
+        "stored procedure",
+        "dataflow"
+      ]
+    },
+    {
+      "id": "rest.openapi.entities",
+      "title": "OpenAPI entity read",
+      "method": "GET",
+      "path": "/openapi/v2/entity/{urn}",
+      "summary": "OpenAPI v2 entity GET. Mock returns a stub dataset document.",
+      "citation": "aspects.md#aspects-datasets-lineage-lab-notes",
+      "keywords": [
+        "openapi",
+        "entity get",
+        "v2 entity"
+      ]
+    },
+    {
+      "id": "graphql.browseV2",
+      "title": "browseV2",
+      "method": "POST",
+      "path": "/api/graphql",
+      "summary": "Browse containers in the UI. Not required for this lab's API tests.",
+      "citation": "aspects.md#aspects-datasets-lineage-lab-notes",
+      "keywords": [
+        "browsev2",
+        "browse containers"
+      ]
+    },
+    {
+      "id": "recipe.sink.rest",
+      "title": "datahub-rest sink",
+      "method": "YAML",
+      "path": "sink.type: datahub-rest",
+      "summary": "Recipe sink that posts to datahub-gms. server: http://datahub-gms:8080 in this lab.",
+      "citation": "recipes.md#sink",
+      "keywords": [
+        "datahub-rest",
+        "sink",
+        "gms url"
+      ]
+    },
+    {
+      "id": "graphql.aggregate",
+      "title": "aggregateAcrossEntities",
+      "method": "POST",
+      "path": "/api/graphql",
+      "summary": "Facet counts. This lab's mock also answers a compact assetCounts query used by tests.",
+      "citation": "aspects.md#aspects-datasets-lineage-lab-notes",
+      "keywords": [
+        "aggregateacrossentities",
+        "asset counts",
+        "facet"
+      ]
+    }
+  ],
+  "caveat": "In-browser demo is a vanilla JS port of the Python router. Python plus tests/test_routing.py are the source of truth. Fictional DataHub demo tenant. Not a live cluster."
+}

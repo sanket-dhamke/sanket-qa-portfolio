@@ -1,0 +1,14 @@
+{
+  "query": "mutation CreateIngestionSource($input: UpdateIngestionSourceInput!) { createIngestionSource(input: $input) }",
+  "variables": {
+    "input": {
+      "name": "postgres-lab-pytest",
+      "type": "postgres",
+      "config": {
+        "executorId": "default",
+        "version": "0.14.1",
+        "recipe": "{\"pipeline_name\":\"postgres-lab-pytest\",\"source\":{\"type\":\"postgres\"}}"
+      }
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "generated_at": "2026-10-01T12:00:00Z",
+  "note": "Synthetic fixture for this public sample. Not a production catalog.",
+  "datasets": 128,
+  "ingest_jobs_total": 46,
+  "ingest_jobs_running": 2,
+  "ingest_jobs_failed": 3,
+  "tags": 19,
+  "lineage_edges": 84
+}

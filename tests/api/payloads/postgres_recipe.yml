@@ -1,0 +1,21 @@
+pipeline_name: postgres-lab-pytest
+source:
+  type: postgres
+  config:
+    host_port: db.lab.example:5432
+    database: analytics
+    username: datahub_reader
+    password: ${POSTGRES_PASSWORD}
+    include_tables: true
+    include_views: true
+    schema_pattern:
+      allow:
+        - public
+    table_pattern:
+      allow:
+        - public.orders
+        - public.customers
+sink:
+  type: datahub-rest
+  config:
+    server: http://datahub-gms:8080
