@@ -27,9 +27,11 @@
     <p>A question hits a keyword/rule table. The first match wins. That is the whole router. There is no embedding index and no hosted model in this sample. If a model were plugged in later, it would only be allowed to rephrase text that a handler or the KB already produced — <strong>a model never produces a number</strong>.</p>
     <div class="arch">
       <div><strong>1. Intent router</strong> Ordered keyword rules in <code>agent/router.py</code>. Vanilla JS port for GitHub Pages.</div>
-      <div><strong>2. Handlers</strong> Read fixture JSON: cluster, metrics, ingestion sources, RCA. Return measured values only.</div>
-      <div><strong>3. KB retrieval</strong> Score a local API catalog (~30 DataHub GraphQL/REST/recipe entries) and cite the file.</div>
-      <div><strong>4. Fallback</strong> If nothing matches, a deterministic refusal. No invented CPU or asset totals.</div>
+      <div><strong>2. Handlers</strong> Read fixture JSON: cluster, metrics, ingestion, RCA, alerts, app config. Return measured values only.</div>
+      <div><strong>3. KB + API exec</strong> Catalog of DataHub GraphQL/REST entries. Explicit questions (login, alerts, /health) run the mock API and print status + body.</div>
+      <div><strong>4. Suite executor</strong> smoke / sanity / regression (API, UI, performance layers). Pages replays <code>agent/fixtures/suites.json</code>; pytest still owns the live checks.</div>
+      <div><strong>5. App verdict</strong> Pods + RCA + smoke + sanity, then the agent asks before full regression. Yes runs it; no skips.</div>
+      <div><strong>6. Fallback</strong> If nothing matches, a deterministic refusal. No invented CPU, assets, or passwords.</div>
     </div>
     <h2>Visible source field</h2>
     <p>Every answer carries <code>source</code>: <code>handler:pod_status</code>, <code>handler:resource_metrics</code>, <code>handler:ingestion_assets</code>, <code>handler:ingest_recipe</code>, <code>kb:graphql.createIngestionSource</code>, or <code>fallback:deterministic</code>. The console paints that chip next to the reply. pytest in <code>tests/test_routing.py</code> asserts the canned questions take different sources — no network.</p>

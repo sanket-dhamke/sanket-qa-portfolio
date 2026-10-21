@@ -4,9 +4,93 @@
     "Show CPU and memory of datahub-gms",
     "Show postgres and oracle ingestion sources and total assets",
     "Ingest a postgres source",
-    "What GraphQL mutation creates an ingestion source?"
+    "What GraphQL mutation creates an ingestion source?",
+    "Test the login with username as emuser and password as empass",
+    "Run API sanity suite",
+    "Check UI sanity",
+    "How many alerts are in DataHub?",
+    "What is the current state of the application?",
+    "What configuration needs to be upgraded to ingest 10m or 1m assets?"
   ],
   "rules": [
+    {
+      "route": "login_api",
+      "source": "handler:login_api",
+      "any": [
+        "test the login",
+        "test login",
+        "run login",
+        "log in with",
+        "login with",
+        "username as",
+        "password as"
+      ]
+    },
+    {
+      "route": "run_suite",
+      "source": "handler:run_suite",
+      "any": [
+        "api sanity",
+        "ui sanity",
+        "sanity suite",
+        "smoke suite",
+        "run smoke",
+        "run sanity",
+        "run regression",
+        "regression suite",
+        "check ui sanity",
+        "check api sanity",
+        "run api tests",
+        "run ui tests"
+      ]
+    },
+    {
+      "route": "app_status",
+      "source": "handler:app_status",
+      "any": [
+        "current state of the application",
+        "current status of the application",
+        "current state of application",
+        "application status",
+        "app status",
+        "quality of the application",
+        "application quality",
+        "verdict on the application",
+        "health of the application"
+      ]
+    },
+    {
+      "route": "capacity_plan",
+      "source": "handler:capacity_plan",
+      "any": [
+        "configuration needs",
+        "config needs to be upgraded",
+        "upgrade to ingest",
+        "ingest 10m",
+        "ingest 1m",
+        "1 million assets",
+        "10 million assets",
+        "1m assets",
+        "10m assets",
+        "capacity",
+        "scale to"
+      ]
+    },
+    {
+      "route": "execute_api",
+      "source": "handler:execute_api",
+      "any": [
+        "how many alert",
+        "how many alerts",
+        "total no of alert",
+        "total number of alert",
+        "alerts in datahub",
+        "list incidents",
+        "gms health",
+        "health api",
+        "/health"
+      ]
+    },
     {
       "route": "ingest_recipe",
       "source": "handler:ingest_recipe",
@@ -70,6 +154,9 @@
         "total assets",
         "asset count",
         "how many dataset",
+        "how many assets",
+        "how many asset",
+        "number of assets",
         "dataset count",
         "postgres and oracle"
       ]
@@ -284,6 +371,432 @@
           "suggested": "Watch mce-consumer logs on the next ingestion; no config change from this fixture alone."
         }
       ]
+    },
+    "alerts": {
+      "generated_at": "2026-10-01T12:00:00Z",
+      "note": "Synthetic DataHub incidents for this lab. Mapped from the user word \u201calerts\u201d. Not scraped from a live tenant.",
+      "open": 3,
+      "resolved": 2,
+      "total": 5,
+      "items": [
+        {
+          "urn": "urn:li:incident:inc-1001",
+          "title": "Search index lag after MAE consumer OOM",
+          "state": "ACTIVE",
+          "severity": "HIGH",
+          "type": "OPERATIONAL",
+          "entity": "datahub-mae-consumer",
+          "started_at": "2026-10-01T11:40:00Z"
+        },
+        {
+          "urn": "urn:li:incident:inc-1002",
+          "title": "Ingestion executor memory pressure",
+          "state": "ACTIVE",
+          "severity": "MEDIUM",
+          "type": "OPERATIONAL",
+          "entity": "datahub-actions",
+          "started_at": "2026-10-01T10:15:00Z"
+        },
+        {
+          "urn": "urn:li:incident:inc-1003",
+          "title": "Stale assertion on analytics.public.orders row count",
+          "state": "ACTIVE",
+          "severity": "LOW",
+          "type": "ASSERTION",
+          "entity": "urn:li:dataset:(urn:li:dataPlatform:postgres,analytics.public.orders,PROD)",
+          "started_at": "2026-09-30T18:02:00Z"
+        },
+        {
+          "urn": "urn:li:incident:inc-0994",
+          "title": "GMS readiness blip",
+          "state": "RESOLVED",
+          "severity": "LOW",
+          "type": "OPERATIONAL",
+          "entity": "datahub-gms",
+          "started_at": "2026-09-28T09:11:00Z"
+        },
+        {
+          "urn": "urn:li:incident:inc-0988",
+          "title": "Oracle recipe timeout (cleared on retry)",
+          "state": "RESOLVED",
+          "severity": "MEDIUM",
+          "type": "INGESTION",
+          "entity": "oracle-finance",
+          "started_at": "2026-09-27T22:40:00Z"
+        }
+      ]
+    },
+    "users": {
+      "note": "Fictional DataHub lab users for the mock POST /logIn API. Not employer credentials and not a live tenant.",
+      "accounts": [
+        {
+          "username": "emuser",
+          "password": "empass",
+          "urn": "urn:li:corpuser:emuser",
+          "displayName": "Lab Operator",
+          "role": "Admin"
+        }
+      ]
+    },
+    "app_config": {
+      "generated_at": "2026-10-01T12:00:00Z",
+      "note": "Synthetic sizing for the fictional DataHub lab tenant. Not a vendor capacity guide. Numbers are derived from the cluster, metrics, ingestion, and RCA fixtures.",
+      "current_assets": 140,
+      "current": {
+        "datahub-gms": {
+          "replicas": 1,
+          "heap": "2g",
+          "memory_limit": "2Gi",
+          "cpu_request": "1"
+        },
+        "datahub-mae-consumer": {
+          "replicas": 1,
+          "heap": "1g",
+          "memory_limit": "1536Mi",
+          "cpu_request": "100m",
+          "pressure": "at_limit_oom"
+        },
+        "datahub-mce-consumer": {
+          "replicas": 1,
+          "heap": "1g",
+          "memory_limit": "1536Mi"
+        },
+        "datahub-actions": {
+          "replicas": 1,
+          "memory_limit": "2048Mi",
+          "used_mib": 1802
+        },
+        "datahub-frontend": {
+          "replicas": 1,
+          "memory_limit": "1400Mi"
+        },
+        "elasticsearch": {
+          "nodes": 1,
+          "heap": "2g",
+          "disk_gb": 20
+        },
+        "kafka": {
+          "partitions_mae": 1,
+          "partitions_mce": 1
+        },
+        "mysql": {
+          "memory": "1Gi",
+          "cpu": "500m"
+        }
+      },
+      "blockers": [
+        "datahub-mae-consumer is OOMKilled at 1536 MiB while serving 140 assets. Do not scale ingestion until this limit is raised."
+      ],
+      "targets": {
+        "1000000": {
+          "label": "1 million assets",
+          "scale_vs_current": "about 7,140\u00d7 the 140-asset fixture",
+          "changes": [
+            {
+              "component": "datahub-mae-consumer",
+              "from": "1\u00d7 1536Mi (OOM today)",
+              "to": "3\u00d7 4Gi / 3g heap",
+              "why": "MAE already sits at the pod limit. Search/index apply is the first wall."
+            },
+            {
+              "component": "datahub-gms",
+              "from": "1\u00d7 2Gi heap 2g",
+              "to": "3\u00d7 8Gi heap 6g",
+              "why": "GraphQL + ingestProposal + search fan-out at 1M entities."
+            },
+            {
+              "component": "datahub-mce-consumer",
+              "from": "1\u00d7 1536Mi",
+              "to": "2\u00d7 4Gi",
+              "why": "MCP apply volume follows ingestion, not UI traffic."
+            },
+            {
+              "component": "datahub-actions",
+              "from": "1\u00d7 2048Mi (1802 used)",
+              "to": "2\u00d7 8Gi, stagger recipes",
+              "why": "Executor already at 88% memory between two small sources."
+            },
+            {
+              "component": "elasticsearch",
+              "from": "1 node heap 2g disk 20GB",
+              "to": "3 nodes heap 16g disk ~1TB",
+              "why": "Dataset + timeseries + search indices dominate storage."
+            },
+            {
+              "component": "kafka",
+              "from": "MAE/MCE partitions=1",
+              "to": "MAE 12 / MCE 12 partitions",
+              "why": "One partition cannot drain 1M-asset audit traffic."
+            },
+            {
+              "component": "mysql",
+              "from": "1Gi",
+              "to": "8Gi + IOPS headroom",
+              "why": "GMS aspect rows and usage stats grow with unique urns."
+            }
+          ]
+        },
+        "10000000": {
+          "label": "10 million assets",
+          "scale_vs_current": "about 71,400\u00d7 the 140-asset fixture",
+          "changes": [
+            {
+              "component": "datahub-mae-consumer",
+              "from": "1\u00d7 1536Mi (OOM today)",
+              "to": "6\u00d7 8Gi / 6g heap",
+              "why": "10\u00d7 the 1M MAE plan; keep consumer lag near zero or search goes stale."
+            },
+            {
+              "component": "datahub-gms",
+              "from": "1\u00d7 2Gi",
+              "to": "8\u00d7 16Gi heap 12g, HPA on CPU",
+              "why": "Search and GraphQL become the hot path; one replica will timeout."
+            },
+            {
+              "component": "datahub-mce-consumer",
+              "from": "1\u00d7 1536Mi",
+              "to": "4\u00d7 8Gi",
+              "why": "Bulk ingest windows otherwise back up MetadataChangeEvent_v4."
+            },
+            {
+              "component": "datahub-actions",
+              "from": "1\u00d7 2048Mi",
+              "to": "dedicated executor pool 4\u00d7 8Gi; no overlapping hourly recipes",
+              "why": "In-process recipes at 10M will OOM the single executor."
+            },
+            {
+              "component": "elasticsearch",
+              "from": "1\u00d7 2g / 20GB",
+              "to": "5 data nodes heap 31g, disk multi-TB, ILM for timeseries",
+              "why": "Index size, not GMS heap, is the usual 10M ceiling."
+            },
+            {
+              "component": "kafka",
+              "from": "partitions=1",
+              "to": "MAE 36 / MCE 24, retention sized to peak ingest",
+              "why": "Need parallel apply plus replay room after MAE incidents."
+            },
+            {
+              "component": "mysql",
+              "from": "1Gi",
+              "to": "primary 32Gi + read replica for UI browse",
+              "why": "Entity aspect tables and relationships stop fitting a lab-sized instance."
+            }
+          ]
+        }
+      }
+    },
+    "suites": {
+      "generated_at": "2026-10-01T12:00:00Z",
+      "note": "Recorded smoke / sanity / regression results for the in-browser agent. Same markers as pytest. GitHub Pages cannot spawn pytest, so the handler replays this catalog. Python tests/api and tests/ui are the live checks.",
+      "cases": [
+        {
+          "id": "api.health",
+          "name": "GMS GET /health",
+          "layer": "api",
+          "suites": [
+            "smoke",
+            "sanity",
+            "regression"
+          ],
+          "endpoint": "rest.health",
+          "status": "pass",
+          "duration_ms": 42,
+          "expected": "200 {ok: true, component: datahub-gms}",
+          "actual": "200 ok=true",
+          "rca": null
+        },
+        {
+          "id": "api.config",
+          "name": "GMS GET /config",
+          "layer": "api",
+          "suites": [
+            "smoke",
+            "regression"
+          ],
+          "endpoint": "rest.config",
+          "status": "pass",
+          "duration_ms": 51,
+          "expected": "managedIngestion.enabled true",
+          "actual": "enabled true, defaultCliVersion 0.14.1",
+          "rca": null
+        },
+        {
+          "id": "api.login",
+          "name": "POST /logIn emuser / empass",
+          "layer": "api",
+          "suites": [
+            "smoke",
+            "sanity",
+            "regression"
+          ],
+          "endpoint": "rest.logIn",
+          "status": "pass",
+          "duration_ms": 88,
+          "expected": "200 session actor urn:li:corpuser:emuser",
+          "actual": "200 PLAY_SESSION set, actor emuser",
+          "rca": null
+        },
+        {
+          "id": "api.list_sources",
+          "name": "GraphQL listIngestionSources",
+          "layer": "api",
+          "suites": [
+            "smoke",
+            "sanity",
+            "regression"
+          ],
+          "endpoint": "graphql.listIngestionSources",
+          "status": "pass",
+          "duration_ms": 120,
+          "expected": "total 2 (postgres-analytics, oracle-finance)",
+          "actual": "total 2, assets 86 + 54",
+          "rca": null
+        },
+        {
+          "id": "api.asset_counts",
+          "name": "GraphQL searchAcrossEntities dataset total",
+          "layer": "api",
+          "suites": [
+            "sanity",
+            "regression"
+          ],
+          "endpoint": "graphql.searchAcrossEntities",
+          "status": "pass",
+          "duration_ms": 134,
+          "expected": "datasets 115, assets 140",
+          "actual": "datasets 115",
+          "rca": null
+        },
+        {
+          "id": "api.incidents",
+          "name": "GraphQL listIncidents (alerts)",
+          "layer": "api",
+          "suites": [
+            "sanity",
+            "regression"
+          ],
+          "endpoint": "graphql.listIncidents",
+          "status": "pass",
+          "duration_ms": 97,
+          "expected": "open incidents 3",
+          "actual": "open 3, total 5",
+          "rca": null
+        },
+        {
+          "id": "api.ingest_proposal",
+          "name": "REST ingestProposal schemaMetadata",
+          "layer": "api",
+          "suites": [
+            "regression"
+          ],
+          "endpoint": "rest.ingestProposal",
+          "status": "pass",
+          "duration_ms": 210,
+          "expected": "success true",
+          "actual": "success true",
+          "rca": null
+        },
+        {
+          "id": "ui.home_cards",
+          "name": "Home shows name and three cards",
+          "layer": "ui",
+          "suites": [
+            "smoke",
+            "sanity",
+            "regression"
+          ],
+          "endpoint": null,
+          "status": "pass",
+          "duration_ms": 640,
+          "expected": "heading Sanket Dhamke; Hybrid Agent, API Automation, UI Automation",
+          "actual": "visible",
+          "rca": null
+        },
+        {
+          "id": "ui.console_chat",
+          "name": "Console composer and source chip",
+          "layer": "ui",
+          "suites": [
+            "smoke",
+            "regression"
+          ],
+          "endpoint": null,
+          "status": "pass",
+          "duration_ms": 710,
+          "expected": "Ask control and result-source chip after a canned question",
+          "actual": "visible",
+          "rca": null
+        },
+        {
+          "id": "ui.search_datasets",
+          "name": "UI search returns postgres datasets",
+          "layer": "ui",
+          "suites": [
+            "sanity",
+            "regression"
+          ],
+          "endpoint": "graphql.searchAcrossEntities",
+          "status": "fail",
+          "duration_ms": 1840,
+          "expected": "results include analytics.public.orders",
+          "actual": "empty result list; index lag banner",
+          "rca": {
+            "symptom": "Dataset search in the UI returns no rows even though GraphQL assetCounts still reports 115 datasets.",
+            "evidence": [
+              "datahub-mae-consumer status=CrashLoopBackOff, restarts=7, last_reason=OOMKilled",
+              "memory 1536 / 1536 MiB in the 5m fixture",
+              "open incident inc-1001 Search index lag after MAE consumer OOM"
+            ],
+            "cause": "MAE consumer cannot apply MetadataAuditEvent_v4, so Elasticsearch search documents are stale. List/count APIs that read GMS still pass; the UI search path does not.",
+            "fix": "Raise datahub-mae-consumer memory toward 2Gi, confirm Kafka lag on MetadataAuditEvent_v4, then reindex. Do not treat this as a frontend selector bug."
+          }
+        },
+        {
+          "id": "ui.lineage_graph",
+          "name": "Lineage graph for analytics.public.orders",
+          "layer": "ui",
+          "suites": [
+            "regression"
+          ],
+          "endpoint": "graphql.dataset",
+          "status": "fail",
+          "duration_ms": 2210,
+          "expected": "upstreamLineage edges render (fixture has 67 edges)",
+          "actual": "graph spinner then empty canvas",
+          "rca": {
+            "symptom": "Lineage tab never paints edges.",
+            "evidence": [
+              "Same MAE CrashLoopBackOff as ui.search_datasets",
+              "mce-consumer is Running but has 2 prior Error restarts"
+            ],
+            "cause": "upstreamLineage aspects are stored on GMS, but the UI lineage explorer hydrates through the search/graph index that MAE maintains.",
+            "fix": "Restore mae-consumer, then reload the dataset urn. No recipe change required."
+          }
+        },
+        {
+          "id": "perf.mae_memory_headroom",
+          "name": "MAE consumer memory under 90% of limit",
+          "layer": "performance",
+          "suites": [
+            "regression"
+          ],
+          "endpoint": null,
+          "status": "fail",
+          "duration_ms": 30,
+          "expected": "memory_mib / memory_limit_mib < 0.90",
+          "actual": "1536 / 1536 = 100%",
+          "rca": {
+            "symptom": "MAE pod has zero memory headroom.",
+            "evidence": [
+              "metrics fixture cpu 88.1%, memory at limit",
+              "RCA finding: OOMKilled then CrashLoopBackOff"
+            ],
+            "cause": "1536 MiB is too small for MAE + Elasticsearch bulk buffers at even 140 assets.",
+            "fix": "This is the first config change before any 1M / 10M ingest plan."
+          }
+        }
+      ]
     }
   },
   "recipes": {
@@ -291,6 +804,35 @@
     "oracle": "pipeline_name: oracle-finance-daily\nsource:\n  type: oracle\n  config:\n    host_port: oracle.lab.example:1521\n    username: datahub_reader\n    password: ${ORACLE_PASSWORD}\n    service_name: FINLAB\n    include_tables: true\n    include_views: true\n    schema_pattern:\n      allow:\n        - FINAPP\n        - REFDATA\nsink:\n  type: datahub-rest\n  config:\n    server: http://datahub-gms:8080\n"
   },
   "endpoints": [
+    {
+      "id": "rest.logIn",
+      "title": "Frontend / GMS login",
+      "method": "POST",
+      "path": "/logIn",
+      "summary": "Create a session. This lab accepts JSON {username, password}. Fictional user emuser / empass. Not a live tenant.",
+      "citation": "components.md#datahub-components-in-this-lab",
+      "keywords": [
+        "login",
+        "log in",
+        "logIn",
+        "authenticate",
+        "emuser"
+      ]
+    },
+    {
+      "id": "graphql.listIncidents",
+      "title": "List incidents (alerts)",
+      "method": "POST",
+      "path": "/api/graphql",
+      "summary": "GraphQL listIncidents. This lab uses DataHub incidents for the word \u201calerts\u201d. Returns open count and titles from the alerts fixture.",
+      "citation": "components.md#datahub-components-in-this-lab",
+      "keywords": [
+        "alerts",
+        "incidents",
+        "listincidents",
+        "how many alert"
+      ]
+    },
     {
       "id": "graphql.listIngestionSources",
       "title": "List ingestion sources",

@@ -11,7 +11,7 @@
 </head>
 <body class="console">
   <header class="console-header">
-    <div class="title">DataHub ops lab <span>fictional demo tenant · simulated</span></div>
+    <div class="title">DataHub ops lab <span>hybrid agent · fictional demo tenant</span></div>
     <nav>
       <a href="index.html">Home</a>
       <a href="architecture.html">Architecture</a>
@@ -21,53 +21,82 @@
   </header>
   <div class="banner">
     Open-source DataHub vocabulary only
-    (<a href="https://datahubproject.io" style="color:#c4a35a">datahubproject.io</a>).
-    Keyword/rule router — not an LLM. Numbers come from fixtures or this simulation, never from a model.
+    (<a href="https://datahubproject.io">datahubproject.io</a>).
+    Keyword/rule router — not an LLM. Suites replay the pytest catalog. Numbers come from fixtures.
     Not affiliated with any prior employer product.
-    Live assets <strong id="asset-live">140</strong> · sources <strong id="source-live">2</strong>
+  </div>
+  <div class="kpis" id="kpis">
+    <div class="kpi"><span>Assets</span><strong id="asset-live">140</strong></div>
+    <div class="kpi"><span>Sources</span><strong id="source-live">2</strong></div>
+    <div class="kpi"><span>Open incidents</span><strong id="alert-live">—</strong></div>
+    <div class="kpi"><span>App health</span><strong id="health-live">—</strong></div>
+    <div class="kpi"><span>Last suite</span><strong id="suite-live">idle</strong></div>
   </div>
   <div class="layout">
     <section class="panel chat">
-      <h2>Agent chat</h2>
+      <h2>Hybrid agent</h2>
       <div class="log" id="log"></div>
       <div class="canned" id="canned"></div>
       <div class="composer">
-        <input id="q" type="text" placeholder="Ask about pods, CPU, sources, or ingest postgres…" aria-label="Question">
+        <input id="q" type="text" placeholder="Ask, then press Enter — the box clears. Try login, sanity, alerts, 1M config…" aria-label="Question">
         <button type="button" id="ask">Ask</button>
       </div>
     </section>
 
-    <section class="panel">
-      <h2>Live CPU and memory · simulated time series</h2>
-      <div class="charts-grid">
-        <div class="chart-box">
-          <p>CPU %</p>
-          <canvas id="cpu-chart"></canvas>
-        </div>
-        <div class="chart-box">
-          <p>Memory MiB (vs pod limit)</p>
-          <canvas id="mem-chart"></canvas>
-        </div>
+    <section class="panel dash">
+      <div class="tabs" role="tablist">
+        <button type="button" class="tab on" data-tab="perf" aria-selected="true">Performance</button>
+        <button type="button" class="tab" data-tab="suites" aria-selected="false">Suites</button>
+        <button type="button" class="tab" data-tab="rca" aria-selected="false">RCA</button>
+        <button type="button" class="tab" data-tab="capacity" aria-selected="false">Capacity</button>
       </div>
-      <div class="legend" id="legend"></div>
-    </section>
-
-    <section class="panel">
-      <h2>Pod health · restarts · recent errors</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Component</th><th>Status</th><th>Restarts</th><th>Last reason</th><th>CPU</th><th>Memory</th>
-          </tr>
-        </thead>
-        <tbody id="pod-body"></tbody>
-      </table>
-      <pre class="gql" id="error-log" style="margin:8px;min-height:48px"></pre>
-    </section>
-
-    <section class="panel">
-      <h2>Root-cause analysis</h2>
-      <div class="rca-list" id="rca-list"></div>
+      <div class="tab-panel on" id="tab-perf">
+        <div class="charts-grid">
+          <div class="chart-box">
+            <p>CPU %</p>
+            <canvas id="cpu-chart"></canvas>
+          </div>
+          <div class="chart-box">
+            <p>Memory MiB (vs pod limit)</p>
+            <canvas id="mem-chart"></canvas>
+          </div>
+        </div>
+        <div class="legend" id="legend"></div>
+        <table>
+          <thead>
+            <tr>
+              <th>Component</th><th>Status</th><th>Restarts</th><th>Last reason</th><th>CPU</th><th>Memory</th>
+            </tr>
+          </thead>
+          <tbody id="pod-body"></tbody>
+        </table>
+        <pre class="gql" id="error-log"></pre>
+      </div>
+      <div class="tab-panel" id="tab-suites">
+        <p class="hint" id="suite-hint">Ask the agent to run smoke, API sanity, UI sanity, or regression. Results land here with pass/fail bars and RCA for failures.</p>
+        <div class="charts-grid">
+          <div class="chart-box">
+            <p>Last suite pass / fail</p>
+            <canvas id="suite-chart"></canvas>
+          </div>
+          <div class="chart-box">
+            <p>Layer mix</p>
+            <canvas id="layer-chart"></canvas>
+          </div>
+        </div>
+        <div id="suite-table"></div>
+      </div>
+      <div class="tab-panel" id="tab-rca">
+        <div class="rca-list" id="rca-list"></div>
+      </div>
+      <div class="tab-panel" id="tab-capacity">
+        <p class="hint">Ask how many assets, or what to upgrade for 1 million / 10 million. The bar is the 140-asset fixture against those targets.</p>
+        <div class="chart-box">
+          <p>Assets vs ingest targets (log-friendly scale)</p>
+          <canvas id="cap-chart"></canvas>
+        </div>
+        <div id="cap-table"></div>
+      </div>
     </section>
 
     <section class="panel ingest hidden" id="ingest-panel">
@@ -97,7 +126,7 @@
           <p class="run-meta">createIngestionExecutionRequest</p>
           <pre class="gql" id="gql-run">Waiting for submit.</pre>
           <p class="run-meta">datahub-actions / GMS stream</p>
-          <pre class="gql" id="run-log" style="min-height:160px"></pre>
+          <pre class="gql" id="run-log"></pre>
         </div>
       </div>
     </section>

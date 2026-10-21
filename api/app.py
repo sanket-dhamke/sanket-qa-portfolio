@@ -21,6 +21,8 @@ ROOT = Path(__file__).resolve().parents[1]
 INGESTION = json.loads(
     (ROOT / "agent" / "fixtures" / "ingestion.json").read_text(encoding="utf-8")
 )
+USERS = json.loads((ROOT / "agent" / "fixtures" / "users.json").read_text(encoding="utf-8"))
+ALERTS = json.loads((ROOT / "agent" / "fixtures" / "alerts.json").read_text(encoding="utf-8"))
 
 app = FastAPI(title="DataHub lab mock GMS", version="0.1.0")
 app.add_middleware(
@@ -60,6 +62,7 @@ def _op(query: str) -> str:
         "aggregateAcrossEntities",
         "assetCounts",
         "dataset",
+        "listIncidents",
     ):
         if name in blob:
             return name
@@ -276,6 +279,17 @@ def _graphql(query: str, variables: dict[str, Any] | None) -> dict[str, Any]:
                 },
             }
         }
+    if op == "listIncidents":
+        active = [item for item in ALERTS["items"] if item["state"] == "ACTIVE"]
+        return {
+            "data": {
+                "listIncidents": {
+                    "total": ALERTS["total"],
+                    "open": ALERTS["open"],
+                    "incidents": active,
+                }
+            }
+        }
     if op == "ingestionSource":
         urn = (variables or {}).get("urn") or _first(r'urn:\s*"([^"]+)"', query)
         for src in _state["sources"]:
@@ -293,6 +307,32 @@ def _graphql(query: str, variables: dict[str, Any] | None) -> dict[str, Any]:
             }
         ]
     }
+
+
+@app.post("/logIn")
+async def login(request: Request) -> JSONResponse:
+    username = None
+    password = None
+    ctype = request.headers.get("content-type", "")
+    if "application/json" in ctype:
+        body = await request.json()
+        username = body.get("username")
+        password = body.get("password")
+    else:
+        form = await request.form()
+        username = form.get("username")
+        password = form.get("password")
+    accounts = {row["username"]: row for row in USERS["accounts"]}
+    row = accounts.get(str(username or ""))
+    if row is None or row["password"] != password:
+        return JSONResponse({"message": "Unauthorized"}, status_code=401)
+    return JSONResponse(
+        {
+            "actor": row["urn"],
+            "displayName": row["displayName"],
+            "role": row["role"],
+        }
+    )
 
 
 @app.get("/health")

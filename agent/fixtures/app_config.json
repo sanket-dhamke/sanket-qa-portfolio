@@ -1,0 +1,148 @@
+{
+  "generated_at": "2026-10-01T12:00:00Z",
+  "note": "Synthetic sizing for the fictional DataHub lab tenant. Not a vendor capacity guide. Numbers are derived from the cluster, metrics, ingestion, and RCA fixtures.",
+  "current_assets": 140,
+  "current": {
+    "datahub-gms": {
+      "replicas": 1,
+      "heap": "2g",
+      "memory_limit": "2Gi",
+      "cpu_request": "1"
+    },
+    "datahub-mae-consumer": {
+      "replicas": 1,
+      "heap": "1g",
+      "memory_limit": "1536Mi",
+      "cpu_request": "100m",
+      "pressure": "at_limit_oom"
+    },
+    "datahub-mce-consumer": {
+      "replicas": 1,
+      "heap": "1g",
+      "memory_limit": "1536Mi"
+    },
+    "datahub-actions": {
+      "replicas": 1,
+      "memory_limit": "2048Mi",
+      "used_mib": 1802
+    },
+    "datahub-frontend": {
+      "replicas": 1,
+      "memory_limit": "1400Mi"
+    },
+    "elasticsearch": {
+      "nodes": 1,
+      "heap": "2g",
+      "disk_gb": 20
+    },
+    "kafka": {
+      "partitions_mae": 1,
+      "partitions_mce": 1
+    },
+    "mysql": {
+      "memory": "1Gi",
+      "cpu": "500m"
+    }
+  },
+  "blockers": [
+    "datahub-mae-consumer is OOMKilled at 1536 MiB while serving 140 assets. Do not scale ingestion until this limit is raised."
+  ],
+  "targets": {
+    "1000000": {
+      "label": "1 million assets",
+      "scale_vs_current": "about 7,140× the 140-asset fixture",
+      "changes": [
+        {
+          "component": "datahub-mae-consumer",
+          "from": "1× 1536Mi (OOM today)",
+          "to": "3× 4Gi / 3g heap",
+          "why": "MAE already sits at the pod limit. Search/index apply is the first wall."
+        },
+        {
+          "component": "datahub-gms",
+          "from": "1× 2Gi heap 2g",
+          "to": "3× 8Gi heap 6g",
+          "why": "GraphQL + ingestProposal + search fan-out at 1M entities."
+        },
+        {
+          "component": "datahub-mce-consumer",
+          "from": "1× 1536Mi",
+          "to": "2× 4Gi",
+          "why": "MCP apply volume follows ingestion, not UI traffic."
+        },
+        {
+          "component": "datahub-actions",
+          "from": "1× 2048Mi (1802 used)",
+          "to": "2× 8Gi, stagger recipes",
+          "why": "Executor already at 88% memory between two small sources."
+        },
+        {
+          "component": "elasticsearch",
+          "from": "1 node heap 2g disk 20GB",
+          "to": "3 nodes heap 16g disk ~1TB",
+          "why": "Dataset + timeseries + search indices dominate storage."
+        },
+        {
+          "component": "kafka",
+          "from": "MAE/MCE partitions=1",
+          "to": "MAE 12 / MCE 12 partitions",
+          "why": "One partition cannot drain 1M-asset audit traffic."
+        },
+        {
+          "component": "mysql",
+          "from": "1Gi",
+          "to": "8Gi + IOPS headroom",
+          "why": "GMS aspect rows and usage stats grow with unique urns."
+        }
+      ]
+    },
+    "10000000": {
+      "label": "10 million assets",
+      "scale_vs_current": "about 71,400× the 140-asset fixture",
+      "changes": [
+        {
+          "component": "datahub-mae-consumer",
+          "from": "1× 1536Mi (OOM today)",
+          "to": "6× 8Gi / 6g heap",
+          "why": "10× the 1M MAE plan; keep consumer lag near zero or search goes stale."
+        },
+        {
+          "component": "datahub-gms",
+          "from": "1× 2Gi",
+          "to": "8× 16Gi heap 12g, HPA on CPU",
+          "why": "Search and GraphQL become the hot path; one replica will timeout."
+        },
+        {
+          "component": "datahub-mce-consumer",
+          "from": "1× 1536Mi",
+          "to": "4× 8Gi",
+          "why": "Bulk ingest windows otherwise back up MetadataChangeEvent_v4."
+        },
+        {
+          "component": "datahub-actions",
+          "from": "1× 2048Mi",
+          "to": "dedicated executor pool 4× 8Gi; no overlapping hourly recipes",
+          "why": "In-process recipes at 10M will OOM the single executor."
+        },
+        {
+          "component": "elasticsearch",
+          "from": "1× 2g / 20GB",
+          "to": "5 data nodes heap 31g, disk multi-TB, ILM for timeseries",
+          "why": "Index size, not GMS heap, is the usual 10M ceiling."
+        },
+        {
+          "component": "kafka",
+          "from": "partitions=1",
+          "to": "MAE 36 / MCE 24, retention sized to peak ingest",
+          "why": "Need parallel apply plus replay room after MAE incidents."
+        },
+        {
+          "component": "mysql",
+          "from": "1Gi",
+          "to": "primary 32Gi + read replica for UI browse",
+          "why": "Entity aspect tables and relationships stop fitting a lab-sized instance."
+        }
+      ]
+    }
+  }
+}

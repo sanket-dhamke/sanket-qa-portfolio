@@ -15,6 +15,8 @@
     highlighted: null,
     extraAssets: 0,
     running: null,
+    session: { awaiting_regression: false },
+    lastSuite: null,
   };
 
   const $ = (id) => document.getElementById(id);
@@ -70,9 +72,7 @@
     });
   }
 
-  function drawChart(canvasId, key, maxFn) {
-    const canvas = $(canvasId);
-    if (!canvas) return;
+  function sizeCanvas(canvas) {
     const ctx = canvas.getContext("2d");
     const dpr = window.devicePixelRatio || 1;
     const width = canvas.clientWidth;
@@ -80,6 +80,13 @@
     canvas.width = width * dpr;
     canvas.height = height * dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return { ctx, width, height };
+  }
+
+  function drawChart(canvasId, key, maxFn) {
+    const canvas = $(canvasId);
+    if (!canvas) return;
+    const { ctx, width, height } = sizeCanvas(canvas);
     ctx.clearRect(0, 0, width, height);
     ctx.strokeStyle = "#24344c";
     ctx.lineWidth = 1;
@@ -108,6 +115,31 @@
     });
   }
 
+  function drawBars(canvasId, rows, opts) {
+    const canvas = $(canvasId);
+    if (!canvas) return;
+    const { ctx, width, height } = sizeCanvas(canvas);
+    ctx.clearRect(0, 0, width, height);
+    if (!rows.length) return;
+    const scale = (v) => (opts && opts.log ? Math.log10(Math.max(v, 1)) : v);
+    const max = Math.max.apply(null, rows.map((r) => scale(r.value))) || 1;
+    const gap = 12;
+    const barW = (width - gap * (rows.length + 1)) / rows.length;
+    rows.forEach((row, i) => {
+      const h = ((scale(row.value) / max) * (height - 28)) | 0;
+      const x = gap + i * (barW + gap);
+      const y = height - 18 - h;
+      ctx.fillStyle = row.color;
+      ctx.fillRect(x, y, barW, h);
+      ctx.fillStyle = "#8b9cb3";
+      ctx.font = "11px IBM Plex Sans, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(row.label, x + barW / 2, height - 6);
+      ctx.fillStyle = "#e8eef8";
+      ctx.fillText(String(row.value), x + barW / 2, y - 4);
+    });
+  }
+
   function renderPods() {
     const cluster = state.data.fixtures.cluster;
     const body = cluster.pods
@@ -128,22 +160,34 @@
     $("pod-body").innerHTML = body;
     $("error-log").textContent = cluster.pods
       .filter((p) => p.status !== "Running" || p.last_reason)
-      .map(
-        (p) =>
-          `${p.component}  restarts=${p.restarts}  ${p.last_reason || p.status}  ${p.probe || ""}`
-      )
+      .map((p) => `${p.component}  restarts=${p.restarts}  ${p.last_reason || p.status}  ${p.probe || ""}`)
       .join("\n");
   }
 
-  function renderRca() {
-    $("rca-list").innerHTML = state.data.fixtures.rca.findings
-      .map(
-        (f) => `<article class="finding ${f.severity}">
-          <strong>${f.component} · ${f.title}</strong>
-          ${f.evidence}<br>${f.likely_cause}<br><em>${f.suggested}</em>
-        </article>`
-      )
-      .join("");
+  function rcaCard(f) {
+    return `<article class="finding ${f.severity || "high"}">
+      <strong>${f.component ? f.component + " · " : ""}${f.title || f.name || "Finding"}</strong>
+      <dl>
+        <dt>Symptom</dt><dd>${f.evidence || f.symptom || ""}</dd>
+        <dt>Cause</dt><dd>${f.likely_cause || f.cause || ""}</dd>
+        <dt>Fix</dt><dd><em>${f.suggested || f.fix || ""}</em></dd>
+      </dl>
+    </article>`;
+  }
+
+  function renderRca(extra) {
+    const base = state.data.fixtures.rca.findings.map(rcaCard);
+    const more = (extra || []).map((r) =>
+      rcaCard({
+        severity: "high",
+        component: r.id,
+        title: r.name,
+        evidence: r.symptom,
+        likely_cause: r.cause,
+        suggested: r.fix,
+      })
+    );
+    $("rca-list").innerHTML = more.concat(base).join("");
   }
 
   function renderLegend() {
@@ -152,10 +196,130 @@
       .join("");
   }
 
+  function showTab(id) {
+    document.querySelectorAll(".tab").forEach((t) => {
+      const on = t.dataset.tab === id;
+      t.classList.toggle("on", on);
+      t.setAttribute("aria-selected", on ? "true" : "false");
+    });
+    document.querySelectorAll(".tab-panel").forEach((p) => {
+      p.classList.toggle("on", p.id === "tab-" + id);
+    });
+  }
+
+  function renderSuitePanel(summary) {
+    if (!summary) return;
+    state.lastSuite = summary;
+    const hint = $("suite-hint");
+    hint.textContent =
+      summary.suite +
+      (summary.layer ? " / " + summary.layer : "") +
+      " → " +
+      summary.verdict +
+      " · " +
+      summary.passed +
+      " passed · " +
+      summary.failed +
+      " failed · " +
+      summary.duration_ms +
+      " ms";
+    $("suite-live").textContent = summary.suite + " " + summary.verdict;
+    $("suite-live").parentElement.classList.toggle("degraded", summary.verdict === "FAIL");
+    $("suite-live").parentElement.classList.toggle("ok", summary.verdict === "PASS");
+    drawBars("suite-chart", [
+      { label: "pass", value: summary.passed, color: "#3dba7a" },
+      { label: "fail", value: summary.failed, color: "#e05d4f" },
+    ]);
+    const layers = {};
+    (summary.cases || []).forEach((c) => {
+      layers[c.layer] = layers[c.layer] || { pass: 0, fail: 0 };
+      if (c.status === "pass") layers[c.layer].pass += 1;
+      else layers[c.layer].fail += 1;
+    });
+    drawBars(
+      "layer-chart",
+      Object.keys(layers).map((k, i) => ({
+        label: k,
+        value: layers[k].pass + layers[k].fail,
+        color: ["#7eb0e4", "#c4a35a", "#c792ea"][i % 3],
+      }))
+    );
+    const rows = (summary.cases || [])
+      .map(
+        (c) => `<tr>
+          <td class="badge ${c.status}">${c.status.toUpperCase()}</td>
+          <td>${c.layer}</td>
+          <td>${c.name}</td>
+          <td>${c.duration_ms} ms</td>
+        </tr>`
+      )
+      .join("");
+    $("suite-table").innerHTML =
+      `<table><thead><tr><th>Result</th><th>Layer</th><th>Case</th><th>Time</th></tr></thead><tbody>${rows}</tbody></table>`;
+    if (summary.rcas && summary.rcas.length) renderRca(summary.rcas);
+  }
+
+  function renderCapacity(plan) {
+    if (!plan) return;
+    const current = plan.current_assets || 140;
+    drawBars(
+      "cap-chart",
+      [
+        { label: "now", value: current, color: "#7eb0e4" },
+        { label: "1M", value: 1000000, color: "#c4a35a" },
+        { label: "10M", value: 10000000, color: "#e05d4f" },
+      ],
+      { log: true }
+    );
+    const blocks = plan.plans || [];
+    $("cap-table").innerHTML = blocks
+      .map((block) => {
+        const rows = (block.changes || [])
+          .map(
+            (c) =>
+              `<tr><td>${c.component}</td><td>${c.from}</td><td>${c.to}</td></tr>`
+          )
+          .join("");
+        return `<h2 style="border:0">${block.label}</h2>
+          <table><thead><tr><th>Component</th><th>Now</th><th>Upgrade</th></tr></thead><tbody>${rows}</tbody></table>`;
+      })
+      .join("");
+  }
+
+  function addStructured(el, result) {
+    if (result.ui === "suite_report" && result.report) {
+      const wrap = document.createElement("div");
+      wrap.className = "result-table";
+      wrap.innerHTML = `<table>${(result.report.cases || [])
+        .map(
+          (c) =>
+            `<tr><td class="badge ${c.status}">${c.status.toUpperCase()}</td><td>${c.layer}</td><td>${c.name}</td></tr>`
+        )
+        .join("")}</table>`;
+      el.appendChild(wrap);
+    }
+    if (result.awaiting_regression) {
+      const row = document.createElement("div");
+      row.className = "confirm";
+      row.innerHTML =
+        '<button type="button" data-confirm="yes">Run regression</button>' +
+        '<button type="button" data-confirm="no">Skip</button>';
+      row.addEventListener("click", (e) => {
+        const btn = e.target.closest("button");
+        if (!btn) return;
+        ask(btn.dataset.confirm === "yes" ? "yes" : "no");
+      });
+      el.appendChild(row);
+    }
+  }
+
   function addMsg(kind, text, result) {
     const el = document.createElement("div");
     el.className = "msg " + kind;
-    el.textContent = text;
+    const body = document.createElement("div");
+    body.className = "body";
+    body.textContent = text;
+    el.appendChild(body);
     if (result) {
       const chips = document.createElement("div");
       chips.className = "chips";
@@ -168,27 +332,66 @@
       route.className = "chip";
       route.textContent = "route " + result.route;
       chips.appendChild(route);
-      (result.tools || []).forEach((tool) => {
+      if (result.metrics && result.metrics.verdict) {
+        const v = document.createElement("span");
+        v.className = "chip " + (result.metrics.verdict === "PASS" ? "ok" : "bad");
+        v.textContent = result.metrics.verdict;
+        chips.appendChild(v);
+      }
+      (result.tools || []).slice(0, 4).forEach((tool) => {
         const t = document.createElement("span");
         t.className = "chip";
         t.textContent = tool;
         chips.appendChild(t);
       });
       el.appendChild(chips);
+      addStructured(el, result);
     }
     $("log").appendChild(el);
     $("log").scrollTop = $("log").scrollHeight;
   }
 
+  function applySession(result) {
+    if (result && result.session_update) {
+      Object.assign(state.session, result.session_update);
+    } else if (result && result.awaiting_regression) {
+      state.session.awaiting_regression = true;
+    }
+  }
+
   function ask(question) {
-    $("q").value = question;
-    addMsg("user", question);
-    const result = window.LabRouter.route(state.data, question);
+    const q = String(question || "").trim();
+    if (!q) return null;
+    $("q").value = "";
+    $("q").focus();
+    addMsg("user", q);
+    const result = window.LabRouter.route(state.data, q, state.session);
+    applySession(result);
     addMsg("bot", result.answer, result);
     if (result.metrics && result.metrics.filter) state.highlighted = result.metrics.filter;
     else if (result.route === "pod_status") state.highlighted = "datahub-mae-consumer";
     else state.highlighted = null;
     if (result.ui === "recipe_editor") openRecipe(result.recipe);
+    if (result.ui === "suite_report") {
+      showTab("suites");
+      renderSuitePanel(result.report);
+      if (result.report && result.report.rcas && result.report.rcas.length) showTab("suites");
+    }
+    if (result.ui === "verdict") {
+      showTab("rca");
+      const health = result.metrics && result.metrics.health;
+      $("health-live").textContent = health || "—";
+      $("health-live").parentElement.classList.toggle("degraded", health === "DEGRADED");
+      $("health-live").parentElement.classList.toggle("ok", health === "HEALTHY");
+      if (result.health && result.health.sanity_report) renderSuitePanel(result.health.sanity_report);
+    }
+    if (result.ui === "capacity") {
+      showTab("capacity");
+      renderCapacity(result.capacity);
+    }
+    if (result.metrics && result.metrics.open != null) {
+      $("alert-live").textContent = String(result.metrics.open);
+    }
     return result;
   }
 
@@ -202,14 +405,8 @@
     const host = $("f-host").value.trim();
     const user = $("f-user").value.trim();
     const database = $("f-db").value.trim();
-    const schemas = $("f-schema")
-      .value.split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
-    const tables = $("f-table")
-      .value.split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
+    const schemas = $("f-schema").value.split(",").map((s) => s.trim()).filter(Boolean);
+    const tables = $("f-table").value.split(",").map((s) => s.trim()).filter(Boolean);
     const schemaYaml = schemas.map((s) => `        - ${s}`).join("\n") || "        - public";
     const tableYaml = tables.map((s) => `        - ${s}`).join("\n") || "        - public.orders";
     $("recipe-yaml").value = `pipeline_name: ${pipeline}
@@ -300,10 +497,7 @@ sink:
     const runId = "urn:li:dataHubExecutionRequest:exec-" + Date.now().toString(36);
     const recipeJson = JSON.stringify({
       pipeline_name: pipeline,
-      source: {
-        type: "postgres",
-        config: { host_port: host, database: database, username: user },
-      },
+      source: { type: "postgres", config: { host_port: host, database: database, username: user } },
       sink: { type: "datahub-rest", config: { server: "http://datahub-gms:8080" } },
     });
     $("gql-create").textContent = `mutation {
@@ -373,9 +567,7 @@ sink:
       if (pct === 100) {
         state.ingestBoost = 0;
         state.extraAssets += 14;
-        $("asset-live").textContent = String(
-          state.data.fixtures.ingestion.totals.assets + state.extraAssets
-        );
+        $("asset-live").textContent = String(state.data.fixtures.ingestion.totals.assets + state.extraAssets);
       }
       i += 1;
     }, 700);
@@ -405,6 +597,10 @@ sink:
       const btn = e.target.closest("button");
       if (btn) ask(btn.dataset.q);
     });
+    document.querySelector(".tabs").addEventListener("click", (e) => {
+      const tab = e.target.closest(".tab");
+      if (tab) showTab(tab.dataset.tab);
+    });
     ["f-pipeline", "f-host", "f-user", "f-db", "f-schema", "f-table"].forEach((id) => {
       $(id).addEventListener("input", syncYamlFromForm);
     });
@@ -420,6 +616,8 @@ sink:
     renderRca();
     $("asset-live").textContent = String(state.data.fixtures.ingestion.totals.assets);
     $("source-live").textContent = String(state.data.fixtures.ingestion.sources.length);
+    $("alert-live").textContent = String(state.data.fixtures.alerts.open);
+    $("health-live").textContent = "unknown";
     const canned = $("canned");
     state.data.canned.forEach((q) => {
       const btn = document.createElement("button");
@@ -431,9 +629,13 @@ sink:
     bind();
     tick();
     setInterval(tick, 1000);
+    renderCapacity({
+      current_assets: state.data.fixtures.app_config.current_assets,
+      plans: [],
+    });
     addMsg(
       "bot",
-      "DataHub operations lab. Keyword router, not an LLM. Ask about crashing pods, CPU of datahub-gms, postgres/oracle sources, or ingest a postgres source.",
+      "Hybrid DataHub lab. Keyword router + suite catalog, not an LLM. Ask to log in as emuser/empass, run API or UI sanity, check alerts, size for 1M assets, or ask the current application state (smoke+sanity, then confirm regression).",
       { source: "fallback:deterministic", route: "hello", tools: [] }
     );
   }

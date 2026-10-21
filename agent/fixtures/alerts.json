@@ -1,0 +1,54 @@
+{
+  "generated_at": "2026-10-01T12:00:00Z",
+  "note": "Synthetic DataHub incidents for this lab. Mapped from the user word “alerts”. Not scraped from a live tenant.",
+  "open": 3,
+  "resolved": 2,
+  "total": 5,
+  "items": [
+    {
+      "urn": "urn:li:incident:inc-1001",
+      "title": "Search index lag after MAE consumer OOM",
+      "state": "ACTIVE",
+      "severity": "HIGH",
+      "type": "OPERATIONAL",
+      "entity": "datahub-mae-consumer",
+      "started_at": "2026-10-01T11:40:00Z"
+    },
+    {
+      "urn": "urn:li:incident:inc-1002",
+      "title": "Ingestion executor memory pressure",
+      "state": "ACTIVE",
+      "severity": "MEDIUM",
+      "type": "OPERATIONAL",
+      "entity": "datahub-actions",
+      "started_at": "2026-10-01T10:15:00Z"
+    },
+    {
+      "urn": "urn:li:incident:inc-1003",
+      "title": "Stale assertion on analytics.public.orders row count",
+      "state": "ACTIVE",
+      "severity": "LOW",
+      "type": "ASSERTION",
+      "entity": "urn:li:dataset:(urn:li:dataPlatform:postgres,analytics.public.orders,PROD)",
+      "started_at": "2026-09-30T18:02:00Z"
+    },
+    {
+      "urn": "urn:li:incident:inc-0994",
+      "title": "GMS readiness blip",
+      "state": "RESOLVED",
+      "severity": "LOW",
+      "type": "OPERATIONAL",
+      "entity": "datahub-gms",
+      "started_at": "2026-09-28T09:11:00Z"
+    },
+    {
+      "urn": "urn:li:incident:inc-0988",
+      "title": "Oracle recipe timeout (cleared on retry)",
+      "state": "RESOLVED",
+      "severity": "MEDIUM",
+      "type": "INGESTION",
+      "entity": "oracle-finance",
+      "started_at": "2026-09-27T22:40:00Z"
+    }
+  ]
+}

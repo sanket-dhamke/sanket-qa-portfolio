@@ -1,0 +1,12 @@
+{
+  "note": "Fictional DataHub lab users for the mock POST /logIn API. Not employer credentials and not a live tenant.",
+  "accounts": [
+    {
+      "username": "emuser",
+      "password": "empass",
+      "urn": "urn:li:corpuser:emuser",
+      "displayName": "Lab Operator",
+      "role": "Admin"
+    }
+  ]
+}

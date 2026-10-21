@@ -1,5 +1,23 @@
 [
   {
+    "id": "rest.logIn",
+    "title": "Frontend / GMS login",
+    "method": "POST",
+    "path": "/logIn",
+    "summary": "Create a session. This lab accepts JSON {username, password}. Fictional user emuser / empass. Not a live tenant.",
+    "citation": "components.md#datahub-components-in-this-lab",
+    "keywords": ["login", "log in", "logIn", "authenticate", "emuser"]
+  },
+  {
+    "id": "graphql.listIncidents",
+    "title": "List incidents (alerts)",
+    "method": "POST",
+    "path": "/api/graphql",
+    "summary": "GraphQL listIncidents. This lab uses DataHub incidents for the word “alerts”. Returns open count and titles from the alerts fixture.",
+    "citation": "components.md#datahub-components-in-this-lab",
+    "keywords": ["alerts", "incidents", "listincidents", "how many alert"]
+  },
+  {
     "id": "graphql.listIngestionSources",
     "title": "List ingestion sources",
     "method": "POST",

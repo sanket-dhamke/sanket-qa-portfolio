@@ -1,0 +1,175 @@
+{
+  "generated_at": "2026-10-01T12:00:00Z",
+  "note": "Recorded smoke / sanity / regression results for the in-browser agent. Same markers as pytest. GitHub Pages cannot spawn pytest, so the handler replays this catalog. Python tests/api and tests/ui are the live checks.",
+  "cases": [
+    {
+      "id": "api.health",
+      "name": "GMS GET /health",
+      "layer": "api",
+      "suites": ["smoke", "sanity", "regression"],
+      "endpoint": "rest.health",
+      "status": "pass",
+      "duration_ms": 42,
+      "expected": "200 {ok: true, component: datahub-gms}",
+      "actual": "200 ok=true",
+      "rca": null
+    },
+    {
+      "id": "api.config",
+      "name": "GMS GET /config",
+      "layer": "api",
+      "suites": ["smoke", "regression"],
+      "endpoint": "rest.config",
+      "status": "pass",
+      "duration_ms": 51,
+      "expected": "managedIngestion.enabled true",
+      "actual": "enabled true, defaultCliVersion 0.14.1",
+      "rca": null
+    },
+    {
+      "id": "api.login",
+      "name": "POST /logIn emuser / empass",
+      "layer": "api",
+      "suites": ["smoke", "sanity", "regression"],
+      "endpoint": "rest.logIn",
+      "status": "pass",
+      "duration_ms": 88,
+      "expected": "200 session actor urn:li:corpuser:emuser",
+      "actual": "200 PLAY_SESSION set, actor emuser",
+      "rca": null
+    },
+    {
+      "id": "api.list_sources",
+      "name": "GraphQL listIngestionSources",
+      "layer": "api",
+      "suites": ["smoke", "sanity", "regression"],
+      "endpoint": "graphql.listIngestionSources",
+      "status": "pass",
+      "duration_ms": 120,
+      "expected": "total 2 (postgres-analytics, oracle-finance)",
+      "actual": "total 2, assets 86 + 54",
+      "rca": null
+    },
+    {
+      "id": "api.asset_counts",
+      "name": "GraphQL searchAcrossEntities dataset total",
+      "layer": "api",
+      "suites": ["sanity", "regression"],
+      "endpoint": "graphql.searchAcrossEntities",
+      "status": "pass",
+      "duration_ms": 134,
+      "expected": "datasets 115, assets 140",
+      "actual": "datasets 115",
+      "rca": null
+    },
+    {
+      "id": "api.incidents",
+      "name": "GraphQL listIncidents (alerts)",
+      "layer": "api",
+      "suites": ["sanity", "regression"],
+      "endpoint": "graphql.listIncidents",
+      "status": "pass",
+      "duration_ms": 97,
+      "expected": "open incidents 3",
+      "actual": "open 3, total 5",
+      "rca": null
+    },
+    {
+      "id": "api.ingest_proposal",
+      "name": "REST ingestProposal schemaMetadata",
+      "layer": "api",
+      "suites": ["regression"],
+      "endpoint": "rest.ingestProposal",
+      "status": "pass",
+      "duration_ms": 210,
+      "expected": "success true",
+      "actual": "success true",
+      "rca": null
+    },
+    {
+      "id": "ui.home_cards",
+      "name": "Home shows name and three cards",
+      "layer": "ui",
+      "suites": ["smoke", "sanity", "regression"],
+      "endpoint": null,
+      "status": "pass",
+      "duration_ms": 640,
+      "expected": "heading Sanket Dhamke; Hybrid Agent, API Automation, UI Automation",
+      "actual": "visible",
+      "rca": null
+    },
+    {
+      "id": "ui.console_chat",
+      "name": "Console composer and source chip",
+      "layer": "ui",
+      "suites": ["smoke", "regression"],
+      "endpoint": null,
+      "status": "pass",
+      "duration_ms": 710,
+      "expected": "Ask control and result-source chip after a canned question",
+      "actual": "visible",
+      "rca": null
+    },
+    {
+      "id": "ui.search_datasets",
+      "name": "UI search returns postgres datasets",
+      "layer": "ui",
+      "suites": ["sanity", "regression"],
+      "endpoint": "graphql.searchAcrossEntities",
+      "status": "fail",
+      "duration_ms": 1840,
+      "expected": "results include analytics.public.orders",
+      "actual": "empty result list; index lag banner",
+      "rca": {
+        "symptom": "Dataset search in the UI returns no rows even though GraphQL assetCounts still reports 115 datasets.",
+        "evidence": [
+          "datahub-mae-consumer status=CrashLoopBackOff, restarts=7, last_reason=OOMKilled",
+          "memory 1536 / 1536 MiB in the 5m fixture",
+          "open incident inc-1001 Search index lag after MAE consumer OOM"
+        ],
+        "cause": "MAE consumer cannot apply MetadataAuditEvent_v4, so Elasticsearch search documents are stale. List/count APIs that read GMS still pass; the UI search path does not.",
+        "fix": "Raise datahub-mae-consumer memory toward 2Gi, confirm Kafka lag on MetadataAuditEvent_v4, then reindex. Do not treat this as a frontend selector bug."
+      }
+    },
+    {
+      "id": "ui.lineage_graph",
+      "name": "Lineage graph for analytics.public.orders",
+      "layer": "ui",
+      "suites": ["regression"],
+      "endpoint": "graphql.dataset",
+      "status": "fail",
+      "duration_ms": 2210,
+      "expected": "upstreamLineage edges render (fixture has 67 edges)",
+      "actual": "graph spinner then empty canvas",
+      "rca": {
+        "symptom": "Lineage tab never paints edges.",
+        "evidence": [
+          "Same MAE CrashLoopBackOff as ui.search_datasets",
+          "mce-consumer is Running but has 2 prior Error restarts"
+        ],
+        "cause": "upstreamLineage aspects are stored on GMS, but the UI lineage explorer hydrates through the search/graph index that MAE maintains.",
+        "fix": "Restore mae-consumer, then reload the dataset urn. No recipe change required."
+      }
+    },
+    {
+      "id": "perf.mae_memory_headroom",
+      "name": "MAE consumer memory under 90% of limit",
+      "layer": "performance",
+      "suites": ["regression"],
+      "endpoint": null,
+      "status": "fail",
+      "duration_ms": 30,
+      "expected": "memory_mib / memory_limit_mib < 0.90",
+      "actual": "1536 / 1536 = 100%",
+      "rca": {
+        "symptom": "MAE pod has zero memory headroom.",
+        "evidence": [
+          "metrics fixture cpu 88.1%, memory at limit",
+          "RCA finding: OOMKilled then CrashLoopBackOff"
+        ],
+        "cause": "1536 MiB is too small for MAE + Elasticsearch bulk buffers at even 140 assets.",
+        "fix": "This is the first config change before any 1M / 10M ingest plan."
+      }
+    }
+  ]
+}

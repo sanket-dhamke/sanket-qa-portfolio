@@ -24,13 +24,14 @@
   </header>
   <main class="wrap prose">
     <h1>API automation</h1>
-    <p>pytest + requests (FastAPI TestClient) against a <strong>bundled mock DataHub-like GraphQL/REST</strong> in <code>api/app.py</code>. It is not a real DataHub cloud. Tests cover list ingestion sources, asset counts, create source from YAML, and poll execution until SUCCESS.</p>
+    <p>pytest + requests (FastAPI TestClient) against a <strong>bundled mock DataHub-like GraphQL/REST</strong> in <code>api/app.py</code>. It is not a real DataHub cloud. Tests cover health, login (<code>emuser</code>/<code>empass</code>), incidents, list ingestion sources, asset counts, create source from YAML, and poll execution until SUCCESS.</p>
     <h2>Folder map</h2>
     <pre class="folder">agent/          router, handlers, KB, fixtures, recipes
-api/app.py      mock GMS: /health /config POST /api/graphql
+api/app.py      mock GMS: /health /config /logIn POST /api/graphql
+agent/fixtures/suites.json   smoke / sanity / regression catalog
 tests/test_routing.py     no-network source assertions
-tests/api/payloads/       postgres_recipe.yml, GraphQL body
-tests/api/test_health.py  smoke status + time
+tests/test_hybrid_agent.py  login, suites, alerts, capacity, verdict
+tests/api/test_login.py   smoke login + sanity incidents
 tests/api/test_ingestion.py  sanity list / counts / YAML / poll
 tests/ui/                 Playwright against this site
 docs/reports/             checked-in pytest-html snapshot</pre>
@@ -43,12 +44,12 @@ pytest -m "smoke or sanity" tests/test_routing.py tests/api \
 # UI (optional)
 playwright install chromium
 pytest -m ui tests/ui</pre>
-    <p>Markers: <code>smoke</code>, <code>sanity</code>, <code>ui</code>. Domain asserts: HTTP status, JSON shape, fixture asset counts, durationMs from the mock execution, elapsed time under 1s.</p>
+    <p>Markers: <code>smoke</code>, <code>sanity</code>, <code>regression</code>, <code>ui</code>. Ask the console agent to run those suites; it replays the catalog and prints RCA on failures. Domain asserts: HTTP status, JSON shape, fixture asset counts, durationMs from the mock execution, elapsed time under 1s.</p>
     <h2>Sample HTML report</h2>
     <p><a href="reports/pytest-report.html">Open the checked-in pytest-html report</a> · <a href="reports/results.html">compact results page</a></p>
     <iframe title="pytest-html sample" src="reports/pytest-report.html" style="width:100%;height:420px;border:1px solid #d8d0c2;background:#fff"></iframe>
     <h2 id="ui">UI automation</h2>
-    <p>Two Playwright tests: the home page shows the three cards; the console canned “OOM” question paints a <code>source handler:pod_status</code> chip. That is UI automation against this public sample — not a claim of a large product grid.</p>
+    <p>Playwright smokes: home cards, canned OOM source chip, Enter clears the chat box, lab login chip. That is UI automation against this public sample — not a claim of a large product grid.</p>
   </main>
   <footer class="site-footer"><div class="wrap">Original portfolio sample of a hybrid router + API test framework. Not affiliated with any prior employer product.</div></footer>
 </body>

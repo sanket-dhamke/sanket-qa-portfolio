@@ -1,11 +1,12 @@
 """Keyword / rule intent router.
 
 This is deliberately not an LLM. The first matching rule wins. Numbers in
-answers always come from handlers (fixture JSON) or from cited KB files.
+answers always come from handlers (fixture JSON), the suite catalog, or cited KB files.
 """
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from agent import handlers, kb
@@ -19,8 +20,106 @@ CANNED_QUESTIONS = [
     "What GraphQL mutation creates an ingestion source?",
 ]
 
-# Order is the contract. Recipe / handlers sit in front of KB retrieval.
+CANNED_CHIPS = CANNED_QUESTIONS + [
+    "Test the login with username as emuser and password as empass",
+    "Run API sanity suite",
+    "Check UI sanity",
+    "How many alerts are in DataHub?",
+    "What is the current state of the application?",
+    "What configuration needs to be upgraded to ingest 10m or 1m assets?",
+]
+
+_YES = re.compile(
+    r"^\s*(y|yes|yeah|yep|ok|okay|sure|do it|go ahead|please run|run it|run them|run regression)\b",
+    re.I,
+)
+_NO = re.compile(r"^\s*(n|no|nope|skip|not now|later|don't|dont)\b", re.I)
+
+# Order is the contract. Specific automation routes sit in front of generic metrics/KB.
 RULES: list[dict[str, Any]] = [
+    {
+        "route": "login_api",
+        "source": "handler:login_api",
+        "handler": handlers.login_api,
+        "any": [
+            "test the login",
+            "test login",
+            "run login",
+            "log in with",
+            "login with",
+            "username as",
+            "password as",
+        ],
+    },
+    {
+        "route": "run_suite",
+        "source": "handler:run_suite",
+        "handler": handlers.run_named_suite,
+        "any": [
+            "api sanity",
+            "ui sanity",
+            "sanity suite",
+            "smoke suite",
+            "run smoke",
+            "run sanity",
+            "run regression",
+            "regression suite",
+            "check ui sanity",
+            "check api sanity",
+            "run api tests",
+            "run ui tests",
+        ],
+    },
+    {
+        "route": "app_status",
+        "source": "handler:app_status",
+        "handler": handlers.app_status,
+        "any": [
+            "current state of the application",
+            "current status of the application",
+            "current state of application",
+            "application status",
+            "app status",
+            "quality of the application",
+            "application quality",
+            "verdict on the application",
+            "health of the application",
+        ],
+    },
+    {
+        "route": "capacity_plan",
+        "source": "handler:capacity_plan",
+        "handler": handlers.capacity_plan,
+        "any": [
+            "configuration needs",
+            "config needs to be upgraded",
+            "upgrade to ingest",
+            "ingest 10m",
+            "ingest 1m",
+            "1 million assets",
+            "10 million assets",
+            "1m assets",
+            "10m assets",
+            "capacity",
+            "scale to",
+        ],
+    },
+    {
+        "route": "execute_api",
+        "source": "handler:execute_api",
+        "handler": handlers.execute_catalog_api,
+        "any": [
+            "how many alert",
+            "how many alerts",
+            "total no of alert",
+            "total number of alert",
+            "alerts in datahub",
+            "list incidents",
+            "gms health",
+            "health api",
+            "/health",
+        ],
+    },
     {
         "route": "ingest_recipe",
         "source": "handler:ingest_recipe",
@@ -88,6 +187,9 @@ RULES: list[dict[str, Any]] = [
             "total assets",
             "asset count",
             "how many dataset",
+            "how many assets",
+            "how many asset",
+            "number of assets",
             "dataset count",
             "postgres and oracle",
         ],
@@ -132,12 +234,41 @@ def _match_rule(question: str) -> dict[str, Any] | None:
     return None
 
 
-def route(question: str, *, model_available: bool = False) -> dict[str, Any]:
+def route(
+    question: str,
+    *,
+    model_available: bool = False,
+    session: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """Return a structured answer with a visible source field."""
     text = (question or "").strip()
+    session = session if session is not None else {}
+
+    if session.get("awaiting_regression") and text:
+        if _YES.search(text):
+            result = handlers.run_named_suite(text, suite="regression", layer=None)
+            result["question"] = text
+            result["model_available"] = model_available
+            result["session_update"] = {"awaiting_regression": False}
+            result["awaiting_regression"] = False
+            result["answer"] = maybe_rephrase(
+                result["answer"], model_available=model_available
+            )
+            return result
+        if _NO.search(text):
+            result = handlers.skip_regression(text)
+            result["question"] = text
+            result["model_available"] = model_available
+            result["answer"] = maybe_rephrase(
+                result["answer"], model_available=model_available
+            )
+            return result
+
     if not text:
         result = handlers.fallback("")
-        result["answer"] = maybe_rephrase(result["answer"], model_available=model_available)
+        result["answer"] = maybe_rephrase(
+            result["answer"], model_available=model_available
+        )
         return result
 
     rule = _match_rule(text)
@@ -146,7 +277,7 @@ def route(question: str, *, model_available: bool = False) -> dict[str, Any]:
     else:
         result = rule["handler"](text)
         result["route"] = rule["route"]
-        if rule["route"] != "kb_retrieve":
+        if rule["route"] not in {"kb_retrieve", "run_suite", "execute_api", "login_api"}:
             result["source"] = rule["source"]
 
     result["question"] = text

@@ -7,7 +7,7 @@ from pathlib import Path
 
 from agent.handlers import FIXTURES, RECIPES
 from agent.kb import load_endpoints
-from agent.router import CANNED_QUESTIONS, rules_for_export
+from agent.router import CANNED_CHIPS, rules_for_export
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "docs" / "js" / "demo-data.json"
@@ -19,13 +19,17 @@ def _json(name: str) -> dict:
 
 def build() -> dict:
     return {
-        "canned": CANNED_QUESTIONS,
+        "canned": CANNED_CHIPS,
         "rules": rules_for_export(),
         "fixtures": {
             "cluster": _json("cluster.json"),
             "metrics": _json("metrics.json"),
             "ingestion": _json("ingestion.json"),
             "rca": _json("rca.json"),
+            "alerts": _json("alerts.json"),
+            "users": _json("users.json"),
+            "app_config": _json("app_config.json"),
+            "suites": _json("suites.json"),
         },
         "recipes": {
             "postgres": (RECIPES / "postgres.yml").read_text(encoding="utf-8"),

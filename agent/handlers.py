@@ -6,6 +6,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+from agent import executor
+
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
 RECIPES = Path(__file__).resolve().parent / "recipes"
 
@@ -238,11 +240,316 @@ def fallback(question: str) -> dict[str, Any]:
                 "No handler or catalog entry matched that question. This sample "
                 "does not call a language model, so it will not invent pod counts, "
                 "CPU, or asset totals. Try: crashing/OOM pods, CPU of datahub-gms, "
-                "postgres/oracle sources and total assets, ingest a postgres source, "
-                "or which GraphQL mutation creates an ingestion source."
+                "how many assets, how many alerts, login with emuser/empass, "
+                "run API sanity, check UI sanity, current state of the application, "
+                "or what config to upgrade for 1M / 10M assets."
             ),
             "metrics": None,
             "citations": [],
         }
     )
     return result
+
+
+def _format_rca_block(rca: dict[str, Any], heading: str | None = None) -> str:
+    title = heading or rca.get("name") or rca.get("id") or "Failure"
+    lines = [
+        f"RCA — {title}",
+        f"Symptom: {rca.get('symptom')}",
+        "Evidence:",
+    ]
+    for item in rca.get("evidence") or []:
+        lines.append(f"  - {item}")
+    lines.append(f"Cause: {rca.get('cause')}")
+    lines.append(f"Fix: {rca.get('fix')}")
+    return "\n".join(lines)
+
+
+def _format_suite(summary: dict[str, Any]) -> str:
+    label = summary.get("suite", "suite")
+    layer = summary.get("layer") or "api+ui+performance"
+    lines = [
+        f"Suite `{label}` layer={layer} → {summary['verdict']} "
+        f"({summary['passed']} passed, {summary['failed']} failed, "
+        f"{summary['total']} total, {summary['duration_ms']} ms).",
+        "This is a replay of the checked-in suite catalog — the same smoke/sanity/"
+        "regression markers as pytest. GitHub Pages does not spawn pytest.",
+    ]
+    for case in summary.get("cases") or []:
+        mark = "PASS" if case["status"] == "pass" else "FAIL"
+        lines.append(
+            f"- [{mark}] {case['layer']} {case['id']}: {case['name']} "
+            f"({case['duration_ms']} ms)"
+        )
+        if case["status"] == "fail":
+            lines.append(f"    expected: {case.get('expected')}")
+            lines.append(f"    actual:   {case.get('actual')}")
+    for rca in summary.get("rcas") or []:
+        lines.append("")
+        lines.append(_format_rca_block(rca, rca.get("name")))
+    return "\n".join(lines)
+
+
+def login_api(question: str) -> dict[str, Any]:
+    username, password = executor.extract_credentials(question)
+    run = executor.login(username, password)
+    result = _base()
+    if not username or not password:
+        result.update(
+            {
+                "route": "login_api",
+                "source": "handler:login_api",
+                "tools": ["kb:rest.logIn"],
+                "answer": (
+                    "POST `/logIn` is in the catalog, but this lab will not invent "
+                    "credentials. Say: test the login with username as emuser and "
+                    "password as empass (fictional lab user)."
+                ),
+                "metrics": {"status": 400, "ok": False},
+                "ui": "api_result",
+                "api": run,
+                "citations": ["agent/fixtures/users.json", "agent/kb/endpoints.json"],
+            }
+        )
+        return result
+    if run["ok"]:
+        body = run["body"]
+        answer = (
+            f"POST `/logIn` → {run['status']} OK.\n"
+            f"Actor `{body['actor']}` ({body['displayName']}, {body['role']}).\n"
+            f"Session cookie: `{body['session']}`.\n"
+            "Fictional lab user only."
+        )
+    else:
+        answer = (
+            f"POST `/logIn` username=`{username}` → {run['status']} {run.get('error')}.\n"
+            "RCA — login rejected\n"
+            "Symptom: UI/API session was not created.\n"
+            "Evidence: mock GMS compared the payload to agent/fixtures/users.json.\n"
+            "Cause: username missing from the lab roster, or password did not match.\n"
+            "Fix: use the documented lab pair emuser / empass. Do not retry with invented users."
+        )
+    result.update(
+        {
+            "route": "login_api",
+            "source": "handler:login_api",
+            "tools": ["http:POST /logIn", "read_fixture:agent/fixtures/users.json"],
+            "answer": answer,
+            "metrics": {
+                "ok": run["ok"],
+                "status": run["status"],
+                "username": username,
+            },
+            "ui": "api_result",
+            "api": run,
+            "citations": ["agent/fixtures/users.json"],
+        }
+    )
+    return result
+
+
+def run_named_suite(question: str, suite: str | None = None, layer: str | None = None) -> dict[str, Any]:
+    if suite is None:
+        suite, layer = executor.infer_suite(question)
+    if suite is None and layer:
+        suite = "sanity"
+    if suite is None:
+        return fallback(question)
+    summary = executor.run_suite(suite, layer)
+    result = _base()
+    result.update(
+        {
+            "route": "run_suite",
+            "source": f"handler:run_suite:{suite}" + (f":{layer}" if layer else ""),
+            "tools": [
+                "read_fixture:agent/fixtures/suites.json",
+                f"pytest -m {suite}" + (f" and {layer}" if layer else ""),
+            ],
+            "answer": _format_suite(summary),
+            "metrics": {
+                "suite": suite,
+                "layer": layer,
+                "passed": summary.get("passed"),
+                "failed": summary.get("failed"),
+                "total": summary.get("total"),
+                "verdict": summary.get("verdict"),
+                "failed_ids": summary.get("failed_ids"),
+            },
+            "ui": "suite_report",
+            "report": summary,
+            "citations": ["agent/fixtures/suites.json"],
+        }
+    )
+    return result
+
+
+def execute_catalog_api(question: str) -> dict[str, Any]:
+    endpoint_id = executor.infer_api(question)
+    if endpoint_id == "rest.logIn":
+        return login_api(question)
+    if endpoint_id is None:
+        return fallback(question)
+    run = executor.run_api(endpoint_id)
+    result = _base()
+    body = run.get("body")
+    if endpoint_id == "graphql.listIncidents" and isinstance(body, dict):
+        lines = [
+            f"POST `/api/graphql` listIncidents (DataHub incidents; the lab maps “alerts” here).",
+            f"Open: {body['open']} · resolved: {body.get('resolved')} · total: {body['total']}.",
+        ]
+        for item in body.get("incidents") or []:
+            lines.append(
+                f"- [{item['severity']}] {item['title']} ({item['entity']})"
+            )
+        answer = "\n".join(lines)
+        metrics = {"open": body["open"], "total": body["total"]}
+    else:
+        answer = (
+            f"{run.get('method')} `{run.get('path')}` → {run.get('status')}.\n"
+            f"{json.dumps(body, indent=2) if body is not None else run.get('error')}"
+        )
+        metrics = {"status": run.get("status"), "ok": run.get("ok")}
+    result.update(
+        {
+            "route": "execute_api",
+            "source": f"handler:execute_api:{endpoint_id}",
+            "tools": [f"kb_exec:{endpoint_id}", f"http:{run.get('method')} {run.get('path')}"],
+            "answer": answer,
+            "metrics": metrics,
+            "ui": "api_result",
+            "api": run,
+            "citations": ["agent/kb/endpoints.json", "agent/fixtures/alerts.json"],
+        }
+    )
+    return result
+
+
+def app_status(question: str) -> dict[str, Any]:
+    health = executor.app_health()
+    lines = [
+        f"Application verdict: {health['health']} on `{health['cluster']}` "
+        f"ns `{health['namespace']}` (simulated).",
+        f"Pods: {health['unhealthy']} / {health['pod_count']} not ready "
+        f"({', '.join(health['unhealthy_names']) or 'none'}).",
+        f"Open DataHub incidents (alerts): {health['open_incidents']}. Assets: {health['assets']}.",
+        "Root cause (from fixtures):",
+    ]
+    for title in health["rca_titles"]:
+        lines.append(f"- {title}")
+    smoke, sanity = health["smoke"], health["sanity"]
+    lines.append(
+        f"Auto-ran smoke: {smoke['verdict']} {smoke['passed']}/{smoke['total']} "
+        f"and sanity: {sanity['verdict']} {sanity['passed']}/{sanity['total']}."
+    )
+    if health["sanity_report"].get("rcas"):
+        lines.append("")
+        lines.append(_format_rca_block(health["sanity_report"]["rcas"][0]))
+    lines.append("")
+    lines.append(
+        "Full regression is heavier (API + UI + performance, including lineage and "
+        "MAE memory). Say yes to run it, or no to stop here."
+    )
+    result = _base()
+    result.update(
+        {
+            "route": "app_status",
+            "source": "handler:app_status",
+            "tools": [
+                "read_fixture:agent/fixtures/cluster.json",
+                "read_fixture:agent/fixtures/rca.json",
+                "run_suite:smoke",
+                "run_suite:sanity",
+            ],
+            "answer": "\n".join(lines),
+            "metrics": {
+                "health": health["health"],
+                "unhealthy": health["unhealthy"],
+                "open_incidents": health["open_incidents"],
+                "assets": health["assets"],
+                "smoke_verdict": smoke["verdict"],
+                "sanity_verdict": sanity["verdict"],
+            },
+            "ui": "verdict",
+            "awaiting_regression": True,
+            "session_update": {"awaiting_regression": True},
+            "health": health,
+            "citations": [
+                "agent/fixtures/cluster.json",
+                "agent/fixtures/rca.json",
+                "agent/fixtures/suites.json",
+            ],
+        }
+    )
+    return result
+
+
+def skip_regression(question: str) -> dict[str, Any]:
+    result = _base()
+    result.update(
+        {
+            "route": "skip_regression",
+            "source": "handler:app_status",
+            "tools": [],
+            "answer": (
+                "Regression skipped. Current quality verdict stays at the smoke + sanity "
+                "read: application is DEGRADED until datahub-mae-consumer is off OOMKilled "
+                "and UI search/lineage are green."
+            ),
+            "metrics": {"regression": "skipped"},
+            "ui": "verdict",
+            "awaiting_regression": False,
+            "session_update": {"awaiting_regression": False},
+        }
+    )
+    return result
+
+
+def capacity_plan(question: str) -> dict[str, Any]:
+    targets = executor.parse_asset_targets(question)
+    plan = executor.capacity_plan(targets)
+    current = plan["current_assets"]
+    lines = [
+        f"Current ingested assets in this fixture: {current} "
+        "(postgres 86 + oracle 54).",
+        "Blockers before any scale-up:",
+    ]
+    for b in plan["blockers"]:
+        lines.append(f"- {b}")
+    for block in plan["plans"]:
+        lines.append("")
+        lines.append(
+            f"To ingest {block['label']} ({block['scale_vs_current']}):"
+        )
+        for change in block["changes"]:
+            lines.append(
+                f"- `{change['component']}`: {change['from']} → {change['to']}"
+            )
+            lines.append(f"  why: {change['why']}")
+    if not plan["plans"]:
+        lines.append("Ask for 1 million or 10 million assets to see the upgrade table.")
+    result = _base()
+    result.update(
+        {
+            "route": "capacity_plan",
+            "source": "handler:capacity_plan",
+            "tools": [
+                "read_fixture:agent/fixtures/app_config.json",
+                "read_fixture:agent/fixtures/ingestion.json",
+                "read_fixture:agent/fixtures/rca.json",
+            ],
+            "answer": "\n".join(lines),
+            "metrics": {
+                "current_assets": current,
+                "targets": [p["assets"] for p in plan["plans"]],
+            },
+            "ui": "capacity",
+            "capacity": plan,
+            "citations": [
+                "agent/fixtures/app_config.json",
+                "agent/fixtures/metrics.json",
+                "agent/fixtures/rca.json",
+            ],
+        }
+    )
+    return result
+

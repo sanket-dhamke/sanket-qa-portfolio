@@ -9,7 +9,7 @@ Site (GitHub Pages, after publish): https://sanket-dhamke.github.io/sanket-qa-po
 ## What you can open
 
 - [Home](docs/index.html) — who I am (Lead SDET, 12 years, Pune) and three cards.
-- [Lab console](docs/console.html) — chat with a visible `source` chip, live CPU/memory charts, pod health, RCA, postgres recipe YAML → simulated `createIngestionSource` + `createIngestionExecutionRequest`.
+- [Lab console](docs/console.html) — hybrid agent: visible `source` chip, live CPU/memory, suites (smoke/sanity/regression), login API, incidents, capacity for 1M/10M assets, postgres recipe YAML → simulated GraphQL ingest.
 - [Architecture](docs/architecture.html) — router, handlers, KB, “model never produces a number”.
 - [API framework](docs/api-framework.html) — folder map, pytest, sample HTML report.
 
@@ -20,7 +20,7 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 python -m agent.export_web
-pytest tests/test_routing.py tests/api \
+pytest tests/test_routing.py tests/test_hybrid_agent.py tests/api \
   --html=docs/reports/pytest-report.html --self-contained-html
 python -m http.server 8765 --directory docs
 # open http://127.0.0.1:8765/
@@ -47,4 +47,4 @@ pytest -m ui tests/ui
 
 ## Honesty
 
-The router is keyword-based, not an LLM. Handlers read `agent/fixtures/`. The in-browser demo is a JS port of the Python router so GitHub Pages works without Python. Python + `tests/test_routing.py` are the source of truth.
+The router is keyword-based, not an LLM. Handlers read `agent/fixtures/`. Suites on GitHub Pages replay `agent/fixtures/suites.json` (same smoke/sanity/regression markers as pytest). Lab login is fictional `emuser` / `empass`. Python + `tests/test_routing.py` / `tests/test_hybrid_agent.py` are the source of truth.

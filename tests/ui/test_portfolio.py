@@ -26,6 +26,29 @@ def test_console_canned_oom_shows_handler_source(page, site_url: str) -> None:
     expect(page.locator("#log")).to_contain_text("OOMKilled")
 
 
+def test_console_enter_clears_question(page, site_url: str) -> None:
+    page.goto(site_url + "/console.html")
+    box = page.locator("#q")
+    box.fill("How many assets are there?")
+    box.press("Enter")
+    expect(box).to_have_value("")
+    expect(page.locator("#log")).to_contain_text("How many assets are there?")
+    expect(page.locator("#log")).to_contain_text("140")
+
+
+def test_console_login_chip_shows_emuser(page, site_url: str) -> None:
+    page.goto(site_url + "/console.html")
+    page.get_by_role(
+        "button",
+        name="Test the login with username as emuser and password as empass",
+    ).click()
+    expect(page.locator("#q")).to_have_value("")
+    expect(page.locator("#log")).to_contain_text("urn:li:corpuser:emuser")
+    expect(page.locator('[data-testid="result-source"]').last).to_contain_text(
+        "handler:login_api"
+    )
+
+
 def test_console_postgres_ingest_opens_recipe_and_run_id(page, site_url: str) -> None:
     page.goto(site_url + "/console.html")
     page.get_by_role("button", name="Ingest a postgres source").click()
