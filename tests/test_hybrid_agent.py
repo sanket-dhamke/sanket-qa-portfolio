@@ -98,6 +98,18 @@ def test_yes_after_status_runs_regression() -> None:
     assert result["session_update"]["awaiting_regression"] is False
 
 
+def test_tool_catalog_lists_gms_heap_as_cluster_tool() -> None:
+    result = route("List the lab tools")
+    assert result["source"] == "handler:tool_catalog"
+    assert result["source_kind"] == "handler"
+    assert result["metrics"]["tool_count"] >= 14
+    assert "gms_heap" in result["metrics"]["cluster_tools"]
+    assert "catalog_stats" in result["metrics"]["gms_tools"]
+    assert "does not query GMS" in result["answer"]
+    assert "not node capacity" in result["answer"]
+    assert "A model never picks a tool" in result["answer"]
+
+
 def test_no_after_status_skips_regression() -> None:
     first = route("what is current state of the application")
     result = route("no", session=first["session_update"])

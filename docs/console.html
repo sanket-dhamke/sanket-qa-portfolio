@@ -22,7 +22,8 @@
   <div class="banner">
     Open-source DataHub vocabulary only
     (<a href="https://datahubproject.io">datahubproject.io</a>).
-    Keyword/rule router — not an LLM. Suites replay the pytest catalog. Numbers come from fixtures.
+    Keyword/rule router — not an LLM. The model does not choose tools, collect metrics, or set RCA.
+    Suites replay the pytest catalog. CPU/memory are % of each pod limit. Numbers come from fixtures.
     Not affiliated with any prior employer product.
   </div>
   <div class="kpis" id="kpis">
@@ -49,11 +50,12 @@
         <button type="button" class="tab" data-tab="suites" aria-selected="false">Suites</button>
         <button type="button" class="tab" data-tab="rca" aria-selected="false">RCA</button>
         <button type="button" class="tab" data-tab="capacity" aria-selected="false">Capacity</button>
+        <button type="button" class="tab" data-tab="tools" aria-selected="false">Tools</button>
       </div>
       <div class="tab-panel on" id="tab-perf">
         <div class="charts-grid">
           <div class="chart-box">
-            <p>CPU %</p>
+            <p>CPU % of pod limit (not node)</p>
             <canvas id="cpu-chart"></canvas>
           </div>
           <div class="chart-box">
@@ -65,7 +67,7 @@
         <table>
           <thead>
             <tr>
-              <th>Component</th><th>Status</th><th>Restarts</th><th>Last reason</th><th>CPU</th><th>Memory</th>
+              <th>Component</th><th>Status</th><th>Restarts</th><th>Last reason</th><th>CPU % limit</th><th>Memory</th>
             </tr>
           </thead>
           <tbody id="pod-body"></tbody>
@@ -96,6 +98,10 @@
           <canvas id="cap-chart"></canvas>
         </div>
         <div id="cap-table"></div>
+      </div>
+      <div class="tab-panel" id="tab-tools">
+        <p class="hint" id="tool-hint">The keyword table chooses which tool runs. A model never does. Cluster tools read fixtures; GMS GraphQL tools need the metadata fixture. <code>gms_heap</code> does not query GMS.</p>
+        <div id="tool-table"></div>
       </div>
     </section>
 

@@ -94,6 +94,20 @@ nav a[aria-current="page"], nav a:hover { color: #fff; border-bottom: 2px solid 
 }
 .arch strong { display: block; color: var(--navy); }
 
+.ai-not {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin: 16px 0 24px;
+}
+.ai-not div {
+  background: var(--card);
+  border: 1px solid var(--line);
+  padding: 12px;
+  font-size: 14px;
+}
+.ai-not strong { display: block; color: var(--navy); margin-bottom: 6px; }
+
 .site-footer {
   border-top: 1px solid var(--line);
   padding: 20px 0 32px;
@@ -103,6 +117,6 @@ nav a[aria-current="page"], nav a:hover { color: #fff; border-bottom: 2px solid 
 
 @media (max-width: 800px) {
   .hero { grid-template-columns: 1fr; }
-  .cards, .arch { grid-template-columns: 1fr; }
+  .cards, .arch, .ai-not { grid-template-columns: 1fr; }
   .hero h1 { font-size: 32px; }
 }

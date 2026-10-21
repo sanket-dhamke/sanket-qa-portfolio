@@ -305,16 +305,28 @@
     const named = namedComponent(question);
     let selected = named ? payload.workers.filter((w) => w.component === named) : payload.workers.slice();
     if (!selected.length) selected = payload.workers.slice();
-    const lines = ["Simulated " + payload.window + " window from `" + payload.generated_at + "` (" + payload.note + ")."];
+    const lines = [
+      "Simulated " + payload.window + " window from `" + payload.generated_at + "` (" + payload.note + ").",
+      "CPU and memory percentages are of each pod's configured limit, not of node capacity. A pod at 95% of a tiny limit can still be idle in millicores. If a pod has no limit, no percentage is computed.",
+    ];
     if (named) lines.push("Filter: `" + named + "`.");
     selected.forEach((row) => {
-      const memPct = ((100 * row.memory_mib) / row.memory_limit_mib).toFixed(1);
-      lines.push(
-        "- `" + row.component + "` (`" + row.pod + "`): CPU " + row.cpu_pct + "% · memory " + row.memory_mib + " MiB / " + row.memory_limit_mib + " MiB (" + memPct + "%)"
-      );
+      const limit = row.memory_limit_mib || 0;
+      const cpuBit =
+        row.cpu_pct != null ? "CPU " + row.cpu_pct + "% of its limit" : "CPU (no limit — no percentage)";
+      let memBit;
+      if (limit) {
+        const memPct = ((100 * row.memory_mib) / limit).toFixed(1);
+        memBit = "memory " + row.memory_mib + " MiB / " + limit + " MiB (" + memPct + "% of limit)";
+      } else {
+        memBit = "memory " + row.memory_mib + " MiB (no limit — no percentage)";
+      }
+      lines.push("- `" + row.component + "` (`" + row.pod + "`): " + cpuBit + " · " + memBit);
     });
     const hottest = selected.reduce((a, b) => (a.cpu_pct > b.cpu_pct ? a : b));
-    lines.push("Highest CPU in this selection: `" + hottest.component + "` at " + hottest.cpu_pct + "%.");
+    lines.push(
+      "Highest CPU in this selection: `" + hottest.component + "` at " + hottest.cpu_pct + "% of its pod limit."
+    );
     return {
       route: "resource_metrics",
       source: "handler:resource_metrics",
@@ -467,6 +479,47 @@
     return lines.join("\n").trim();
   }
 
+  function toolCatalog(data) {
+    const bundle = ((data.fixtures || {}).tools) || { tools: [] };
+    const tools = bundle.tools || [];
+    const cluster = tools.filter((row) => !row.gms);
+    const gms = tools.filter((row) => row.gms);
+    const lines = [
+      "Lab tool catalog — " +
+        tools.length +
+        " tools. The keyword table chooses which one runs. A model never picks a tool and never invents a number.",
+      bundle.note || "",
+      "",
+      "Cluster / fixture tools (no GraphQL):",
+    ];
+    cluster.forEach((row) => {
+      lines.push("- `" + row.id + "` — " + row.returns + " (reads " + row.needs + ")");
+    });
+    lines.push("");
+    lines.push("GMS GraphQL tools (need the metadata fixture, not a live cluster URL):");
+    gms.forEach((row) => {
+      lines.push("- `" + row.id + "` — " + row.returns + " (reads " + row.needs + ")");
+    });
+    lines.push("");
+    lines.push(
+      "`gms_heap` reads datahub-gms java opts from the cluster fixture. It does not query GMS GraphQL. CPU/memory percentages are of each pod's own limit, not node capacity."
+    );
+    return {
+      route: "tool_catalog",
+      source: "handler:tool_catalog",
+      tools: ["read_fixture:agent/fixtures/tools.json"],
+      answer: lines.join("\n"),
+      metrics: {
+        tool_count: tools.length,
+        gms_tools: gms.map((row) => row.id),
+        cluster_tools: cluster.map((row) => row.id),
+      },
+      ui: "tools",
+      catalog: bundle,
+      caveat: caveat(),
+    };
+  }
+
   function perfRca(data) {
     const report = data.rca_report || { fired: [], skipped: [], principle: "", counts: {} };
     return {
@@ -492,7 +545,7 @@
       source: "fallback:deterministic",
       tools: [],
       answer:
-        "No handler or catalog entry matched that question. This sample does not call a language model, so it will not invent pod counts, CPU, or asset totals. Try: crashing/OOM pods, CPU of datahub-gms, how many assets, how many alerts, login with emuser/empass, run API sanity, check UI sanity, current state of the application, or what config to upgrade for 1M / 10M assets.",
+        "No handler or catalog entry matched that question. This sample does not call a language model, so it will not invent pod counts, CPU, or asset totals. Try: crashing/OOM pods, CPU of datahub-gms, how many assets, how many alerts, login with emuser/empass, run API sanity, check UI sanity, current state of the application, list the lab tools, or what config to upgrade for 1M / 10M assets.",
       metrics: null,
       ui: null,
       caveat: caveat(),
@@ -731,6 +784,7 @@
     ingestion_assets: ingestionAssets,
     kb_retrieve: kbRetrieve,
     perf_rca: perfRca,
+    tool_catalog: toolCatalog,
   };
 
   function route(data, question, session) {

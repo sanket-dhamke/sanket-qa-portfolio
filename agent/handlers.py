@@ -117,18 +117,25 @@ def resource_metrics(question: str) -> dict[str, Any]:
     lines = [
         f"Simulated {payload['window']} window from `{payload['generated_at']}` "
         f"({payload['note']}).",
+        "CPU and memory percentages are of each pod's configured limit, not of node capacity. "
+        "A pod at 95% of a tiny limit can still be idle in millicores. "
+        "If a pod has no limit, no percentage is computed.",
     ]
     if named:
         lines.append(f"Filter: `{named}`.")
     for row in selected:
-        mem_pct = round(100.0 * row["memory_mib"] / row["memory_limit_mib"], 1)
-        lines.append(
-            f"- `{row['component']}` (`{row['pod']}`): CPU {row['cpu_pct']}% · "
-            f"memory {row['memory_mib']} MiB / {row['memory_limit_mib']} MiB ({mem_pct}%)"
-        )
+        limit = row.get("memory_limit_mib") or 0
+        cpu = row.get("cpu_pct")
+        cpu_bit = f"CPU {cpu}% of its limit" if cpu is not None else "CPU (no limit — no percentage)"
+        if limit:
+            mem_pct = round(100.0 * row["memory_mib"] / limit, 1)
+            mem_bit = f"memory {row['memory_mib']} MiB / {limit} MiB ({mem_pct}% of limit)"
+        else:
+            mem_bit = f"memory {row['memory_mib']} MiB (no limit — no percentage)"
+        lines.append(f"- `{row['component']}` (`{row['pod']}`): {cpu_bit} · {mem_bit}")
     hottest = max(selected, key=lambda row: row["cpu_pct"])
     lines.append(
-        f"Highest CPU in this selection: `{hottest['component']}` at {hottest['cpu_pct']}%."
+        f"Highest CPU in this selection: `{hottest['component']}` at {hottest['cpu_pct']}% of its pod limit."
     )
     result = _base()
     result.update(
@@ -234,6 +241,50 @@ def ingest_recipe(question: str) -> dict[str, Any]:
     return result
 
 
+def tool_catalog(question: str) -> dict[str, Any]:
+    bundle = _load("tools.json")
+    tools = bundle["tools"]
+    cluster = [row for row in tools if not row.get("gms")]
+    gms = [row for row in tools if row.get("gms")]
+    lines = [
+        f"Lab tool catalog — {len(tools)} tools. The keyword table chooses which one "
+        "runs. A model never picks a tool and never invents a number.",
+        bundle.get("note") or "",
+        "",
+        "Cluster / fixture tools (no GraphQL):",
+    ]
+    for row in cluster:
+        lines.append(f"- `{row['id']}` — {row['returns']} (reads {row['needs']})")
+    lines.append("")
+    lines.append("GMS GraphQL tools (need the metadata fixture, not a live cluster URL):")
+    for row in gms:
+        lines.append(f"- `{row['id']}` — {row['returns']} (reads {row['needs']})")
+    lines.append("")
+    lines.append(
+        "`gms_heap` reads datahub-gms java opts from the cluster fixture. "
+        "It does not query GMS GraphQL. CPU/memory percentages are of each pod's "
+        "own limit, not node capacity."
+    )
+    result = _base()
+    result.update(
+        {
+            "route": "tool_catalog",
+            "source": "handler:tool_catalog",
+            "tools": ["read_fixture:agent/fixtures/tools.json"],
+            "answer": "\n".join(lines),
+            "metrics": {
+                "tool_count": len(tools),
+                "gms_tools": [row["id"] for row in gms],
+                "cluster_tools": [row["id"] for row in cluster],
+            },
+            "citations": ["agent/fixtures/tools.json"],
+            "ui": "tools",
+            "catalog": bundle,
+        }
+    )
+    return result
+
+
 def fallback(question: str) -> dict[str, Any]:
     result = _base()
     result.update(
@@ -247,7 +298,7 @@ def fallback(question: str) -> dict[str, Any]:
                 "CPU, or asset totals. Try: crashing/OOM pods, CPU of datahub-gms, "
                 "how many assets, how many alerts, login with emuser/empass, "
                 "run API sanity, check UI sanity, current state of the application, "
-                "or what config to upgrade for 1M / 10M assets."
+                "list the lab tools, or what config to upgrade for 1M / 10M assets."
             ),
             "metrics": None,
             "citations": [],

@@ -48,6 +48,16 @@ def test_source_kinds_split_handler_kb_suite() -> None:
     assert miss["source_kind"] == "fallback"
 
 
+def test_architecture_states_ai_boundary() -> None:
+    text = (ROOT / "docs" / "architecture.html").read_text(encoding="utf-8")
+    assert "does not decide which tool" in text.lower() or "Does not choose tools" in text
+    assert "Does not collect metrics" in text
+    assert "Does not set RCA" in text
+    cpu = (ROOT / "docs" / "console.html").read_text(encoding="utf-8")
+    assert "CPU % of pod limit (not node)" in cpu
+    assert 'data-tab="tools"' in cpu
+
+
 def test_public_tree_has_no_forbidden_product_names() -> None:
     # Scan shipped lab files only — not this test's own pattern string.
     pattern = re.compile(r"\b(beacon|bmc|odin|kubectl|eks|gatezo)\b", re.I)

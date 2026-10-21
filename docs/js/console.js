@@ -288,6 +288,32 @@
     if (summary.rcas && summary.rcas.length) renderRca(summary.rcas);
   }
 
+  function renderTools() {
+    const bundle = ((state.data.fixtures || {}).tools) || {};
+    const tools = bundle.tools || [];
+    const hint = $("tool-hint");
+    if (hint) {
+      hint.textContent =
+        (bundle.note || "Lab tool catalog.") +
+        " The keyword table chooses which tool runs. A model never does. " +
+        "CPU/memory percentages are of each pod's own limit, not node capacity.";
+    }
+    const rows = tools
+      .map((t) => {
+        const kind = t.gms ? "GMS GraphQL" : "cluster fixture";
+        const cls = t.gms ? "gms" : "cluster";
+        return `<tr>
+          <td><code>${t.id}</code></td>
+          <td class="badge ${cls}">${kind}</td>
+          <td>${t.needs}</td>
+          <td>${t.returns}</td>
+        </tr>`;
+      })
+      .join("");
+    $("tool-table").innerHTML =
+      `<table><thead><tr><th>Tool</th><th>Kind</th><th>Reads</th><th>Returns</th></tr></thead><tbody>${rows}</tbody></table>`;
+  }
+
   function renderCapacity(plan) {
     if (!plan) return;
     const current = plan.current_assets || 140;
@@ -427,6 +453,10 @@
     if (result.ui === "capacity") {
       showTab("capacity");
       renderCapacity(result.capacity);
+    }
+    if (result.ui === "tools") {
+      showTab("tools");
+      renderTools();
     }
     if (result.metrics && result.metrics.open != null) {
       $("alert-live").textContent = String(result.metrics.open);
@@ -653,6 +683,7 @@ sink:
     seedSeries(state.data.fixtures.metrics.workers);
     renderLegend();
     renderRca();
+    renderTools();
     $("asset-live").textContent = String(state.data.fixtures.ingestion.totals.assets);
     $("source-live").textContent = String(state.data.fixtures.ingestion.sources.length);
     $("alert-live").textContent = String(state.data.fixtures.alerts.open);
@@ -674,7 +705,7 @@ sink:
     });
     addMsg(
       "bot",
-      "Hybrid DataHub lab. Keyword router + suite catalog, not an LLM. Ask to log in as emuser/empass, run API or UI sanity, check alerts, size for 1M assets, or ask the current application state (smoke+sanity, then confirm regression).",
+      "Hybrid DataHub lab. Keyword router + suite catalog, not an LLM. The model does not choose tools, collect metrics, or set RCA. CPU is % of pod limit. Ask to log in as emuser/empass, list the lab tools, run API or UI sanity, check alerts, size for 1M assets, or ask the current application state (smoke+sanity, then confirm regression).",
       { source: "fallback:deterministic", route: "hello", tools: [] }
     );
   }

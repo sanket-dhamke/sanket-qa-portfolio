@@ -43,6 +43,14 @@
       <li><code>fallback:deterministic</code> — no match, no hallucination.</li>
     </ul>
     <p>The console paints those chips next to the reply. pytest in <code>tests/test_routing.py</code> asserts the canned questions take different sources — no network.</p>
+    <h2>Where the model is not</h2>
+    <p>The honest answer to “is this an AI project?” is nuanced. A model is optional, and it is only allowed to rephrase text a handler or the knowledge base already produced. If it is off, the same numbers still return.</p>
+    <div class="ai-not">
+      <div><strong>Does not choose tools</strong> A keyword table in <code>agent/router.py</code> picks the path. First match wins. Inspectable, instant, free, same answer every time. Fixing a miss is one table line, not a prompt rewrite.</div>
+      <div><strong>Does not collect metrics</strong> Handlers read fixture JSON (cluster, metrics, ingestion, alerts). CPU and memory are <em>percent of each pod’s configured limit</em>, not of node capacity. A pod with no limit gets no percentage.</div>
+      <div><strong>Does not set RCA</strong> Named rules in <code>agent/rca_engine.py</code> fire or skip. Exit 137 is SIGKILL; memory pressure only when <code>last_reason=OOMKilled</code>. Severity comes from the rule, not from prose.</div>
+    </div>
+    <p>The console <strong>Tools</strong> tab lists the catalog. Cluster tools never call GraphQL. <code>gms_heap</code> reads <code>datahub-gms</code> java opts from the cluster fixture — it does not query GMS. Tools marked GMS GraphQL (<code>catalog_stats</code>, <code>search_latency</code>, <code>list_incidents</code>) are the ones that need the metadata fixture.</p>
     <h2>DataHub vocabulary in this lab</h2>
     <p>Components: <code>datahub-gms</code>, <code>datahub-mae-consumer</code>, <code>datahub-mce-consumer</code>, <code>datahub-frontend</code>, <code>datahub-actions</code>. Ingestion uses recipe YAML (<code>type: postgres</code> / <code>type: oracle</code>), pipeline name, <code>schema_pattern</code> / <code>table_pattern</code>, sink <code>datahub-rest</code> to GMS. GraphQL: <code>listIngestionSources</code>, <code>createIngestionSource</code> (JSON-encoded recipe, <code>executorId</code>), <code>createIngestionExecutionRequest</code>. Aspects such as <code>schemaMetadata</code> and <code>upstreamLineage</code> show up in the fake run log. Public docs: <a href="https://datahubproject.io/docs/generated/ingestion/sources/postgres/">Postgres source</a>.</p>
     <p class="note">The in-browser console is a JS port of the Python router so GitHub Pages can run without a Python host. Python remains the source of truth.</p>

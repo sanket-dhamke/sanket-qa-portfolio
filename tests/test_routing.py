@@ -27,6 +27,8 @@ def test_gms_cpu_uses_metrics_handler() -> None:
     assert workers[0]["component"] == "datahub-gms"
     assert workers[0]["cpu_pct"] == 41.2
     assert "41.2" in result["answer"]
+    assert "not of node capacity" in result["answer"]
+    assert "pod's configured limit" in result["answer"]
 
 
 def test_sources_and_assets_use_ingestion_handler() -> None:

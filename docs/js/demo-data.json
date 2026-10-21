@@ -11,7 +11,8 @@
     "How many alerts are in DataHub?",
     "Why is DataHub slow?",
     "What is the current state of the application?",
-    "What configuration needs to be upgraded to ingest 10m or 1m assets?"
+    "What configuration needs to be upgraded to ingest 10m or 1m assets?",
+    "List the lab tools"
   ],
   "rules": [
     {
@@ -75,6 +76,21 @@
         "10m assets",
         "capacity",
         "scale to"
+      ]
+    },
+    {
+      "route": "tool_catalog",
+      "source": "handler:tool_catalog",
+      "any": [
+        "tool catalog",
+        "list the lab tools",
+        "list the tools",
+        "list tools",
+        "which tools",
+        "what tools",
+        "available tools",
+        "show tools",
+        "lab tools"
       ]
     },
     {
@@ -273,7 +289,7 @@
     "metrics": {
       "generated_at": "2026-10-01T12:00:00Z",
       "window": "5m",
-      "note": "Synthetic fixture. Simulated baselines for the in-browser time series. Not scraped from a live cluster.",
+      "note": "Synthetic fixture. cpu_pct is percent of each pod's CPU limit, not of node capacity. Simulated baselines for the in-browser time series. Not scraped from a live cluster.",
       "workers": [
         {
           "component": "datahub-gms",

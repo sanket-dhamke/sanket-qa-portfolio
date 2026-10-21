@@ -28,6 +28,7 @@ CANNED_CHIPS = CANNED_QUESTIONS + [
     "Why is DataHub slow?",
     "What is the current state of the application?",
     "What configuration needs to be upgraded to ingest 10m or 1m assets?",
+    "List the lab tools",
 ]
 
 _YES = re.compile(
@@ -103,6 +104,22 @@ RULES: list[dict[str, Any]] = [
             "10m assets",
             "capacity",
             "scale to",
+        ],
+    },
+    {
+        "route": "tool_catalog",
+        "source": "handler:tool_catalog",
+        "handler": handlers.tool_catalog,
+        "any": [
+            "tool catalog",
+            "list the lab tools",
+            "list the tools",
+            "list tools",
+            "which tools",
+            "what tools",
+            "available tools",
+            "show tools",
+            "lab tools",
         ],
     },
     {
