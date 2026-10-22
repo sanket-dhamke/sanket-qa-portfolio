@@ -81,6 +81,8 @@ def test_architecture_states_ai_boundary() -> None:
     assert "does not decide which tool" in text.lower() or "Does not choose tools" in text
     assert "Does not collect metrics" in text
     assert "Does not set RCA" in text
+    assert "Try this out — click here to see how it works." in text
+    assert 'href="console.html"' in text
     cpu = (ROOT / "docs" / "console.html").read_text(encoding="utf-8")
     assert "CPU % of pod limit (not node)" in cpu
     assert 'data-tab="tools"' in cpu

@@ -77,6 +77,19 @@ nav a[aria-current="page"], nav a:hover { color: #fff; border-bottom: 2px solid 
   background: #fff;
 }
 .card p { margin: 0; color: var(--muted); font-size: 15px; }
+.try-this {
+  display: inline-block;
+  margin-top: 12px;
+  font-weight: 600;
+  color: var(--link);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.try-this:hover,
+.try-this:focus {
+  color: var(--navy);
+}
+.card .try-this { margin-top: 14px; }
 
 .note {
   border-left: 3px solid var(--brass);

@@ -125,6 +125,8 @@ def test_api_page_does_not_document_playwright() -> None:
     assert "tests/helpers/" in text
     assert "allure-results" in text
     assert 'href="reports/allure-api/index.html">Allure report</a>' in text
+    assert "Try this out — click here to see how it works." in text
+    assert 'data-testid="try-this"' in text
 
 
 def test_ui_page_does_not_document_api_payloads() -> None:
@@ -137,6 +139,7 @@ def test_ui_page_does_not_document_api_payloads() -> None:
     assert "test_performance_tab.py" in text
     assert "about_page.py" in text
     assert 'data-testid="suite-strip"' in text
+    assert "Try this out — click here to see how it works." in text
     assert "AI-AGENT.md" in text
     assert "SKILLS.md" in text
     assert "pytest-html" not in text
@@ -146,11 +149,12 @@ def test_ui_page_does_not_document_api_payloads() -> None:
 def test_home_cards_split_api_and_ui() -> None:
     text = (ROOT / "docs" / "index.html").read_text(encoding="utf-8")
     cards = text.split('class="cards"', 1)[1]
-    hybrid = cards.split("Hybrid AI Agent for performance testing", 1)[1].split("</a>", 1)[0]
-    api_card = cards.split("API Automation", 1)[1].split("</a>", 1)[0]
-    ui_card = cards.split("UI Automation", 1)[1].split("</a>", 1)[0]
-    assert 'href="api-framework.html"' in cards
-    assert 'href="ui-framework.html"' in cards
+    hybrid = cards.split("Hybrid AI Agent for performance testing", 1)[1].split("</article>", 1)[0]
+    api_card = cards.split("API Automation", 1)[1].split("</article>", 1)[0]
+    ui_card = cards.split("UI Automation", 1)[1].split("</article>", 1)[0]
+    assert 'href="console.html"' in hybrid
+    assert 'href="api-framework.html"' in api_card
+    assert 'href="ui-framework.html"' in ui_card
     assert "not an LLM inventing metrics" in hybrid
     assert "Playwright" not in hybrid
     assert "Playwright" not in api_card
@@ -159,6 +163,13 @@ def test_home_cards_split_api_and_ui() -> None:
     assert "ui/" in ui_card
     assert "tests/payloads" not in ui_card
     assert "Open the Hybrid AI Agent for performance testing" in text
+    cta = "Try this out — click here to see how it works."
+    assert cta in hybrid
+    assert cta in api_card
+    assert cta in ui_card
+    assert 'data-testid="try-this-hybrid"' in hybrid
+    assert 'data-testid="try-this-api"' in api_card
+    assert 'data-testid="try-this-ui"' in ui_card
 
 
 def test_api_allure_report_is_api_only() -> None:
@@ -196,6 +207,8 @@ def test_console_has_connect_gate_and_email_tab() -> None:
     ) in text
     assert 'id="perf-rca"' in text
     assert "MEM-PRESSURE" in text
+    assert 'data-testid="try-this"' in text
+    assert "Try this out — click here to see how it works." in text
     js = (ROOT / "docs" / "js" / "console.js").read_text(encoding="utf-8")
     assert 'textContent = "unknown"' not in js
     assert "computeAppHealth" in (ROOT / "docs" / "js" / "router.js").read_text(encoding="utf-8")

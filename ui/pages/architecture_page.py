@@ -24,3 +24,9 @@ class ArchitecturePage:
         expect(main).to_contain_text("Does not collect metrics")
         expect(main).to_contain_text("Does not set RCA")
         expect(main).to_contain_text("not an LLM inventing metrics")
+        expect(self.page.locator('[data-testid="try-this"]')).to_have_attribute(
+            "href", "console.html"
+        )
+        expect(self.page.locator('[data-testid="try-this"]')).to_have_text(
+            "Try this out — click here to see how it works."
+        )

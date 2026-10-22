@@ -42,6 +42,21 @@ body.console {
   border-bottom: 1px solid var(--line);
 }
 .banner a { color: var(--brass); }
+.try-this-wrap {
+  margin: 0;
+  padding: 10px 18px 0;
+}
+.try-this {
+  display: inline-block;
+  font-weight: 600;
+  color: var(--brass);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.try-this:hover,
+.try-this:focus {
+  color: #fff;
+}
 
 .kpis {
   display: grid;

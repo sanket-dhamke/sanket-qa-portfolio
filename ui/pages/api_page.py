@@ -22,6 +22,12 @@ class ApiFrameworkPage:
             "href", "reports/allure-api/index.html"
         )
         expect(self.page.locator("main")).not_to_contain_text("pytest-html")
+        expect(self.page.locator('[data-testid="try-this"]')).to_have_attribute(
+            "href", "reports/allure-api/index.html"
+        )
+        expect(self.page.locator('[data-testid="try-this"]')).to_have_text(
+            "Try this out — click here to see how it works."
+        )
 
     @allure.step("Expect smoke < sanity < regression suite strip")
     def expect_suite_strip(self) -> None:

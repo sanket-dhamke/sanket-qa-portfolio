@@ -20,6 +20,12 @@ class ConsolePage:
         )
         expect(self.page.locator("#connect-gate")).to_be_visible()
         expect(self.page.locator("#monitor")).to_be_hidden()
+        expect(self.page.locator('[data-testid="try-this"]')).to_have_attribute(
+            "href", "#connect-gate"
+        )
+        expect(self.page.locator('[data-testid="try-this"]')).to_have_text(
+            "Try this out — click here to see how it works."
+        )
         if connect:
             self.connect()
 
