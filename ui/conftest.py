@@ -35,11 +35,13 @@ def site_url() -> str:
 @pytest.hookimpl(tryfirst=True)
 def pytest_runtest_setup(item: pytest.Item) -> None:
     allure.dynamic.epic("UI automation")
-    allure.dynamic.suite("ui/tests/ui")
-    for mark in ("smoke", "sanity", "regression", "ui"):
+    allure.dynamic.tag("ui")
+    for mark in ("smoke", "sanity", "regression"):
         if item.get_closest_marker(mark):
             allure.dynamic.feature(mark)
+            allure.dynamic.suite(mark)
             allure.dynamic.tag(mark)
+            break
     allure.dynamic.story(item.name)
     if item.get_closest_marker("lab_issue"):
         allure.dynamic.severity(allure.severity_level.CRITICAL)

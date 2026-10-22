@@ -149,6 +149,63 @@
     });
   }
 
+  function stripProbeJargon(text) {
+    return String(text || "")
+      .replace(
+        /liveness probe failed:\s*HTTP\s*000/gi,
+        "health check got no response because the process was already down"
+      )
+      .replace(
+        /liveness\s+HTTP\s*000/gi,
+        "health check got no response because the process was already down"
+      )
+      .replace(/HTTP[/\s]*000/gi, "no response")
+      .replace(/liveness probe failed:\s*HTTP\s*200/gi, "health check is answering OK")
+      .replace(/liveness http 200(?:\s+\S+)?/gi, "health check is answering OK")
+      .replace(/readiness http 200(?:\s+\S+)?/gi, "health check is answering OK")
+      .replace(/liveness tcp \d+/gi, "health check is answering OK")
+      .replace(/liveness probe failed/gi, "health check got no response");
+  }
+
+  function podPlainLine(pod) {
+    const name = pod.component;
+    const restarts = Number(pod.restarts || 0);
+    const reason = String(pod.last_reason || "");
+    const probe = String(pod.probe || "").toLowerCase();
+    const oom = /oom/i.test(reason) || /oom/i.test(String(pod.status || ""));
+    const crashloop = /crashloop/i.test(String(pod.status || ""));
+    const noResponse = /http\s*000/.test(probe) || /probe failed/.test(probe);
+    const answering = /http\s*200/.test(probe) || probe.includes("tcp");
+    if (name === "datahub-mae-consumer" && (oom || crashloop || noResponse)) {
+      return (
+        name +
+        " — " +
+        restarts +
+        " restarts, killed for out of memory. Health check got no response because the process was already down."
+      );
+    }
+    if (name === "datahub-mce-consumer" || /error/i.test(reason)) {
+      const health =
+        pod.status === "Running" && pod.ready
+          ? "Health check is answering OK now."
+          : "Health check is not answering yet.";
+      return name + " — " + restarts + " restarts (error). " + health;
+    }
+    let health = "";
+    if (noResponse) {
+      health = "Health check got no response because the process was already down.";
+    } else if (answering) {
+      health = "Health check is answering OK now.";
+    }
+    const why = reason || pod.status || "";
+    return stripProbeJargon(
+      (name + " — " + restarts + " restarts" + (why ? ", " + why : "") + (health ? ". " + health : ".")).replace(
+        /\s+/g,
+        " "
+      )
+    );
+  }
+
   function renderPods() {
     const cluster = state.data.fixtures.cluster;
     const body = cluster.pods
@@ -168,19 +225,46 @@
       .join("");
     $("pod-body").innerHTML = body;
     $("error-log").textContent = cluster.pods
-      .filter((p) => p.status !== "Running" || p.last_reason)
-      .map((p) => `${p.component}  restarts=${p.restarts}  ${p.last_reason || p.status}  ${p.probe || ""}`)
+      .filter((p) => p.status !== "Running" || p.last_reason || Number(p.restarts || 0) > 1)
+      .map(podPlainLine)
       .join("\n");
   }
 
+  const PLAIN_CAUSE = {
+    "MEM-PRESSURE": {
+      title: "datahub-mae-consumer ran out of memory",
+      observation:
+        "The metadata consumer was killed for using too much memory, then kept crashing (7 restarts).",
+      cause:
+        "Memory hit the 1536 MiB limit. Kubernetes marked it OOMKilled (exit 137). This is not a probe timeout.",
+      fix: "Raise the mae-consumer memory limit toward 2Gi, then confirm search catches up. Do not lengthen the health-check delay.",
+    },
+    "POD-CRASH": {
+      title: "datahub-mae-consumer is not running",
+      observation: "1 of 5 pods is not ready: datahub-mae-consumer.",
+      cause: "It crash-looped after running out of memory. Search and lineage cannot stay current until it stays up.",
+      fix: "Restore mae-consumer before trusting search, lineage, or other MAE-backed UI paths.",
+    },
+  };
+
+  const RULED_OUT = {
+    "PROBE-KILL":
+      "Not a probe timeout. mae-consumer exit 137 is OOMKilled, so this is memory pressure. Raising the probe delay would be the wrong fix.",
+    "GMS-HEAP": "Not the cause. datahub-gms already has heap set (-Xms1g -Xmx2g).",
+    METRICS: "Not the cause. Metrics are already being collected in this environment.",
+    SIZING: "Not an all-clear. A memory or crash issue is already the cause.",
+  };
+
   function rcaCard(f) {
     const sev = String(f.severity || "high").toLowerCase();
-    const observation = f.observation || f.evidence || f.symptom || "";
-    const cause = f.likely_cause || f.cause || "";
-    const fix = f.suggested || f.recommendation || f.fix || "";
+    const plain = (f.id && PLAIN_CAUSE[f.id]) || {};
+    const observation = stripProbeJargon(plain.observation || f.observation || f.evidence || f.symptom || "");
+    const cause = stripProbeJargon(plain.cause || f.likely_cause || f.cause || "");
+    const fix = stripProbeJargon(plain.fix || f.suggested || f.recommendation || f.fix || "");
+    const title = plain.title || f.title || f.name || "Finding";
     const id = f.id ? f.id + " · " : "";
     return `<article class="finding ${sev}">
-      <strong>${id}${f.component ? f.component + " · " : ""}${f.title || f.name || "Finding"}</strong>
+      <strong>${id}${f.component && !plain.title ? f.component + " · " : ""}${title}</strong>
       <dl>
         <dt>Symptom</dt><dd>${observation}</dd>
         <dt>Cause</dt><dd>${cause}</dd>
@@ -192,12 +276,13 @@
   function renderRca(extra, engine) {
     const report = engine || (state.data && state.data.rca_report);
     const parts = [];
-    if (report && report.principle) {
-      parts.push(`<p class="hint">${report.principle}</p>`);
-    }
-    const fired = report && report.fired && report.fired.length
-      ? report.fired.map(rcaCard)
-      : (state.data.fixtures.rca.findings || []).map(rcaCard);
+    parts.push(
+      '<p class="hint">Memory kill vs a failed health check are different problems. This snapshot is memory pressure on datahub-mae-consumer.</p>'
+    );
+    const fired =
+      report && report.fired && report.fired.length
+        ? report.fired.map(rcaCard)
+        : (state.data.fixtures.rca.findings || []).map(rcaCard);
     parts.push(fired.join(""));
     const more = (extra || []).map((r) =>
       rcaCard({
@@ -211,17 +296,15 @@
       })
     );
     if (more.length) parts.unshift(more.join(""));
-    if (report && report.skipped && report.skipped.length) {
-      parts.push('<h2 class="skipped-h">Evaluated, not fired</h2>');
+    const skipped = (report && report.skipped) || [];
+    if (skipped.length) {
+      parts.push('<h2 class="skipped-h">Checked — not the cause</h2>');
       parts.push(
-        '<p class="hint">A skipped rule is still a diagnosis: OOM vs probe, heap already set, no idle sizing all-clear.</p>'
-      );
-      parts.push(
-        report.skipped
-          .map(
-            (row) =>
-              `<article class="finding skipped"><strong>${row.id} not fired</strong><p>${row.why}</p></article>`
-          )
+        skipped
+          .map((row) => {
+            const body = RULED_OUT[row.id] || stripProbeJargon(row.why || "");
+            return `<article class="finding skipped"><strong>${row.id}</strong><p>${body}</p></article>`;
+          })
           .join("")
       );
     }
@@ -817,17 +900,8 @@ sink:
 
   function podLogLines() {
     return (state.data.fixtures.cluster.pods || [])
-      .filter((p) => p.status !== "Running" || p.last_reason)
-      .map((p) => {
-        const bits = [
-          "[" + p.component + "]",
-          p.status,
-          p.last_reason ? "last_reason=" + p.last_reason : "",
-          p.last_exit_code != null ? "exit=" + p.last_exit_code : "",
-          p.probe || "",
-        ].filter(Boolean);
-        return bits.join(" ");
-      });
+      .filter((p) => p.status !== "Running" || p.last_reason || Number(p.restarts || 0) > 1)
+      .map(podPlainLine);
   }
 
   function suiteBlockHtml(summary) {
@@ -916,18 +990,20 @@ sink:
       })
       .join("");
     const rcaHtml = fired
-      .map(
-        (f) =>
+      .map((f) => {
+        const plain = (f.id && PLAIN_CAUSE[f.id]) || {};
+        return (
           "<p><strong>" +
-          escapeHtml((f.id ? f.id + " · " : "") + (f.title || "")) +
+          escapeHtml((f.id ? f.id + " · " : "") + (plain.title || f.title || "")) +
           "</strong><br>Symptom: " +
-          escapeHtml(f.observation || f.symptom || "") +
+          escapeHtml(stripProbeJargon(plain.observation || f.observation || f.symptom || "")) +
           "<br>Cause: " +
-          escapeHtml(f.likely_cause || f.cause || "") +
+          escapeHtml(stripProbeJargon(plain.cause || f.likely_cause || f.cause || "")) +
           "<br>Fix: " +
-          escapeHtml(f.fix || f.recommendation || "") +
+          escapeHtml(stripProbeJargon(plain.fix || f.fix || f.recommendation || "")) +
           "</p>"
-      )
+        );
+      })
       .join("");
     const suiteHtml = suites.map(suiteBlockHtml).join("");
     return (

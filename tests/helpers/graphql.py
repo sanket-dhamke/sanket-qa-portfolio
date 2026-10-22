@@ -26,7 +26,7 @@ query {
 
 LIST_INCIDENTS = """
 query {
-  listIncidents { open total }
+  listIncidents { open total incidents { title severity entity } }
 }
 """
 

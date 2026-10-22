@@ -1,0 +1,33 @@
+{
+  "note": "Live pytest collection. API smoke excludes --run-live tests. Sanity FAIL is the known mae-consumer OOM / MEM-PRESSURE lab_issue. CI uses -m 'not lab_issue'.",
+  "api": {
+    "smoke": {
+      "tests": 6,
+      "verdict": "PASS"
+    },
+    "sanity": {
+      "tests": 12,
+      "verdict": "FAIL",
+      "why": "datahub-mae-consumer OOM / MEM-PRESSURE"
+    },
+    "regression": {
+      "tests": 18,
+      "verdict": "PASS"
+    }
+  },
+  "ui": {
+    "smoke": {
+      "tests": 3,
+      "verdict": "PASS"
+    },
+    "sanity": {
+      "tests": 10,
+      "verdict": "FAIL",
+      "why": "UI search empty while MAE OOM"
+    },
+    "regression": {
+      "tests": 16,
+      "verdict": "PASS"
+    }
+  }
+}

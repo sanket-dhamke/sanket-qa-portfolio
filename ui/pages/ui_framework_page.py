@@ -24,3 +24,13 @@ class UiFrameworkPage:
             "href", "reports/allure-ui/index.html"
         )
         expect(self.page.locator("main")).not_to_contain_text("pytest-html")
+
+    @allure.step("Expect smoke < sanity < regression suite strip")
+    def expect_suite_strip(self) -> None:
+        strip = self.page.locator('[data-testid="suite-strip"]')
+        expect(strip).to_be_visible()
+        expect(strip).to_have_attribute("data-layer", "ui")
+        expect(strip.locator('[data-suite="smoke"]')).to_contain_text("smoke")
+        expect(strip.locator('[data-suite="sanity"]')).to_contain_text("sanity")
+        expect(strip.locator('[data-suite="regression"]')).to_contain_text("regression")
+        expect(strip.locator('[data-suite="sanity"]')).to_contain_text("FAIL")

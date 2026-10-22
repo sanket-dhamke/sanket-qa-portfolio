@@ -100,12 +100,7 @@
             </div>
           </div>
           <div class="legend" id="legend"></div>
-          <div class="perf-rca" id="perf-rca" data-testid="perf-rca">
-            <h2>Current issues / rule RCA</h2>
-            <p class="hint">From the live DataHub lab fixture — pods, logs, and fired rules. MEM-PRESSURE vs PROBE-KILL: exit 137 is OOM only when last_reason is OOMKilled.</p>
-            <div class="rca-list" id="perf-rca-list"></div>
-          </div>
-          <table>
+          <table id="pod-table" data-testid="pod-table">
             <thead>
               <tr>
                 <th>Component</th><th>Status</th><th>Restarts</th><th>Last reason</th><th>CPU % limit</th><th>Memory</th>
@@ -113,7 +108,12 @@
             </thead>
             <tbody id="pod-body"></tbody>
           </table>
-          <pre class="gql" id="error-log"></pre>
+          <pre class="gql" id="error-log" data-testid="error-log"></pre>
+          <div class="perf-rca" id="perf-rca" data-testid="perf-rca">
+            <h2>Current issues / root cause</h2>
+            <p class="hint">From the live DataHub lab fixture — pods first, then why. Memory pressure (MEM-PRESSURE) vs a failed health check are different problems.</p>
+            <div class="rca-list" id="perf-rca-list"></div>
+          </div>
         </div>
         <div class="tab-panel" id="tab-suites">
           <p class="hint" id="suite-hint">Ask the agent to run smoke, API sanity, UI sanity, or regression. Results land here with pass/fail bars and RCA for failures.</p>

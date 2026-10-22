@@ -25,7 +25,29 @@
   </header>
   <main class="wrap prose">
     <h1>UI automation</h1>
-    <p>Playwright + pytest against this public site. Page objects in <code>ui/pages/</code>. A model does not pick selectors or invent pass/fail. The Hybrid AI Agent for performance testing can <em>ask</em> for UI sanity; pytest here is what actually drives the browser.</p>
+    <p>Playwright + pytest against this public site. Page objects in <code>ui/pages/</code>. A model does not pick selectors or invent pass/fail. The Hybrid AI Agent for performance testing can <em>ask</em> for UI sanity; pytest here is what actually drives the browser. Smoke, sanity, and regression are separate suites — same pyramid as API, with their own Allure feature/suite labels.</p>
+    <section class="suite-strip" data-testid="suite-strip" data-layer="ui">
+      <h2>Execution results</h2>
+      <p class="hint">Live pytest collection — smoke smallest, then sanity, then regression. Allure splits the same way (not one combined UI run). Sanity FAIL is UI search empty while mae-consumer is OOM.</p>
+      <div class="suite-cards">
+        <article data-suite="smoke">
+          <h3>smoke</h3>
+          <p class="count"><span data-count>3</span> tests</p>
+          <span class="verdict pass" data-verdict>PASS</span>
+        </article>
+        <article data-suite="sanity">
+          <h3>sanity</h3>
+          <p class="count"><span data-count>10</span> tests</p>
+          <span class="verdict fail" data-verdict>FAIL</span>
+          <p class="why" data-why>UI search empty while MAE OOM</p>
+        </article>
+        <article data-suite="regression">
+          <h3>regression</h3>
+          <p class="count"><span data-count>16</span> tests</p>
+          <span class="verdict pass" data-verdict>PASS</span>
+        </article>
+      </div>
+    </section>
     <h2>Folder map</h2>
     <pre class="folder">ui/
   pytest.ini
@@ -43,12 +65,15 @@
     architecture_page.py
     api_page.py
     ui_framework_page.py
+    about_page.py
   tests/ui/
     test_home.py            smoke
-    test_console.py         sanity / regression
+    test_console.py         smoke / sanity / regression
     test_search_index.py    fails: UI search empty while MAE OOM (DEGRADED)
     test_architecture.py
     test_framework_pages.py
+    test_performance_tab.py table above RCA, no HTTP 000
+    test_pages.py           suite strips, about, nav
   reports/
     README.md
     allure-results/         pytest --alluredir raw results
@@ -56,6 +81,7 @@
   SKILLS.md
   README.md
 docs/reports/allure-ui/     committed Allure HTML
+docs/js/suite-results.json  live smoke/sanity/regression counts
 .cursor/skills/ui-automation/SKILL.md</pre>
     <h2>How to run</h2>
     <pre>cd ui
@@ -65,6 +91,7 @@ pip install -r requirements.txt
 playwright install chromium
 pytest -m smoke
 pytest -m sanity
+pytest -m regression
 pytest -m ui --alluredir=reports/allure-results
 allure generate reports/allure-results -o ../docs/reports/allure-ui --clean --single-file --name "UI automation"</pre>
     <h2>Allure report</h2>
@@ -78,5 +105,6 @@ allure generate reports/allure-results -o ../docs/reports/allure-ui --clean --si
       <p class="note">Note. Open-source DataHub vocabulary. Not affiliated with any prior employer product. Metrics, sources, and ingest runs are simulated.</p>
     </div>
   </footer>
+  <script src="js/suite-strip.js"></script>
 </body>
 </html>

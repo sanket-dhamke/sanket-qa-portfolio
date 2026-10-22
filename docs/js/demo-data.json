@@ -642,16 +642,29 @@
     },
     "suites": {
       "generated_at": "2026-10-01T12:00:00Z",
-      "note": "Recorded smoke / sanity / regression results for the in-browser agent. Same markers as pytest. GitHub Pages cannot spawn pytest, so the handler replays this catalog. Python tests/api and tests/ui are the live checks.",
+      "note": "Recorded smoke / sanity / regression results for the in-browser agent. API and UI cases are 1:1 with pytest markers (live excluded). Performance extras are catalog-only. GitHub Pages cannot spawn pytest, so the handler replays this catalog.",
+      "counts": {
+        "api": {
+          "smoke": 6,
+          "sanity": 12,
+          "regression": 18
+        },
+        "ui": {
+          "smoke": 3,
+          "sanity": 10,
+          "regression": 16
+        },
+        "performance": {
+          "regression": 1
+        }
+      },
       "cases": [
         {
           "id": "api.health",
           "name": "GMS GET /health",
           "layer": "api",
           "suites": [
-            "smoke",
-            "sanity",
-            "regression"
+            "smoke"
           ],
           "endpoint": "rest.health",
           "status": "pass",
@@ -665,8 +678,7 @@
           "name": "GMS GET /config",
           "layer": "api",
           "suites": [
-            "smoke",
-            "regression"
+            "smoke"
           ],
           "endpoint": "rest.config",
           "status": "pass",
@@ -680,9 +692,7 @@
           "name": "POST /logIn emuser / empass",
           "layer": "api",
           "suites": [
-            "smoke",
-            "sanity",
-            "regression"
+            "smoke"
           ],
           "endpoint": "rest.logIn",
           "status": "pass",
@@ -692,13 +702,25 @@
           "rca": null
         },
         {
+          "id": "api.login_payload",
+          "name": "POST /logIn from login.json payload",
+          "layer": "api",
+          "suites": [
+            "smoke"
+          ],
+          "endpoint": "rest.logIn",
+          "status": "pass",
+          "duration_ms": 76,
+          "expected": "200 actor emuser",
+          "actual": "200 actor emuser",
+          "rca": null
+        },
+        {
           "id": "api.list_sources",
           "name": "GraphQL listIngestionSources",
           "layer": "api",
           "suites": [
-            "smoke",
-            "sanity",
-            "regression"
+            "smoke"
           ],
           "endpoint": "graphql.listIngestionSources",
           "status": "pass",
@@ -708,12 +730,81 @@
           "rca": null
         },
         {
+          "id": "api.gms_pod",
+          "name": "GMS pod Running matches /health",
+          "layer": "api",
+          "suites": [
+            "smoke"
+          ],
+          "endpoint": null,
+          "status": "pass",
+          "duration_ms": 22,
+          "expected": "datahub-gms Running ready=true",
+          "actual": "Running ready=true",
+          "rca": null
+        },
+        {
+          "id": "api.asset_counts",
+          "name": "GraphQL searchAcrossEntities dataset total",
+          "layer": "api",
+          "suites": [
+            "sanity"
+          ],
+          "endpoint": "graphql.searchAcrossEntities",
+          "status": "pass",
+          "duration_ms": 134,
+          "expected": "datasets 115, assets 140",
+          "actual": "datasets 115",
+          "rca": null
+        },
+        {
+          "id": "api.ingest_create_poll",
+          "name": "Create postgres source then poll execution",
+          "layer": "api",
+          "suites": [
+            "sanity"
+          ],
+          "endpoint": "graphql.createIngestionSource",
+          "status": "pass",
+          "duration_ms": 210,
+          "expected": "PENDING then RUNNING then SUCCESS durationMs=18420",
+          "actual": "SUCCESS 18420",
+          "rca": null
+        },
+        {
+          "id": "api.incidents",
+          "name": "GraphQL listIncidents (alerts)",
+          "layer": "api",
+          "suites": [
+            "sanity"
+          ],
+          "endpoint": "graphql.listIncidents",
+          "status": "pass",
+          "duration_ms": 97,
+          "expected": "open incidents 3",
+          "actual": "open 3, total 5",
+          "rca": null
+        },
+        {
+          "id": "api.ingest_proposal",
+          "name": "REST ingestProposal schemaMetadata",
+          "layer": "api",
+          "suites": [
+            "sanity"
+          ],
+          "endpoint": "rest.ingestProposal",
+          "status": "pass",
+          "duration_ms": 188,
+          "expected": "success true",
+          "actual": "success true",
+          "rca": null
+        },
+        {
           "id": "api.mae_search_index",
           "name": "MAE consumer ready so search index stays current",
           "layer": "api",
           "suites": [
-            "sanity",
-            "regression"
+            "sanity"
           ],
           "endpoint": null,
           "status": "fail",
@@ -732,47 +823,353 @@
           }
         },
         {
-          "id": "api.asset_counts",
-          "name": "GraphQL searchAcrossEntities dataset total",
+          "id": "api.search_across_entities",
+          "name": "searchAcrossEntities total is 115",
           "layer": "api",
           "suites": [
-            "sanity",
-            "regression"
+            "sanity"
           ],
           "endpoint": "graphql.searchAcrossEntities",
           "status": "pass",
-          "duration_ms": 134,
-          "expected": "datasets 115, assets 140",
-          "actual": "datasets 115",
+          "duration_ms": 110,
+          "expected": "total 115",
+          "actual": "total 115",
           "rca": null
         },
         {
-          "id": "api.incidents",
-          "name": "GraphQL listIncidents (alerts)",
+          "id": "api.incident_mae_lag",
+          "name": "Open incidents include MAE search lag",
           "layer": "api",
           "suites": [
-            "sanity",
-            "regression"
+            "sanity"
           ],
           "endpoint": "graphql.listIncidents",
           "status": "pass",
-          "duration_ms": 97,
-          "expected": "open incidents 3",
-          "actual": "open 3, total 5",
+          "duration_ms": 90,
+          "expected": "inc-1001 Search index lag after MAE consumer OOM",
+          "actual": "open 3 includes MAE lag",
           "rca": null
         },
         {
-          "id": "api.ingest_proposal",
-          "name": "REST ingestProposal schemaMetadata",
+          "id": "api.postgres_source",
+          "name": "postgres-analytics still listed",
+          "layer": "api",
+          "suites": [
+            "sanity"
+          ],
+          "endpoint": "graphql.listIngestionSources",
+          "status": "pass",
+          "duration_ms": 80,
+          "expected": "postgres-analytics type=postgres assets=86",
+          "actual": "86",
+          "rca": null
+        },
+        {
+          "id": "api.config_cli_version",
+          "name": "managedIngestion CLI 0.14.1",
+          "layer": "api",
+          "suites": [
+            "sanity"
+          ],
+          "endpoint": "rest.config",
+          "status": "pass",
+          "duration_ms": 44,
+          "expected": "defaultCliVersion 0.14.1",
+          "actual": "0.14.1",
+          "rca": null
+        },
+        {
+          "id": "api.frontend_pod",
+          "name": "datahub-frontend Running",
+          "layer": "api",
+          "suites": [
+            "sanity"
+          ],
+          "endpoint": null,
+          "status": "pass",
+          "duration_ms": 18,
+          "expected": "Running ready=true restarts=0",
+          "actual": "Running",
+          "rca": null
+        },
+        {
+          "id": "api.mce_recovered",
+          "name": "datahub-mce-consumer recovered",
+          "layer": "api",
+          "suites": [
+            "sanity"
+          ],
+          "endpoint": null,
+          "status": "pass",
+          "duration_ms": 19,
+          "expected": "Running after 2 Error restarts",
+          "actual": "Running ready=true last_reason=Error",
+          "rca": null
+        },
+        {
+          "id": "api.health_while_mae_down",
+          "name": "GMS /health ok while MAE is down",
+          "layer": "api",
+          "suites": [
+            "sanity"
+          ],
+          "endpoint": "rest.health",
+          "status": "pass",
+          "duration_ms": 55,
+          "expected": "ok true and mae CrashLoopBackOff",
+          "actual": "ok true; mae OOMKilled",
+          "rca": null
+        },
+        {
+          "id": "api.login_bad_password",
+          "name": "Login rejects bad password",
+          "layer": "api",
+          "suites": [
+            "regression"
+          ],
+          "endpoint": "rest.logIn",
+          "status": "pass",
+          "duration_ms": 40,
+          "expected": "401",
+          "actual": "401",
+          "rca": null
+        },
+        {
+          "id": "api.login_missing_body",
+          "name": "Login missing body unauthorized",
+          "layer": "api",
+          "suites": [
+            "regression"
+          ],
+          "endpoint": "rest.logIn",
+          "status": "pass",
+          "duration_ms": 36,
+          "expected": "401",
+          "actual": "401",
+          "rca": null
+        },
+        {
+          "id": "api.graphql_unknown",
+          "name": "Unknown GraphQL operation returns errors",
+          "layer": "api",
+          "suites": [
+            "regression"
+          ],
+          "endpoint": "graphql",
+          "status": "pass",
+          "duration_ms": 33,
+          "expected": "400 errors mock GMS",
+          "actual": "400 errors",
+          "rca": null
+        },
+        {
+          "id": "api.unsupported_aspect",
+          "name": "Unsupported aspect action fails",
           "layer": "api",
           "suites": [
             "regression"
           ],
           "endpoint": "rest.ingestProposal",
           "status": "pass",
-          "duration_ms": 210,
-          "expected": "success true",
-          "actual": "success true",
+          "duration_ms": 31,
+          "expected": "success false",
+          "actual": "success false",
+          "rca": null
+        },
+        {
+          "id": "api.reset_source",
+          "name": "Reset clears created ingestion source",
+          "layer": "api",
+          "suites": [
+            "regression"
+          ],
+          "endpoint": null,
+          "status": "pass",
+          "duration_ms": 70,
+          "expected": "list sources back to 2",
+          "actual": "total 2",
+          "rca": null
+        },
+        {
+          "id": "api.login_unknown_user",
+          "name": "Unknown user unauthorized",
+          "layer": "api",
+          "suites": [
+            "regression"
+          ],
+          "endpoint": "rest.logIn",
+          "status": "pass",
+          "duration_ms": 38,
+          "expected": "401",
+          "actual": "401",
+          "rca": null
+        },
+        {
+          "id": "api.dataset_unknown",
+          "name": "dataset GraphQL not implemented",
+          "layer": "api",
+          "suites": [
+            "regression"
+          ],
+          "endpoint": "graphql.dataset",
+          "status": "pass",
+          "duration_ms": 29,
+          "expected": "400 errors",
+          "actual": "400 errors",
+          "rca": null
+        },
+        {
+          "id": "api.health_lab_mock",
+          "name": "Health mode is lab-mock",
+          "layer": "api",
+          "suites": [
+            "regression"
+          ],
+          "endpoint": "rest.health",
+          "status": "pass",
+          "duration_ms": 24,
+          "expected": "mode lab-mock",
+          "actual": "lab-mock",
+          "rca": null
+        },
+        {
+          "id": "api.sources_assets_sum",
+          "name": "Listed source assets sum to 140",
+          "layer": "api",
+          "suites": [
+            "regression"
+          ],
+          "endpoint": "graphql.listIngestionSources",
+          "status": "pass",
+          "duration_ms": 95,
+          "expected": "86+54=140",
+          "actual": "140",
+          "rca": null
+        },
+        {
+          "id": "api.ingest_proposal_urn",
+          "name": "ingestProposal default orders urn",
+          "layer": "api",
+          "suites": [
+            "regression"
+          ],
+          "endpoint": "rest.ingestProposal",
+          "status": "pass",
+          "duration_ms": 48,
+          "expected": "analytics.public.orders",
+          "actual": "orders urn",
+          "rca": null
+        },
+        {
+          "id": "api.create_source_inline",
+          "name": "Inline createIngestionSource mutation",
+          "layer": "api",
+          "suites": [
+            "regression"
+          ],
+          "endpoint": "graphql.createIngestionSource",
+          "status": "pass",
+          "duration_ms": 62,
+          "expected": "urn:li:dataHubIngestionSource:*",
+          "actual": "urn minted",
+          "rca": null
+        },
+        {
+          "id": "api.exec_pending_running",
+          "name": "Execution poll PENDING then RUNNING",
+          "layer": "api",
+          "suites": [
+            "regression"
+          ],
+          "endpoint": "graphql.listExecutionRequests",
+          "status": "pass",
+          "duration_ms": 84,
+          "expected": "PENDING then RUNNING",
+          "actual": "PENDING, RUNNING",
+          "rca": null
+        },
+        {
+          "id": "api.mae_memory_limit",
+          "name": "MAE memory is at the pod limit",
+          "layer": "api",
+          "suites": [
+            "regression"
+          ],
+          "endpoint": null,
+          "status": "pass",
+          "duration_ms": 16,
+          "expected": "1536 / 1536 MiB",
+          "actual": "1536 / 1536",
+          "rca": null
+        },
+        {
+          "id": "api.gms_heap_opts",
+          "name": "GMS java opts set heap",
+          "layer": "api",
+          "suites": [
+            "regression"
+          ],
+          "endpoint": null,
+          "status": "pass",
+          "duration_ms": 15,
+          "expected": "-Xms1g -Xmx2g",
+          "actual": "-Xms1g -Xmx2g",
+          "rca": null
+        },
+        {
+          "id": "api.actions_pod",
+          "name": "datahub-actions executor Running",
+          "layer": "api",
+          "suites": [
+            "regression"
+          ],
+          "endpoint": null,
+          "status": "pass",
+          "duration_ms": 17,
+          "expected": "Running ready=true 2048 MiB",
+          "actual": "Running",
+          "rca": null
+        },
+        {
+          "id": "api.oracle_source",
+          "name": "oracle-finance source present",
+          "layer": "api",
+          "suites": [
+            "regression"
+          ],
+          "endpoint": "graphql.listIngestionSources",
+          "status": "pass",
+          "duration_ms": 78,
+          "expected": "oracle assets 54",
+          "actual": "54",
+          "rca": null
+        },
+        {
+          "id": "api.config_stateful",
+          "name": "config statefulIngestionCapable",
+          "layer": "api",
+          "suites": [
+            "regression"
+          ],
+          "endpoint": "rest.config",
+          "status": "pass",
+          "duration_ms": 27,
+          "expected": "true",
+          "actual": "true",
+          "rca": null
+        },
+        {
+          "id": "api.duplicate_source_urns",
+          "name": "Duplicate creates get unique urns",
+          "layer": "api",
+          "suites": [
+            "regression"
+          ],
+          "endpoint": "graphql.createIngestionSource",
+          "status": "pass",
+          "duration_ms": 66,
+          "expected": "two distinct urns",
+          "actual": "urns differ",
           "rca": null
         },
         {
@@ -780,9 +1177,7 @@
           "name": "Home shows name and three cards",
           "layer": "ui",
           "suites": [
-            "smoke",
-            "sanity",
-            "regression"
+            "smoke"
           ],
           "endpoint": null,
           "status": "pass",
@@ -792,18 +1187,157 @@
           "rca": null
         },
         {
-          "id": "ui.console_chat",
-          "name": "Console composer and source chip",
+          "id": "ui.console_connect_hidden",
+          "name": "Console starts on Connect, monitoring hidden",
           "layer": "ui",
           "suites": [
-            "smoke",
-            "regression"
+            "smoke"
+          ],
+          "endpoint": null,
+          "status": "pass",
+          "duration_ms": 520,
+          "expected": "connect-gate visible, monitor hidden",
+          "actual": "visible",
+          "rca": null
+        },
+        {
+          "id": "ui.console_refresh_connect",
+          "name": "Connect then refresh returns to Connect",
+          "layer": "ui",
+          "suites": [
+            "smoke"
           ],
           "endpoint": null,
           "status": "pass",
           "duration_ms": 710,
-          "expected": "Ask control and result-source chip after a canned question",
+          "expected": "connect-gate after reload",
           "actual": "visible",
+          "rca": null
+        },
+        {
+          "id": "ui.email_preview",
+          "name": "Email preview default To sanket",
+          "layer": "ui",
+          "suites": [
+            "sanity"
+          ],
+          "endpoint": null,
+          "status": "pass",
+          "duration_ms": 980,
+          "expected": "sanket.dhamke@gmail.com, SMTP=none",
+          "actual": "preview sent",
+          "rca": null
+        },
+        {
+          "id": "ui.console_oom_chip",
+          "name": "Canned OOM question shows handler chip",
+          "layer": "ui",
+          "suites": [
+            "sanity"
+          ],
+          "endpoint": null,
+          "status": "pass",
+          "duration_ms": 640,
+          "expected": "handler:pod_status",
+          "actual": "handler:pod_status",
+          "rca": null
+        },
+        {
+          "id": "ui.graphql_kb_chip",
+          "name": "GraphQL mutation chip is knowledge base",
+          "layer": "ui",
+          "suites": [
+            "sanity"
+          ],
+          "endpoint": null,
+          "status": "pass",
+          "duration_ms": 610,
+          "expected": "kb:graphql.createIngestionSource",
+          "actual": "kb",
+          "rca": null
+        },
+        {
+          "id": "ui.enter_clears",
+          "name": "Enter clears the question box",
+          "layer": "ui",
+          "suites": [
+            "sanity"
+          ],
+          "endpoint": null,
+          "status": "pass",
+          "duration_ms": 430,
+          "expected": "composer empty after ask",
+          "actual": "empty",
+          "rca": null
+        },
+        {
+          "id": "ui.login_chip",
+          "name": "Login chip shows emuser",
+          "layer": "ui",
+          "suites": [
+            "sanity"
+          ],
+          "endpoint": null,
+          "status": "pass",
+          "duration_ms": 690,
+          "expected": "urn:li:corpuser:emuser",
+          "actual": "emuser",
+          "rca": null
+        },
+        {
+          "id": "ui.api_page",
+          "name": "API page is API-only",
+          "layer": "ui",
+          "suites": [
+            "sanity"
+          ],
+          "endpoint": null,
+          "status": "pass",
+          "duration_ms": 540,
+          "expected": "tests/api/smoke, no Playwright",
+          "actual": "visible",
+          "rca": null
+        },
+        {
+          "id": "ui.ui_page",
+          "name": "UI page shows UI tree not API payloads",
+          "layer": "ui",
+          "suites": [
+            "sanity"
+          ],
+          "endpoint": null,
+          "status": "pass",
+          "duration_ms": 530,
+          "expected": "pages/ and tests/ui/",
+          "actual": "visible",
+          "rca": null
+        },
+        {
+          "id": "ui.architecture",
+          "name": "Architecture states model does not choose tools",
+          "layer": "ui",
+          "suites": [
+            "sanity"
+          ],
+          "endpoint": null,
+          "status": "pass",
+          "duration_ms": 500,
+          "expected": "Does not choose tools",
+          "actual": "visible",
+          "rca": null
+        },
+        {
+          "id": "ui.app_health_rca",
+          "name": "Console App health DEGRADED and Performance RCA",
+          "layer": "ui",
+          "suites": [
+            "sanity"
+          ],
+          "endpoint": null,
+          "status": "pass",
+          "duration_ms": 860,
+          "expected": "DEGRADED, MEM-PRESSURE, table above RCA",
+          "actual": "DEGRADED",
           "rca": null
         },
         {
@@ -811,8 +1345,7 @@
           "name": "UI search returns postgres datasets",
           "layer": "ui",
           "suites": [
-            "sanity",
-            "regression"
+            "sanity"
           ],
           "endpoint": "graphql.searchAcrossEntities",
           "status": "fail",
@@ -831,26 +1364,228 @@
           }
         },
         {
-          "id": "ui.lineage_graph",
-          "name": "Lineage graph for analytics.public.orders",
+          "id": "ui.tools_tab",
+          "name": "Tools tab and CPU % of pod limit",
           "layer": "ui",
           "suites": [
             "regression"
           ],
-          "endpoint": "graphql.dataset",
-          "status": "fail",
-          "duration_ms": 2210,
-          "expected": "upstreamLineage edges render (fixture has 67 edges)",
-          "actual": "graph spinner then empty canvas",
-          "rca": {
-            "symptom": "Lineage tab never paints edges.",
-            "evidence": [
-              "Same MAE CrashLoopBackOff as ui.search_datasets",
-              "mce-consumer is Running but has 2 prior Error restarts"
-            ],
-            "cause": "upstreamLineage aspects are stored on GMS, but the UI lineage explorer hydrates through the search/graph index that MAE maintains.",
-            "fix": "Restore mae-consumer, then reload the dataset urn. No recipe change required."
-          }
+          "endpoint": null,
+          "status": "pass",
+          "duration_ms": 720,
+          "expected": "handler:tool_catalog, gms_heap",
+          "actual": "visible",
+          "rca": null
+        },
+        {
+          "id": "ui.postgres_ingest",
+          "name": "Postgres ingest opens recipe and run id",
+          "layer": "ui",
+          "suites": [
+            "regression"
+          ],
+          "endpoint": null,
+          "status": "pass",
+          "duration_ms": 1100,
+          "expected": "createIngestionSource run id",
+          "actual": "run id minted",
+          "rca": null
+        },
+        {
+          "id": "ui.perf_table_above_rca",
+          "name": "Performance pod table is above RCA",
+          "layer": "ui",
+          "suites": [
+            "regression"
+          ],
+          "endpoint": null,
+          "status": "pass",
+          "duration_ms": 780,
+          "expected": "pod-table y < perf-rca y",
+          "actual": "table first",
+          "rca": null
+        },
+        {
+          "id": "ui.perf_no_http_000",
+          "name": "Performance never shows HTTP 000",
+          "layer": "ui",
+          "suites": [
+            "regression"
+          ],
+          "endpoint": null,
+          "status": "pass",
+          "duration_ms": 790,
+          "expected": "plain mae/mce health-check lines",
+          "actual": "plain language",
+          "rca": null
+        },
+        {
+          "id": "ui.perf_checked_not_cause",
+          "name": "Checked \u2014 not the cause on Performance",
+          "layer": "ui",
+          "suites": [
+            "regression"
+          ],
+          "endpoint": null,
+          "status": "pass",
+          "duration_ms": 770,
+          "expected": "PROBE-KILL ruled out",
+          "actual": "Checked \u2014 not the cause",
+          "rca": null
+        },
+        {
+          "id": "ui.rca_tab_plain",
+          "name": "RCA tab plain language",
+          "layer": "ui",
+          "suites": [
+            "regression"
+          ],
+          "endpoint": null,
+          "status": "pass",
+          "duration_ms": 740,
+          "expected": "no HTTP 000, no not fired",
+          "actual": "plain",
+          "rca": null
+        },
+        {
+          "id": "ui.capacity_tab",
+          "name": "Capacity tab 140-asset fixture",
+          "layer": "ui",
+          "suites": [
+            "regression"
+          ],
+          "endpoint": null,
+          "status": "pass",
+          "duration_ms": 700,
+          "expected": "140-asset fixture",
+          "actual": "visible",
+          "rca": null
+        },
+        {
+          "id": "ui.email_subject_degraded",
+          "name": "Email subject is DEGRADED",
+          "layer": "ui",
+          "suites": [
+            "regression"
+          ],
+          "endpoint": null,
+          "status": "pass",
+          "duration_ms": 920,
+          "expected": "DEGRADED, no HTTP 000",
+          "actual": "DEGRADED",
+          "rca": null
+        },
+        {
+          "id": "ui.suites_tab_sanity",
+          "name": "Suites tab after API sanity",
+          "layer": "ui",
+          "suites": [
+            "regression"
+          ],
+          "endpoint": null,
+          "status": "pass",
+          "duration_ms": 880,
+          "expected": "sanity FAIL",
+          "actual": "FAIL",
+          "rca": null
+        },
+        {
+          "id": "ui.health_kpi",
+          "name": "App health KPI is DEGRADED not unknown",
+          "layer": "ui",
+          "suites": [
+            "regression"
+          ],
+          "endpoint": null,
+          "status": "pass",
+          "duration_ms": 650,
+          "expected": "DEGRADED",
+          "actual": "DEGRADED",
+          "rca": null
+        },
+        {
+          "id": "ui.suite_strip_ui",
+          "name": "UI framework suite strip pyramid",
+          "layer": "ui",
+          "suites": [
+            "regression"
+          ],
+          "endpoint": null,
+          "status": "pass",
+          "duration_ms": 560,
+          "expected": "smoke < sanity < regression",
+          "actual": "pyramid",
+          "rca": null
+        },
+        {
+          "id": "ui.suite_strip_api",
+          "name": "API framework suite strip pyramid",
+          "layer": "ui",
+          "suites": [
+            "regression"
+          ],
+          "endpoint": null,
+          "status": "pass",
+          "duration_ms": 550,
+          "expected": "smoke < sanity < regression",
+          "actual": "pyramid",
+          "rca": null
+        },
+        {
+          "id": "ui.about_page",
+          "name": "About page is not a live cluster",
+          "layer": "ui",
+          "suites": [
+            "regression"
+          ],
+          "endpoint": null,
+          "status": "pass",
+          "duration_ms": 480,
+          "expected": "Not a hosted DataHub cloud",
+          "actual": "visible",
+          "rca": null
+        },
+        {
+          "id": "ui.home_nav_console",
+          "name": "Home nav opens lab console",
+          "layer": "ui",
+          "suites": [
+            "regression"
+          ],
+          "endpoint": null,
+          "status": "pass",
+          "duration_ms": 610,
+          "expected": "console.html connect-gate",
+          "actual": "visible",
+          "rca": null
+        },
+        {
+          "id": "ui.architecture_footer",
+          "name": "Architecture footer says simulated",
+          "layer": "ui",
+          "suites": [
+            "regression"
+          ],
+          "endpoint": null,
+          "status": "pass",
+          "duration_ms": 470,
+          "expected": "simulated",
+          "actual": "visible",
+          "rca": null
+        },
+        {
+          "id": "ui.allure_link",
+          "name": "UI Allure link is separate from API",
+          "layer": "ui",
+          "suites": [
+            "regression"
+          ],
+          "endpoint": null,
+          "status": "pass",
+          "duration_ms": 490,
+          "expected": "reports/allure-ui/index.html",
+          "actual": "href allure-ui",
+          "rca": null
         },
         {
           "id": "perf.mae_memory_headroom",

@@ -27,6 +27,13 @@ def test_console_app_health_and_performance_rca(page, site_url: str) -> None:
     expect(page.locator("#perf-rca")).to_contain_text("MEM-PRESSURE")
     expect(page.locator("#perf-rca")).to_contain_text("OOMKilled")
     expect(page.locator("#perf-rca")).to_contain_text("PROBE-KILL")
+    expect(page.locator("#perf-rca")).to_contain_text("Checked — not the cause")
+    expect(page.locator("#error-log")).to_contain_text("killed for out of memory")
+    expect(page.locator("#error-log")).to_contain_text("Health check is answering OK now")
+    expect(page.locator("#tab-perf")).not_to_contain_text("HTTP 000")
+    table = page.locator("#pod-table").bounding_box()
+    rca = page.locator("#perf-rca").bounding_box()
+    assert table and rca and table["y"] < rca["y"]
     expect(page.locator("#pod-body")).to_contain_text("datahub-mae-consumer")
     expect(page.locator("#pod-body")).to_contain_text("CrashLoopBackOff")
 

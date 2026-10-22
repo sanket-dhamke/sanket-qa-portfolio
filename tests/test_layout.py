@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import base64
+import json
 import re
+import subprocess
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -43,11 +46,13 @@ API_PATHS = [
     "tests/api/sanity/test_incidents.py",
     "tests/api/sanity/test_aspects.py",
     "tests/api/sanity/test_mae_search_index.py",
+    "tests/api/sanity/test_search_and_pods.py",
     "tests/api/smoke/test_gms_pod.py",
     "tests/helpers/lab_evidence.py",
     "tests/test_app_health.py",
     "tests/api/regression/test_login_failures.py",
     "tests/api/regression/test_graphql_unknown.py",
+    "tests/api/regression/test_mock_gms_catalog.py",
     "utils/http.py",
     "utils/gms.py",
     "reports/README.md",
@@ -56,6 +61,10 @@ API_PATHS = [
     "docs/api-framework.html",
     "docs/reports/allure-api/index.html",
     "scripts/generate_allure.sh",
+    "scripts/write_suite_results.py",
+    "scripts/write_suites_catalog.py",
+    "docs/js/suite-results.json",
+    "docs/js/suite-strip.js",
 ]
 
 UI_PATHS = [
@@ -72,11 +81,14 @@ UI_PATHS = [
     "ui/pages/architecture_page.py",
     "ui/pages/api_page.py",
     "ui/pages/ui_framework_page.py",
+    "ui/pages/about_page.py",
     "ui/tests/ui/test_home.py",
     "ui/tests/ui/test_console.py",
     "ui/tests/ui/test_search_index.py",
     "ui/tests/ui/test_architecture.py",
     "ui/tests/ui/test_framework_pages.py",
+    "ui/tests/ui/test_performance_tab.py",
+    "ui/tests/ui/test_pages.py",
     "ui/AI-AGENT.md",
     "ui/SKILLS.md",
     "ui/README.md",
@@ -106,6 +118,9 @@ def test_api_page_does_not_document_playwright() -> None:
     assert "pytest-html" not in text
     assert "tests/api/smoke/" in text
     assert "test_mae_search_index.py" in text
+    assert "test_search_and_pods.py" in text
+    assert "test_mock_gms_catalog.py" in text
+    assert 'data-testid="suite-strip"' in text
     assert "tests/payloads/" in text
     assert "tests/helpers/" in text
     assert "allure-results" in text
@@ -119,6 +134,9 @@ def test_ui_page_does_not_document_api_payloads() -> None:
     assert "pages/" in text
     assert "Playwright" in text
     assert "test_search_index.py" in text
+    assert "test_performance_tab.py" in text
+    assert "about_page.py" in text
+    assert 'data-testid="suite-strip"' in text
     assert "AI-AGENT.md" in text
     assert "SKILLS.md" in text
     assert "pytest-html" not in text
@@ -194,3 +212,77 @@ def test_ui_allure_report_is_separate() -> None:
     assert "MEM-PRESSURE" in decoded
     assert "datahub-mae-consumer" in decoded
     assert "test_ui_dataset_search_empty_while_mae_oom" in decoded
+
+
+def _collect(args: list[str], cwd: Path) -> int:
+    proc = subprocess.run(
+        [sys.executable, "-m", "pytest", "--collect-only", "-q", *args],
+        cwd=cwd,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert proc.returncode in {0, 1}, proc.stdout + proc.stderr
+    return sum(1 for line in proc.stdout.splitlines() if "::" in line and not line.startswith("E "))
+
+
+def _catalog_count(layer: str, suite: str) -> int:
+    cases = json.loads((ROOT / "agent" / "fixtures" / "suites.json").read_text(encoding="utf-8"))[
+        "cases"
+    ]
+    return sum(1 for row in cases if row.get("layer") == layer and suite in row.get("suites", []))
+
+
+def test_performance_table_is_above_rca_in_html() -> None:
+    html = (ROOT / "docs" / "console.html").read_text(encoding="utf-8")
+    assert html.find('id="pod-table"') < html.find('id="perf-rca"')
+    assert html.find('id="error-log"') < html.find('id="perf-rca"')
+    assert html.find('id="pod-table"') < html.find('id="error-log"')
+    assert "Current issues / root cause" in html
+    assert "HTTP 000" not in html
+    assert "liveness probe" not in html
+
+
+def test_console_js_plain_language_no_probe_jargon() -> None:
+    js = (ROOT / "docs" / "js" / "console.js").read_text(encoding="utf-8")
+    assert "stripProbeJargon" in js
+    assert "podPlainLine" in js
+    assert "killed for out of memory" in js
+    assert "Health check got no response because the process was already down" in js
+    assert "Health check is answering OK now" in js
+    assert "Checked — not the cause" in js
+    assert "not fired" not in js
+    assert "Evaluated, not fired" not in js
+    assert "A skipped rule is still a diagnosis" not in js
+
+
+def test_api_and_ui_pyramids_match_catalog_and_collection() -> None:
+    api = {
+        "smoke": _collect(["tests/api", "-m", "smoke and not live"], ROOT),
+        "sanity": _collect(["tests/api", "-m", "sanity"], ROOT),
+        "regression": _collect(["tests/api", "-m", "regression"], ROOT),
+    }
+    ui = {
+        "smoke": _collect(["-m", "smoke"], ROOT / "ui"),
+        "sanity": _collect(["-m", "sanity"], ROOT / "ui"),
+        "regression": _collect(["-m", "regression"], ROOT / "ui"),
+    }
+    assert api["smoke"] < api["sanity"] < api["regression"], api
+    assert ui["smoke"] < ui["sanity"] < ui["regression"], ui
+    for suite, count in api.items():
+        assert _catalog_count("api", suite) == count
+    for suite, count in ui.items():
+        assert _catalog_count("ui", suite) == count
+    results = json.loads((ROOT / "docs" / "js" / "suite-results.json").read_text(encoding="utf-8"))
+    for suite, count in api.items():
+        assert results["api"][suite]["tests"] == count
+    for suite, count in ui.items():
+        assert results["ui"][suite]["tests"] == count
+    api_html = (ROOT / "docs" / "api-framework.html").read_text(encoding="utf-8")
+    ui_html = (ROOT / "docs" / "ui-framework.html").read_text(encoding="utf-8")
+    assert f">{api['smoke']}<" in api_html
+    assert f">{api['sanity']}<" in api_html
+    assert f">{api['regression']}<" in api_html
+    assert f">{ui['smoke']}<" in ui_html
+    assert f">{ui['sanity']}<" in ui_html
+    assert f">{ui['regression']}<" in ui_html

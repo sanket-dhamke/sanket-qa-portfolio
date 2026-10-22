@@ -42,10 +42,10 @@ def _annotate_lab_issue(item: pytest.Item) -> None:
 @pytest.hookimpl(tryfirst=True)
 def pytest_runtest_setup(item: pytest.Item) -> None:
     allure.dynamic.epic("API automation")
-    allure.dynamic.suite("tests/api")
-    for mark in ("smoke", "sanity", "regression", "live"):
+    for mark in ("smoke", "sanity", "regression"):
         if item.get_closest_marker(mark):
             allure.dynamic.feature(mark)
+            allure.dynamic.suite(mark)
             allure.dynamic.tag(mark)
             allure.dynamic.story(item.name)
             if mark == "smoke":
@@ -55,4 +55,6 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
             elif mark == "regression":
                 allure.dynamic.severity(allure.severity_level.NORMAL)
             break
+    if item.get_closest_marker("live"):
+        allure.dynamic.tag("live")
     _annotate_lab_issue(item)

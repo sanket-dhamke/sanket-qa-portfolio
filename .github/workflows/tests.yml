@@ -11,7 +11,9 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -r requirements.txt
+      - run: python scripts/write_suites_catalog.py
       - run: python -m agent.export_web
+      - run: python scripts/write_suite_results.py
       - run: pytest -p no:playwright tests/test_routing.py tests/test_hybrid_agent.py tests/test_rca_engine.py tests/test_layout.py tests/test_app_health.py tests/api -m "not lab_issue"
   playwright:
     runs-on: ubuntu-latest
@@ -22,6 +24,7 @@ jobs:
           python-version: "3.12"
       - run: pip install -r ui/requirements.txt
       - run: python -m agent.export_web
+      - run: python scripts/write_suite_results.py
       - run: playwright install chromium --with-deps
       - run: pytest -m "ui and not lab_issue"
         working-directory: ui

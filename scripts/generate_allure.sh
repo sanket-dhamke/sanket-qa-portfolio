@@ -14,6 +14,10 @@ run_allure() {
   fi
 }
 
+python3 scripts/write_suites_catalog.py
+python3 -m agent.export_web
+python3 scripts/write_suite_results.py
+
 mkdir -p reports/allure-results ui/reports/allure-results
 find reports/allure-results ui/reports/allure-results -type f ! -name '.gitkeep' -delete
 
