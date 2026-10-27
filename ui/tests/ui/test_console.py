@@ -80,7 +80,7 @@ def test_console_run_api_smoke_shows_allure(page, site_url: str) -> None:
     expect(log).to_contain_text("GMS GET /health")
     expect(log).to_contain_text("Catalog replay")
     expect(log.locator('[data-testid="allure-link"]')).to_have_attribute(
-        "href", "reports/allure-api/index.html"
+        "href", "reports/allure-api-smoke/index.html"
     )
     expect(log.locator('[data-testid="allure-link"]')).to_contain_text("Open Allure report")
     expect(log).not_to_contain_text("source handler:run_suite")

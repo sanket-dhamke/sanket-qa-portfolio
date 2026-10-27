@@ -125,10 +125,14 @@
   }
 
   const SUITE_FOOTNOTE = "Catalog replay — not a live pytest run.";
-  const ALLURE_BY_LAYER = {
-    api: "reports/allure-api/index.html",
-    ui: "reports/allure-ui/index.html",
-  };
+  const ALLURE_LAYERS = ["api", "ui"];
+  const ALLURE_SUITES = ["smoke", "sanity", "regression"];
+
+  function allureHref(layer, suite) {
+    if (ALLURE_LAYERS.indexOf(layer) === -1) return null;
+    if (ALLURE_SUITES.indexOf(suite) !== -1) return "reports/allure-" + layer + "-" + suite + "/index.html";
+    return "reports/allure-" + layer + "/index.html";
+  }
 
   function layerTitle(layer) {
     if (layer === "api") return "API ";
@@ -165,12 +169,20 @@
         if (c.layer && layers.indexOf(c.layer) === -1) layers.push(c.layer);
       });
     }
-    const present = layers.filter((layer) => ALLURE_BY_LAYER[layer]);
-    return present.map((layer) => ({
-      href: ALLURE_BY_LAYER[layer],
-      label: present.length > 1 ? "Open " + layer.toUpperCase() + " Allure report" : "Open Allure report",
-      layer: layer,
-    }));
+    const suite = summary && summary.suite;
+    const present = layers.filter((layer) => ALLURE_LAYERS.indexOf(layer) !== -1);
+    return present
+      .map((layer) => {
+        const href = allureHref(layer, suite);
+        if (!href) return null;
+        return {
+          href: href,
+          label: present.length > 1 ? "Open " + layer.toUpperCase() + " Allure report" : "Open Allure report",
+          layer: layer,
+          suite: suite || "",
+        };
+      })
+      .filter(Boolean);
   }
 
   function suiteView(summary) {

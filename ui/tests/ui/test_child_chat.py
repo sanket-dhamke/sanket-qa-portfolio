@@ -49,7 +49,7 @@ def test_api_and_ui_child_chats_scoped_pipeline(page, site_url: str) -> None:
     expect(log).not_to_contain_text("Catalog read")
     expect(log).not_to_contain_text("git_pull")
     expect(page.locator('[data-testid="allure-link"]').first).to_have_attribute(
-        "href", "reports/allure-api/index.html"
+        "href", "reports/allure-api-sanity/index.html"
     )
     expect(page.locator('[data-testid="allure-link"]').first).to_contain_text(
         "Open Allure report"
@@ -68,7 +68,7 @@ def test_api_and_ui_child_chats_scoped_pipeline(page, site_url: str) -> None:
     expect(page.locator('[data-testid="child-job"]')).to_contain_text("Open Allure report")
     expect(page.locator('[data-testid="child-job"]')).not_to_contain_text("git_pull")
     expect(page.locator('[data-testid="child-job"] a[data-testid="allure-link"]')).to_have_attribute(
-        "href", "reports/allure-api/index.html"
+        "href", "reports/allure-api-smoke/index.html"
     )
 
     _ask(page, "any security issues?")
@@ -85,12 +85,15 @@ def test_api_and_ui_child_chats_scoped_pipeline(page, site_url: str) -> None:
     expect(page.locator('[data-testid="child-log"]')).to_contain_text("UI sanity failed")
     expect(page.locator('[data-testid="child-log"]')).to_contain_text("search")
     expect(page.locator('[data-testid="allure-link"]').first).to_have_attribute(
-        "href", "reports/allure-ui/index.html"
+        "href", "reports/allure-ui-sanity/index.html"
     )
     _ask(page, "Run UI smoke")
     expect(page.locator('[data-testid="child-log"]')).to_contain_text("UI smoke passed")
     expect(page.locator('[data-testid="child-job"]')).to_contain_text("Open Allure report")
     expect(page.locator('[data-testid="child-job"]')).not_to_contain_text("git_pull")
+    expect(page.locator('[data-testid="child-job"] a[data-testid="allure-link"]')).to_have_attribute(
+        "href", "reports/allure-ui-smoke/index.html"
+    )
     _ask(page, "Run API sanity suite")
     expect(page.locator('[data-testid="child-log"]')).to_contain_text(
         "child agent only answers UI"

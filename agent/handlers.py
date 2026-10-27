@@ -323,10 +323,16 @@ def _format_rca_block(rca: dict[str, Any], heading: str | None = None) -> str:
 
 
 SUITE_FOOTNOTE = "Catalog replay — not a live pytest run."
-ALLURE_BY_LAYER = {
-    "api": "reports/allure-api/index.html",
-    "ui": "reports/allure-ui/index.html",
-}
+ALLURE_LAYERS = ("api", "ui")
+ALLURE_SUITES = ("smoke", "sanity", "regression")
+
+
+def allure_href(layer: str, suite: str | None) -> str | None:
+    if layer not in ALLURE_LAYERS:
+        return None
+    if suite in ALLURE_SUITES:
+        return f"reports/allure-{layer}-{suite}/index.html"
+    return f"reports/allure-{layer}/index.html"
 
 
 def _layer_title(layer: str | None) -> str:
@@ -375,13 +381,17 @@ def allure_links(summary: dict[str, Any]) -> list[dict[str, str]]:
             layer = case.get("layer")
             if layer and layer not in layers:
                 layers.append(str(layer))
-    present = [layer for layer in layers if layer in ALLURE_BY_LAYER]
+    suite = summary.get("suite")
+    present = [layer for layer in layers if layer in ALLURE_LAYERS]
     links = []
     for layer in present:
+        href = allure_href(layer, suite)
+        if not href:
+            continue
         label = "Open Allure report"
         if len(present) > 1:
             label = f"Open {layer.upper()} Allure report"
-        links.append({"href": ALLURE_BY_LAYER[layer], "label": label, "layer": layer})
+        links.append({"href": href, "label": label, "layer": layer, "suite": suite or ""})
     return links
 
 

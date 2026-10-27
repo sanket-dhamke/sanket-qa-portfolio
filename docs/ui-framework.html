@@ -102,7 +102,10 @@
   AI-AGENT.md
   SKILLS.md
   README.md
-docs/reports/allure-ui/     committed Allure HTML
+docs/reports/allure-ui/          combined Allure HTML
+docs/reports/allure-ui-smoke/    smoke-only Allure (chat link)
+docs/reports/allure-ui-sanity/
+docs/reports/allure-ui-regression/
 docs/js/suite-results.json  live smoke/sanity/regression counts
 .cursor/skills/ui-automation/SKILL.md</pre>
     <h2>How to run</h2>
@@ -117,7 +120,7 @@ pytest -m regression
 pytest -m ui --alluredir=reports/allure-results
 allure generate reports/allure-results -o ../docs/reports/allure-ui --clean --single-file --name "UI automation"</pre>
     <h2>Allure report</h2>
-    <p><a href="reports/allure-ui/index.html">Allure report</a> — static export (suites, steps, status, screenshot attachments). Raw results stay in <code>ui/reports/allure-results/</code>.</p>
+    <p><a href="reports/allure-ui/index.html">Allure report</a> — full UI export. The agent chat opens the slice you ran: <a href="reports/allure-ui-smoke/index.html">smoke</a>, <a href="reports/allure-ui-sanity/index.html">sanity</a>, or <a href="reports/allure-ui-regression/index.html">regression</a>.</p>
     <iframe class="report-frame" title="UI Allure report" src="reports/allure-ui/index.html"></iframe>
     <h2>AI-based agent</h2>
     <p>In the lab console, “Check UI sanity” is a keyword route to the suite catalog (<code>handler:run_suite</code>, layer <code>ui</code>). Pages replays fixtures. This tree is the Playwright implementation. Details: <a href="https://github.com/sanket-dhamke/sanket-qa-portfolio/blob/main/ui/AI-AGENT.md">ui/AI-AGENT.md</a>, <a href="https://github.com/sanket-dhamke/sanket-qa-portfolio/blob/main/ui/SKILLS.md">ui/SKILLS.md</a>, and <code>.cursor/skills/ui-automation/SKILL.md</code>.</p>

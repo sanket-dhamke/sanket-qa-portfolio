@@ -83,7 +83,7 @@ def test_why_api_sanity_fail_is_read_not_a_job() -> None:
     assert "Catalog read" not in result["answer"]
     assert "git_pull" not in result["answer"]
     assert "api.mae_search_index" in (result["metrics"].get("failed_ids") or [])
-    assert result["allure"][0]["href"] == "reports/allure-api/index.html"
+    assert result["allure"][0]["href"] == "reports/allure-api-sanity/index.html"
 
 
 def test_run_api_smoke_is_user_friendly_with_allure() -> None:
@@ -103,7 +103,7 @@ def test_run_api_smoke_is_user_friendly_with_allure() -> None:
     assert "Jenkins" not in result["answer"]
     assert "handler:run_suite" not in result["answer"]
     assert "GitHub Pages does not spawn" not in result["answer"]
-    assert result["allure"][0]["href"] == "reports/allure-api/index.html"
+    assert result["allure"][0]["href"] == "reports/allure-api-smoke/index.html"
     assert result["allure"][0]["label"] == "Open Allure report"
 
 

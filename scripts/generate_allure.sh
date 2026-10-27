@@ -36,4 +36,12 @@ done
 run_allure generate reports/allure-results -o docs/reports/allure-api --clean --single-file --name "API automation"
 run_allure generate ui/reports/allure-results -o docs/reports/allure-ui --clean --single-file --name "UI automation"
 
-echo "Wrote docs/reports/allure-api and docs/reports/allure-ui"
+SPLIT_ROOT="${TMPDIR:-/tmp}/allure-suite-split"
+python3 scripts/split_allure_by_suite.py reports/allure-results "$SPLIT_ROOT/api"
+python3 scripts/split_allure_by_suite.py ui/reports/allure-results "$SPLIT_ROOT/ui"
+for suite in smoke sanity regression; do
+  run_allure generate "$SPLIT_ROOT/api/$suite" -o "docs/reports/allure-api-${suite}" --clean --single-file --name "API ${suite}"
+  run_allure generate "$SPLIT_ROOT/ui/$suite" -o "docs/reports/allure-ui-${suite}" --clean --single-file --name "UI ${suite}"
+done
+
+echo "Wrote docs/reports/allure-api, allure-ui, and per-suite smoke/sanity/regression slices"

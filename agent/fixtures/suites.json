@@ -1001,8 +1001,8 @@
       "endpoint": null,
       "status": "pass",
       "duration_ms": 860,
-      "expected": "API smoke passed (6/6), Open Allure report",
-      "actual": "allure link",
+      "expected": "API smoke passed (6/6), reports/allure-api-smoke",
+      "actual": "smoke-only allure",
       "rca": null
     },
     {

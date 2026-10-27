@@ -67,7 +67,11 @@ API_PATHS = [
     "docs/API.md",
     "docs/api-framework.html",
     "docs/reports/allure-api/index.html",
+    "docs/reports/allure-api-smoke/index.html",
+    "docs/reports/allure-api-sanity/index.html",
+    "docs/reports/allure-api-regression/index.html",
     "scripts/generate_allure.sh",
+    "scripts/split_allure_by_suite.py",
     "scripts/write_suite_results.py",
     "scripts/write_suites_catalog.py",
     "docs/js/suite-results.json",
@@ -106,6 +110,9 @@ UI_PATHS = [
     ".cursor/skills/ui-automation/SKILL.md",
     "docs/ui-framework.html",
     "docs/reports/allure-ui/index.html",
+    "docs/reports/allure-ui-smoke/index.html",
+    "docs/reports/allure-ui-sanity/index.html",
+    "docs/reports/allure-ui-regression/index.html",
 ]
 
 
@@ -224,6 +231,29 @@ def test_console_has_connect_gate_and_email_tab() -> None:
     js = (ROOT / "docs" / "js" / "console.js").read_text(encoding="utf-8")
     assert 'textContent = "unknown"' not in js
     assert "computeAppHealth" in (ROOT / "docs" / "js" / "router.js").read_text(encoding="utf-8")
+
+
+def test_suite_allure_reports_are_smoke_sanity_regression_slices() -> None:
+    api_smoke_html = ROOT / "docs" / "reports" / "allure-api-smoke" / "index.html"
+    api_sanity_html = ROOT / "docs" / "reports" / "allure-api-sanity" / "index.html"
+    ui_smoke_html = ROOT / "docs" / "reports" / "allure-ui-smoke" / "index.html"
+    ui_sanity_html = ROOT / "docs" / "reports" / "allure-ui-sanity" / "index.html"
+    assert "<title>API smoke</title>" in api_smoke_html.read_text(encoding="utf-8", errors="ignore")
+    assert "<title>API sanity</title>" in api_sanity_html.read_text(encoding="utf-8", errors="ignore")
+    assert "<title>UI smoke</title>" in ui_smoke_html.read_text(encoding="utf-8", errors="ignore")
+    api_smoke = _allure_decoded(api_smoke_html)
+    api_sanity = _allure_decoded(api_sanity_html)
+    ui_smoke = _allure_decoded(ui_smoke_html)
+    ui_sanity = _allure_decoded(ui_sanity_html)
+    assert "test_gms_health_ok_and_fast" in api_smoke
+    assert "test_mae_consumer_ready_so_search_index_is_current" not in api_smoke
+    assert "test_mae_consumer_ready_so_search_index_is_current" in api_sanity
+    assert "test_ui_dataset_search_empty_while_mae_oom" not in ui_smoke
+    assert "test_ui_dataset_search_empty_while_mae_oom" in ui_sanity
+    js = (ROOT / "docs" / "js" / "router.js").read_text(encoding="utf-8")
+    assert 'return "reports/allure-" + layer + "-" + suite + "/index.html"' in js
+    py = (ROOT / "agent" / "handlers.py").read_text(encoding="utf-8")
+    assert "reports/allure-{layer}-{suite}/index.html" in py
 
 
 def test_ui_allure_report_is_separate() -> None:

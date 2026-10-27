@@ -41,7 +41,7 @@ def test_api_sanity_suite_reports_mae_rca() -> None:
     assert "Open Allure report" in result["answer"]
     assert "Cause:" not in result["answer"]
     assert "Fix:" not in result["answer"]
-    assert result["allure"][0]["href"] == "reports/allure-api/index.html"
+    assert result["allure"][0]["href"] == "reports/allure-api-sanity/index.html"
 
 
 def test_ui_sanity_suite_reports_search_rca() -> None:
@@ -55,7 +55,7 @@ def test_ui_sanity_suite_reports_search_rca() -> None:
     assert "Open Allure report" in result["answer"]
     assert "Cause:" not in result["answer"]
     assert "Fix:" not in result["answer"]
-    assert result["allure"][0]["href"] == "reports/allure-ui/index.html"
+    assert result["allure"][0]["href"] == "reports/allure-ui-sanity/index.html"
 
 
 def test_how_many_assets_stays_on_ingestion_handler() -> None:

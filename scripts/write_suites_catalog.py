@@ -237,7 +237,7 @@ CASES = [
     case("ui.child_chats", "API and UI child chats scoped pipeline", "ui", "regression", duration_ms=980,
          expected="Open Allure report, no git_pull dump", actual="scoped allure"),
     case("ui.suite_allure_chat", "Console run API smoke shows Allure", "ui", "regression", duration_ms=860,
-         expected="API smoke passed (6/6), Open Allure report", actual="allure link"),
+         expected="API smoke passed (6/6), reports/allure-api-smoke", actual="smoke-only allure"),
     case(
         "perf.mae_memory_headroom",
         "MAE consumer memory under 90% of limit",
