@@ -19,3 +19,13 @@ class AboutPage:
         expect(main).to_contain_text("Not a hosted DataHub cloud")
         expect(main).to_contain_text("Not an LLM demo")
         expect(self.page.locator("footer")).to_contain_text("no live cluster")
+        resume = self.page.locator('[data-testid="download-resume"]')
+        cover = self.page.locator('[data-testid="download-cover-letter"]')
+        expect(resume).to_have_text("Download resume")
+        expect(cover).to_have_text("Download cover letter")
+        expect(resume).to_have_attribute(
+            "href", "Sanket_Dhamke_AI_Quality_Automation_Engineer_Resume.pdf"
+        )
+        expect(cover).to_have_attribute(
+            "href", "Sanket_Dhamke_AI_Quality_Automation_Engineer_Cover_Letter.pdf"
+        )

@@ -186,6 +186,23 @@ def test_home_cards_split_api_and_ui() -> None:
     assert 'data-testid="try-this-hybrid"' in hybrid
     assert 'data-testid="try-this-api"' in api_card
     assert 'data-testid="try-this-ui"' in ui_card
+    assert 'data-testid="about-downloads"' in text
+    assert "Download resume" in text
+    assert "Download cover letter" in text
+    assert "Sanket_Dhamke_AI_Quality_Automation_Engineer_Resume.pdf" in text
+    assert "Sanket_Dhamke_AI_Quality_Automation_Engineer_Cover_Letter.pdf" in text
+
+
+def test_resume_and_cover_letter_pdfs_are_in_docs() -> None:
+    resume = ROOT / "docs" / "Sanket_Dhamke_AI_Quality_Automation_Engineer_Resume.pdf"
+    cover = ROOT / "docs" / "Sanket_Dhamke_AI_Quality_Automation_Engineer_Cover_Letter.pdf"
+    assert resume.read_bytes()[:4] == b"%PDF"
+    assert cover.read_bytes()[:4] == b"%PDF"
+    about = (ROOT / "docs" / "about.html").read_text(encoding="utf-8")
+    assert "Download resume" in about
+    assert "Download cover letter" in about
+    assert 'href="Sanket_Dhamke_AI_Quality_Automation_Engineer_Resume.pdf"' in about
+    assert 'href="Sanket_Dhamke_AI_Quality_Automation_Engineer_Cover_Letter.pdf"' in about
 
 
 def test_api_allure_report_is_api_only() -> None:

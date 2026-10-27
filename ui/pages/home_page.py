@@ -50,3 +50,18 @@ class HomePage:
                 "link", name="Open the Hybrid AI Agent for performance testing"
             )
         ).to_be_visible()
+        about = self.page.locator('[data-testid="about-downloads"]')
+        expect(about).to_be_visible()
+        expect(about.get_by_role("heading", name="About")).to_be_visible()
+        expect(about.locator('[data-testid="download-resume"]')).to_have_text(
+            "Download resume"
+        )
+        expect(about.locator('[data-testid="download-cover-letter"]')).to_have_text(
+            "Download cover letter"
+        )
+        expect(about.locator('[data-testid="download-resume"]')).to_have_attribute(
+            "href", "Sanket_Dhamke_AI_Quality_Automation_Engineer_Resume.pdf"
+        )
+        expect(about.locator('[data-testid="download-cover-letter"]')).to_have_attribute(
+            "href", "Sanket_Dhamke_AI_Quality_Automation_Engineer_Cover_Letter.pdf"
+        )
