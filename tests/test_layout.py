@@ -50,6 +50,13 @@ API_PATHS = [
     "tests/api/smoke/test_gms_pod.py",
     "tests/helpers/lab_evidence.py",
     "tests/test_app_health.py",
+    "tests/test_security.py",
+    "tests/security/smoke/test_fixture.py",
+    "tests/security/sanity/test_findings.py",
+    "agent/security_engine.py",
+    "agent/fixtures/security.json",
+    "agent/fixtures/pipeline.json",
+    "docs/js/child-chat.js",
     "tests/api/regression/test_login_failures.py",
     "tests/api/regression/test_graphql_unknown.py",
     "tests/api/regression/test_mock_gms_catalog.py",
@@ -89,6 +96,8 @@ UI_PATHS = [
     "ui/tests/ui/test_framework_pages.py",
     "ui/tests/ui/test_performance_tab.py",
     "ui/tests/ui/test_pages.py",
+    "ui/tests/ui/test_security.py",
+    "ui/tests/ui/test_child_chat.py",
     "ui/AI-AGENT.md",
     "ui/SKILLS.md",
     "ui/README.md",
@@ -206,6 +215,9 @@ def test_console_has_connect_gate_and_email_tab() -> None:
         "application deployed on the production environment."
     ) in text
     assert 'id="perf-rca"' in text
+    assert 'data-tab="security"' in text
+    assert 'data-testid="qbank-toggle"' in text
+    assert "Questions you can ask" in text
     assert "MEM-PRESSURE" in text
     assert 'data-testid="try-this"' in text
     assert "Try this out — click here to see how it works." in text
@@ -299,3 +311,23 @@ def test_api_and_ui_pyramids_match_catalog_and_collection() -> None:
     assert f">{ui['smoke']}<" in ui_html
     assert f">{ui['sanity']}<" in ui_html
     assert f">{ui['regression']}<" in ui_html
+    sec = {
+        "smoke": _collect(["tests/security", "-m", "smoke"], ROOT),
+        "sanity": _collect(["tests/security", "-m", "sanity"], ROOT),
+    }
+    assert sec["smoke"] < sec["sanity"], sec
+    assert _catalog_count("security", "smoke") == sec["smoke"]
+    assert _catalog_count("security", "sanity") == sec["sanity"]
+    api_page = (ROOT / "docs" / "api-framework.html").read_text(encoding="utf-8")
+    ui_page = (ROOT / "docs" / "ui-framework.html").read_text(encoding="utf-8")
+    assert 'data-testid="child-chat"' in api_page
+    assert 'data-layer="api"' in api_page
+    assert 'data-testid="child-chat"' in ui_page
+    assert 'data-layer="ui"' in ui_page
+    js = "\n".join(
+        (ROOT / "docs" / "js" / name).read_text(encoding="utf-8")
+        for name in ("router.js", "console.js", "child-chat.js")
+    )
+    assert "git pull origin" not in js
+    assert "git fetch origin" not in js
+    assert "gitPull(" not in js

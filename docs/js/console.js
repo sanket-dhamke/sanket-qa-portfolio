@@ -245,6 +245,24 @@
       cause: "It crash-looped after running out of memory. Search and lineage cannot stay current until it stays up.",
       fix: "Restore mae-consumer before trusting search, lineage, or other MAE-backed UI paths.",
     },
+    "AUTH-OPEN": {
+      title: "GMS is reachable without signing in",
+      observation: "Mocked datahub-gms GraphQL and REST answered without a session cookie.",
+      cause: "Auth is not required on this lab GMS endpoint. This is a fixture finding, not a live exploit.",
+      fix: "Require a session (PLAY_SESSION) on GMS before serving metadata. A 200 from /health is not proof that auth is on.",
+    },
+    "SECRET-IN-LOG": {
+      title: "Token-like value in a pod log (redacted)",
+      observation: "A session cookie appeared in datahub-frontend logs. Shown redacted: PLAY_SESSION=dh_lab_****redacted****.",
+      cause: "The lab frontend echoed a PLAY_SESSION cookie into logs. The raw value is never shown here.",
+      fix: "Stop logging Authorization and session headers. Rotate the lab session cookie.",
+    },
+    "DEP-CVE": {
+      title: "Mocked dependency advisory (lab_issue)",
+      observation: "com.fasterxml.jackson.core:jackson-databind — mocked lab advisory. Not a live scan.",
+      cause: "Cited as lab_issue in the security fixture. No CVE number is invented.",
+      fix: "Track the advisory in the lab catalog. Do not treat this as a production CVE match.",
+    },
   };
 
   const RULED_OUT = {
@@ -253,14 +271,18 @@
     "GMS-HEAP": "Not the cause. datahub-gms already has heap set (-Xms1g -Xmx2g).",
     METRICS: "Not the cause. Metrics are already being collected in this environment.",
     SIZING: "Not an all-clear. A memory or crash issue is already the cause.",
+    TLS: "Checked — not the cause. datahub-gms already has TLS in this fixture. Open GMS is an auth gap, not a missing certificate.",
+    "LIVE-SCAN": "Checked — not the cause. This lab never scans the internet. Findings come only from the security fixture.",
   };
 
   function rcaCard(f) {
     const sev = String(f.severity || "high").toLowerCase();
     const plain = (f.id && PLAIN_CAUSE[f.id]) || {};
-    const observation = stripProbeJargon(plain.observation || f.observation || f.evidence || f.symptom || "");
-    const cause = stripProbeJargon(plain.cause || f.likely_cause || f.cause || "");
-    const fix = stripProbeJargon(plain.fix || f.suggested || f.recommendation || f.fix || "");
+    const observation = redactSecrets(
+      stripProbeJargon(plain.observation || f.observation || f.evidence || f.symptom || "")
+    );
+    const cause = redactSecrets(stripProbeJargon(plain.cause || f.likely_cause || f.cause || ""));
+    const fix = redactSecrets(stripProbeJargon(plain.fix || f.suggested || f.recommendation || f.fix || ""));
     const title = plain.title || f.title || f.name || "Finding";
     const id = f.id ? f.id + " · " : "";
     return `<article class="finding ${sev}">
@@ -313,6 +335,105 @@
       const el = $(id);
       if (el) el.innerHTML = html;
     });
+  }
+
+  function redactSecrets(text) {
+    return String(text || "").replace(
+      /(PLAY_SESSION=)(?!dh_lab_\*+redacted)\S+/gi,
+      "$1dh_lab_****redacted****"
+    );
+  }
+
+  function renderSecurity(report) {
+    const engine = report || (state.data && state.data.security_report) || { fired: [], skipped: [] };
+    const findings = $("sec-findings");
+    const rcaList = $("sec-rca-list");
+    if (!findings || !rcaList) return;
+    const fired = engine.fired || [];
+    findings.innerHTML =
+      '<h2 class="skipped-h">Current findings</h2>' +
+      fired
+        .map((f) => {
+          const plain = (f.id && PLAIN_CAUSE[f.id]) || {};
+          return (
+            '<article class="finding ' +
+            String(f.severity || "high").toLowerCase() +
+            '"><strong>' +
+            escapeHtml((f.id ? f.id + " · " : "") + (plain.title || f.title || "Finding")) +
+            "</strong><p>" +
+            escapeHtml(redactSecrets(plain.observation || f.observation || "")) +
+            "</p></article>"
+          );
+        })
+        .join("");
+    const rcaParts = fired.map(rcaCard);
+    const skipped = engine.skipped || [];
+    if (skipped.length) {
+      rcaParts.push('<h2 class="skipped-h">Checked — not the cause</h2>');
+      skipped.forEach((row) => {
+        const body = RULED_OUT[row.id] || redactSecrets(row.why || "");
+        rcaParts.push(
+          '<article class="finding skipped"><strong>' +
+            escapeHtml(row.id) +
+            "</strong><p>" +
+            escapeHtml(body) +
+            "</p></article>"
+        );
+      });
+    }
+    rcaList.innerHTML = rcaParts.join("");
+  }
+
+  function renderQuestionBank() {
+    const root = $("qbank");
+    if (!root) return;
+    const bank = (state.data && state.data.questions) || [];
+    root.innerHTML = "";
+    bank.forEach((cat) => {
+      const section = document.createElement("section");
+      const h = document.createElement("h3");
+      h.textContent = cat.title;
+      section.appendChild(h);
+      (cat.questions || []).forEach((q) => {
+        const row = document.createElement("div");
+        row.className = "qbank-row";
+        const code = document.createElement("code");
+        code.textContent = q;
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.textContent = "Copy";
+        btn.dataset.copy = q;
+        btn.setAttribute("data-testid", "qbank-copy");
+        btn.addEventListener("click", () => copyQuestion(btn, q));
+        row.appendChild(code);
+        row.appendChild(btn);
+        section.appendChild(row);
+      });
+      root.appendChild(section);
+    });
+  }
+
+  function copyQuestion(btn, text) {
+    btn.textContent = "Copied";
+    btn.classList.add("copied");
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).catch(function () {});
+    }
+    setTimeout(() => {
+      btn.textContent = "Copy";
+      btn.classList.remove("copied");
+    }, 1600);
+  }
+
+  function toggleQuestionBank() {
+    const panel = $("qbank");
+    const btn = $("btn-qbank");
+    if (!panel || !btn) return;
+    const open = panel.classList.contains("hidden") || panel.hidden;
+    panel.classList.toggle("hidden", !open);
+    panel.hidden = !open;
+    btn.setAttribute("aria-expanded", open ? "true" : "false");
+    if (open) renderQuestionBank();
   }
 
   function paintAppHealth() {
@@ -568,6 +689,13 @@
     if (result.ui === "rca") {
       showTab("rca");
       renderRca(null, result.rca);
+    }
+    if (result.ui === "security") {
+      showTab("security");
+      renderSecurity(result.security);
+    }
+    if (result.ui === "email") {
+      showTab("email");
     }
     if (result.ui === "capacity") {
       showTab("capacity");
@@ -830,6 +958,8 @@ sink:
     seedSeries(state.data.fixtures.metrics.workers);
     renderLegend();
     renderRca();
+    renderSecurity();
+    renderQuestionBank();
     renderTools();
     $("asset-live").textContent = String(state.data.fixtures.ingestion.totals.assets);
     $("source-live").textContent = String(state.data.fixtures.ingestion.sources.length);
@@ -862,7 +992,7 @@ sink:
         vals.namespace +
         "` (simulated). App health is " +
         ((snapshot && snapshot.health) || "DEGRADED") +
-        " from the live fixture (datahub-mae-consumer OOMKilled / CrashLoopBackOff). Smoke and sanity were replayed from the catalog — look at Performance for current issues and rule RCA (MEM-PRESSURE vs PROBE-KILL). Hybrid AI Agent for performance testing. Keyword/hybrid router + suite catalog, not an LLM inventing metrics. CPU is % of pod limit. Ask to log in as emuser/empass, list the lab tools, run API or UI sanity, check alerts, size for 1M assets, or ask the current application state.",
+        " from the live fixture (datahub-mae-consumer OOMKilled / CrashLoopBackOff, AUTH-OPEN on GMS). Smoke and sanity were replayed from the catalog — look at Performance for current issues and rule RCA (MEM-PRESSURE vs PROBE-KILL), or Security for AUTH-OPEN. Hybrid AI Agent for performance testing. Keyword/hybrid router + suite catalog, not an LLM inventing metrics. CPU is % of pod limit. Open “Questions you can ask” to copy a question, or ask to log in as emuser/empass, list the lab tools, run API or UI sanity, any security issues, size for 1M assets, or the current application state.",
       { source: "fallback:deterministic", route: "hello", tools: [] }
     );
   }
@@ -1114,6 +1244,7 @@ sink:
       const btn = e.target.closest("button");
       if (btn) ask(btn.dataset.q);
     });
+    $("btn-qbank").addEventListener("click", toggleQuestionBank);
     document.querySelector(".tabs").addEventListener("click", (e) => {
       const tab = e.target.closest(".tab");
       if (tab) showTab(tab.dataset.tab);

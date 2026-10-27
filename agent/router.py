@@ -20,6 +20,105 @@ CANNED_QUESTIONS = [
     "What GraphQL mutation creates an ingestion source?",
 ]
 
+QUESTION_BANK = [
+    {
+        "id": "health",
+        "title": "App health",
+        "questions": [
+            "What is the current state of the application?",
+            "What is the health of the application?",
+        ],
+    },
+    {
+        "id": "pods",
+        "title": "Pods / OOM / RCA",
+        "questions": [
+            "Which pods are crashing or restarting after OOM?",
+            "Why is DataHub slow?",
+        ],
+    },
+    {
+        "id": "suites",
+        "title": "Smoke / sanity / regression",
+        "questions": [
+            "Run smoke suite",
+            "Run API sanity suite",
+            "Check UI sanity",
+            "Run security smoke",
+        ],
+    },
+    {
+        "id": "email",
+        "title": "Email / schedule",
+        "questions": [
+            "How does the email report schedule work?",
+            "Send an email preview",
+        ],
+    },
+    {
+        "id": "performance",
+        "title": "Performance",
+        "questions": [
+            "Show CPU and memory of datahub-gms",
+            "Why is DataHub slow?",
+            "What configuration needs to be upgraded to ingest 10m or 1m assets?",
+        ],
+    },
+    {
+        "id": "security",
+        "title": "Security",
+        "questions": [
+            "any security issues?",
+            "why is GMS exposed?",
+            "Is there a secret in the logs?",
+            "Is TLS the cause?",
+        ],
+    },
+]
+
+CHILD_QUESTIONS = {
+    "api": [
+        {
+            "id": "read",
+            "title": "Read (no job)",
+            "questions": [
+                "Why did API sanity fail?",
+                "How many API smoke tests are there?",
+                "What is the last pipeline SHA?",
+            ],
+        },
+        {
+            "id": "run",
+            "title": "Run (records a job)",
+            "questions": [
+                "Run API smoke",
+                "Run API sanity suite",
+                "Run API regression",
+            ],
+        },
+    ],
+    "ui": [
+        {
+            "id": "read",
+            "title": "Read (no job)",
+            "questions": [
+                "Why did UI sanity fail?",
+                "How many UI smoke tests are there?",
+                "What is the last pipeline SHA?",
+            ],
+        },
+        {
+            "id": "run",
+            "title": "Run (records a job)",
+            "questions": [
+                "Run UI smoke",
+                "Check UI sanity",
+                "Run UI regression",
+            ],
+        },
+    ],
+}
+
 CANNED_CHIPS = CANNED_QUESTIONS + [
     "Test the login with username as emuser and password as empass",
     "Run API sanity suite",
@@ -54,6 +153,36 @@ RULES: list[dict[str, Any]] = [
         ],
     },
     {
+        "route": "pipeline_status",
+        "source": "handler:pipeline_status",
+        "handler": handlers.pipeline_status,
+        "any": [
+            "last sha",
+            "last pipeline",
+            "pipeline sha",
+            "jenkins",
+            "github actions",
+            "git pull",
+            "git fetch",
+        ],
+    },
+    {
+        "route": "suite_explain",
+        "source": "handler:suite_explain",
+        "handler": handlers.suite_explain,
+        "any": [
+            "why did",
+            "why does",
+            "how many smoke",
+            "how many sanity",
+            "how many regression",
+            "how many api",
+            "how many ui",
+            "suite pyramid",
+            "test pyramid",
+        ],
+    },
+    {
         "route": "run_suite",
         "source": "handler:run_suite",
         "handler": handlers.run_named_suite,
@@ -70,6 +199,16 @@ RULES: list[dict[str, Any]] = [
             "check api sanity",
             "run api tests",
             "run ui tests",
+            "run api smoke",
+            "run ui smoke",
+            "api smoke",
+            "ui smoke",
+            "run api regression",
+            "run ui regression",
+            "security smoke",
+            "security sanity",
+            "run security smoke",
+            "run security sanity",
         ],
     },
     {
@@ -123,6 +262,20 @@ RULES: list[dict[str, Any]] = [
         ],
     },
     {
+        "route": "email_report",
+        "source": "handler:email_report",
+        "handler": handlers.email_report,
+        "any": [
+            "email report",
+            "email preview",
+            "email schedule",
+            "smtp",
+            "on new issue",
+            "send an email",
+            "how does the email",
+        ],
+    },
+    {
         "route": "perf_rca",
         "source": "handler:perf_rca",
         "handler": handlers.perf_rca,
@@ -137,6 +290,22 @@ RULES: list[dict[str, Any]] = [
             "what's wrong",
             "diagnose performance",
             "why search is empty",
+        ],
+    },
+    {
+        "route": "security_rca",
+        "source": "handler:security_rca",
+        "handler": handlers.security_rca,
+        "any": [
+            "any security issues",
+            "security issues",
+            "security",
+            "secret",
+            "cve",
+            "exposed",
+            "tls",
+            "auth",
+            "why is gms exposed",
         ],
     },
     {

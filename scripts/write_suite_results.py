@@ -38,10 +38,15 @@ def main() -> None:
         "sanity": collect(["-m", "sanity"], ui_cwd),
         "regression": collect(["-m", "regression"], ui_cwd),
     }
+    security = {
+        "smoke": collect(["tests/security", "-m", "smoke"], ROOT),
+        "sanity": collect(["tests/security", "-m", "sanity"], ROOT),
+    }
     payload = {
         "note": (
             "Live pytest collection. API smoke excludes --run-live tests. "
             "Sanity FAIL is the known mae-consumer OOM / MEM-PRESSURE lab_issue. "
+            "Security smoke < sanity (AUTH-OPEN is the sanity lab_issue). "
             "CI uses -m 'not lab_issue'."
         ),
         "api": {
@@ -62,6 +67,14 @@ def main() -> None:
             },
             "regression": {"tests": ui["regression"], "verdict": "PASS"},
         },
+        "security": {
+            "smoke": {"tests": security["smoke"], "verdict": "PASS"},
+            "sanity": {
+                "tests": security["sanity"],
+                "verdict": "FAIL",
+                "why": "AUTH-OPEN — GMS reachable without a session",
+            },
+        },
     }
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
@@ -72,6 +85,9 @@ def main() -> None:
         raise SystemExit(f"API pyramid broken: {api}")
     if not (ui["smoke"] < ui["sanity"] < ui["regression"]):
         raise SystemExit(f"UI pyramid broken: {ui}")
+    if not (security["smoke"] < security["sanity"]):
+        raise SystemExit(f"security pyramid broken: {security}")
+    print("security", security)
 
 
 if __name__ == "__main__":

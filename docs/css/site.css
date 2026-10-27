@@ -196,6 +196,120 @@ nav a[aria-current="page"], nav a:hover { color: #fff; border-bottom: 2px solid 
   padding: 6px 10px;
 }
 
+.child-chat {
+  margin: 8px 0 28px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  padding: 14px 16px 16px;
+}
+.child-chat-head h2 {
+  font-family: Fraunces, Georgia, serif;
+  font-size: 22px;
+  font-weight: 500;
+  margin: 0 0 6px;
+}
+.child-chat-head .hint {
+  color: var(--muted);
+  font-size: 14px;
+  margin: 0 0 10px;
+}
+.child-chat-head .row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.child-chat .qbank-link {
+  background: transparent;
+  border: 0;
+  color: var(--link);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0;
+}
+.child-chat .qbank {
+  background: #f7f3ea;
+  border: 1px solid var(--line);
+  padding: 8px 10px;
+  margin-bottom: 10px;
+  max-height: 240px;
+  overflow: auto;
+}
+.child-chat .qbank.hidden { display: none; }
+.child-chat .qbank h3 {
+  margin: 8px 0 4px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.child-chat .qbank-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin: 4px 0;
+}
+.child-chat .qbank-row code {
+  flex: 1;
+  font-size: 12px;
+  background: #fff;
+  padding: 5px 7px;
+  border: 1px solid var(--line);
+}
+.child-chat .qbank-row button {
+  background: var(--navy);
+  color: #fff;
+  border: 0;
+  padding: 5px 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.child-log {
+  background: var(--navy);
+  color: #e8eef6;
+  min-height: 160px;
+  max-height: 280px;
+  overflow: auto;
+  padding: 10px 12px;
+  font-size: 13px;
+  white-space: pre-wrap;
+}
+.child-msg { margin: 0 0 10px; }
+.child-msg.user { color: #d4b36a; }
+.child-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.child-chips span {
+  font-size: 11px;
+  border: 1px solid #d4b36a;
+  color: #d4b36a;
+  padding: 1px 6px;
+}
+.child-job {
+  margin: 8px 0;
+  font-size: 13px;
+  background: #fff;
+  border: 1px solid var(--line);
+  padding: 8px 10px;
+}
+.child-composer { display: flex; gap: 8px; }
+.child-composer input {
+  flex: 1;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  font-family: inherit;
+}
+.child-composer button {
+  background: var(--navy);
+  color: #fff;
+  border: 0;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
 @media (max-width: 800px) {
   .hero { grid-template-columns: 1fr; }
   .cards, .arch, .ai-not { grid-template-columns: 1fr; }

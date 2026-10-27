@@ -91,6 +91,36 @@
       "needs": "app_config.json",
       "gms": false,
       "returns": "1M / 10M upgrade table from the 140-asset fixture"
+    },
+    {
+      "id": "auth_open",
+      "needs": "security fixture",
+      "gms": false,
+      "returns": "Whether mocked GMS answered without a session (AUTH-OPEN)"
+    },
+    {
+      "id": "secret_in_log",
+      "needs": "security fixture",
+      "gms": false,
+      "returns": "Token-like log line, already redacted (SECRET-IN-LOG)"
+    },
+    {
+      "id": "dep_advisory",
+      "needs": "security fixture",
+      "gms": false,
+      "returns": "Mocked jackson-databind advisory cited as lab_issue — no invented CVE"
+    },
+    {
+      "id": "security_rca",
+      "needs": "security fixture",
+      "gms": false,
+      "returns": "Fired security rules plus Checked — not the cause (TLS, live scan)"
+    },
+    {
+      "id": "pipeline_status",
+      "needs": "pipeline fixture",
+      "gms": false,
+      "returns": "Last SHA snapshot — read only, never git-pulls"
     }
   ]
 }

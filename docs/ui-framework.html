@@ -40,15 +40,32 @@
         </article>
         <article data-suite="sanity">
           <h3>sanity</h3>
-          <p class="count"><span data-count>10</span> tests</p>
+          <p class="count"><span data-count>11</span> tests</p>
           <span class="verdict fail" data-verdict>FAIL</span>
           <p class="why" data-why>UI search empty while MAE OOM</p>
         </article>
         <article data-suite="regression">
           <h3>regression</h3>
-          <p class="count"><span data-count>16</span> tests</p>
+          <p class="count"><span data-count>18</span> tests</p>
           <span class="verdict pass" data-verdict>PASS</span>
         </article>
+      </div>
+    </section>
+    <section class="child-chat" data-testid="child-chat" data-layer="ui">
+      <div class="child-chat-head">
+        <h2>UI agent</h2>
+        <p class="hint">Child of the lab console — UI smoke / sanity / regression only. The main Hybrid AI Agent is the root for performance, security, API, and UI. Chat is read; “run …” records a simulated Actions/Jenkins job against the last SHA. No git pull. No Jenkins credentials.</p>
+        <div class="row">
+          <a href="console.html">Open the main Hybrid AI Agent</a>
+          <button type="button" class="qbank-link" data-testid="qbank-toggle" aria-expanded="false">Questions you can ask</button>
+        </div>
+      </div>
+      <div class="qbank hidden" data-testid="qbank" hidden></div>
+      <div class="child-log" data-testid="child-log"></div>
+      <div class="child-job" data-testid="child-job">No suite run this session.</div>
+      <div class="child-composer">
+        <input data-testid="child-q" type="text" placeholder="Ask about UI smoke / sanity / regression…" aria-label="UI agent question">
+        <button type="button" data-testid="child-ask">Ask</button>
       </div>
     </section>
     <h2>Folder map</h2>
@@ -77,6 +94,8 @@
     test_framework_pages.py
     test_performance_tab.py table above RCA, no HTTP 000
     test_pages.py           suite strips, about, nav
+    test_security.py        question bank + security chat
+    test_child_chat.py      API/UI scoped child agents
   reports/
     README.md
     allure-results/         pytest --alluredir raw results
@@ -108,6 +127,8 @@ allure generate reports/allure-results -o ../docs/reports/allure-ui --clean --si
       <p class="note">Note. Open-source DataHub vocabulary. Not affiliated with any prior employer product. Metrics, sources, and ingest runs are simulated.</p>
     </div>
   </footer>
+  <script src="js/router.js"></script>
+  <script src="js/child-chat.js"></script>
   <script src="js/suite-strip.js"></script>
 </body>
 </html>

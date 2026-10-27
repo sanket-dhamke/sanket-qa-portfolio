@@ -71,6 +71,35 @@ def test_unknown_is_deterministic_fallback() -> None:
     assert "will not invent" in result["answer"]
 
 
+def test_why_api_sanity_fail_is_read_not_a_job() -> None:
+    result = route("Why did API sanity fail?")
+    assert result["route"] == "suite_explain"
+    assert result["metrics"]["mode"] == "read"
+    assert result["metrics"]["git_pull"] is False
+    assert "job" not in result
+    assert "Catalog read" in result["answer"]
+    assert "api.mae_search_index" in (result["metrics"].get("failed_ids") or [])
+
+
+def test_run_api_smoke_records_job_against_sha() -> None:
+    result = route("Run API smoke")
+    assert result["route"] == "run_suite"
+    assert result["metrics"]["layer"] == "api"
+    assert result["metrics"]["suite"] == "smoke"
+    assert result["job"]["git_pull"] is False
+    assert result["job"]["credentials"] == "none"
+    assert result["job"]["sha"]
+    assert "Pipeline job (write)" in result["answer"]
+    assert "git_pull=false" in result["answer"]
+
+
+def test_last_pipeline_sha_is_read() -> None:
+    result = route("What is the last pipeline SHA?")
+    assert result["route"] == "pipeline_status"
+    assert result["metrics"]["mode"] == "read"
+    assert "never git-pulls" in result["answer"]
+
+
 def test_mae_consumer_cpu_filters_component() -> None:
     result = route("Show CPU and memory of datahub-mae-consumer")
     assert result["source"] == "handler:resource_metrics"

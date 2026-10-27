@@ -33,17 +33,19 @@
       <div><strong>1. Intent router</strong> Ordered keyword rules in <code>agent/router.py</code>. Vanilla JS port for GitHub Pages.</div>
       <div><strong>2. Handlers</strong> Read fixture JSON: cluster, metrics, ingestion, RCA, alerts, app config. Return measured values only. Chip: <code>Handler · fixtures only</code>.</div>
       <div><strong>3. KB + API exec</strong> Catalog of DataHub GraphQL/REST entries. Explicit questions (login, alerts, /health) run the mock API and print status + body. Cite chip: <code>Knowledge base · cited catalog</code>.</div>
-      <div><strong>4. Suite executor</strong> smoke / sanity / regression (API, UI, performance layers). Pages replays <code>agent/fixtures/suites.json</code>; pytest still owns the live checks. Chip: <code>Suite catalog · pytest markers</code>.</div>
-      <div><strong>5. Rule RCA</strong> <code>agent/rca_engine.py</code> fires or skips named rules. Exit 137 is SIGKILL; memory pressure only when <code>last_reason=OOMKilled</code>. Skipped rules are part of the diagnosis (probe vs OOM, heap already set).</div>
-      <div><strong>6. App verdict</strong> Pods + RCA + smoke + sanity, then the agent asks before full regression. Yes runs it; no skips.</div>
-      <div><strong>7. Fallback</strong> If nothing matches, a deterministic refusal. No invented CPU, assets, or passwords.</div>
+      <div><strong>4. Suite executor</strong> smoke / sanity / regression (API, UI, performance, security layers). Pages replays <code>agent/fixtures/suites.json</code>; pytest still owns the live checks. Chip: <code>Suite catalog · pytest markers</code>. Chat is read; “run …” records a simulated Actions/Jenkins job against the last SHA (no git pull).</div>
+      <div><strong>5. Rule RCA</strong> <code>agent/rca_engine.py</code> fires or skips named rules. Exit 137 is SIGKILL; memory pressure only when <code>last_reason=OOMKilled</code>. Skipped rules are part of the diagnosis (probe vs OOM, heap already set). Security uses the same pattern in <code>agent/security_engine.py</code> (AUTH-OPEN, SECRET-IN-LOG, DEP-CVE).</div>
+      <div><strong>6. App verdict</strong> Pods + RCA + smoke + sanity + AUTH-OPEN, then the agent asks before full regression. Yes runs it; no skips.</div>
+      <div><strong>7. Child agents</strong> API and UI pages host a scoped child of this router. Each answers only that layer’s suites. The lab console stays the root for performance, security, API, and UI.</div>
+      <div><strong>8. Fallback</strong> If nothing matches, a deterministic refusal. No invented CPU, assets, or passwords.</div>
     </div>
     <h2>Visible source field</h2>
     <p>Every answer carries <code>source</code> plus a kind chip so you can see which path ran:</p>
     <ul>
       <li><code>handler:pod_status</code> / <code>handler:perf_rca</code> — fixtures and the rule engine. A model never picks the tool.</li>
       <li><code>kb:graphql.createIngestionSource</code> — cited catalog file, no number invented.</li>
-      <li><code>handler:run_suite:sanity:ui</code> — pytest marker catalog replay, with Symptom / Cause / Fix on fails.</li>
+      <li><code>handler:run_suite:sanity:ui</code> — pytest marker catalog replay, with Symptom / Cause / Fix on fails. Write path: records a simulated job against last SHA.</li>
+      <li><code>handler:security_rca</code> — mocked security fixture; AUTH-OPEN / SECRET-IN-LOG / DEP-CVE. No live scan.</li>
       <li><code>fallback:deterministic</code> — no match, no hallucination.</li>
     </ul>
     <p>The console paints those chips next to the reply. pytest in <code>tests/test_routing.py</code> asserts the canned questions take different sources — no network.</p>

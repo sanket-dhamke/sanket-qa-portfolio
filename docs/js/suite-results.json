@@ -1,5 +1,5 @@
 {
-  "note": "Live pytest collection. API smoke excludes --run-live tests. Sanity FAIL is the known mae-consumer OOM / MEM-PRESSURE lab_issue. CI uses -m 'not lab_issue'.",
+  "note": "Live pytest collection. API smoke excludes --run-live tests. Sanity FAIL is the known mae-consumer OOM / MEM-PRESSURE lab_issue. Security smoke < sanity (AUTH-OPEN is the sanity lab_issue). CI uses -m 'not lab_issue'.",
   "api": {
     "smoke": {
       "tests": 6,
@@ -21,13 +21,24 @@
       "verdict": "PASS"
     },
     "sanity": {
-      "tests": 10,
+      "tests": 11,
       "verdict": "FAIL",
       "why": "UI search empty while MAE OOM"
     },
     "regression": {
-      "tests": 16,
+      "tests": 18,
       "verdict": "PASS"
+    }
+  },
+  "security": {
+    "smoke": {
+      "tests": 2,
+      "verdict": "PASS"
+    },
+    "sanity": {
+      "tests": 3,
+      "verdict": "FAIL",
+      "why": "AUTH-OPEN \u2014 GMS reachable without a session"
     }
   }
 }

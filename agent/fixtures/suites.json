@@ -1,6 +1,6 @@
 {
   "generated_at": "2026-10-01T12:00:00Z",
-  "note": "Recorded smoke / sanity / regression results for the in-browser agent. API and UI cases are 1:1 with pytest markers (live excluded). Performance extras are catalog-only. GitHub Pages cannot spawn pytest, so the handler replays this catalog.",
+  "note": "Recorded smoke / sanity / regression results for the in-browser agent. API and UI cases are 1:1 with pytest markers (live excluded). Security layer is 1:1 with tests/security (smoke < sanity). Performance extras are catalog-only. GitHub Pages cannot spawn pytest, so the handler replays this catalog.",
   "counts": {
     "api": {
       "smoke": 6,
@@ -9,11 +9,15 @@
     },
     "ui": {
       "smoke": 3,
-      "sanity": 10,
-      "regression": 16
+      "sanity": 11,
+      "regression": 18
     },
     "performance": {
       "regression": 1
+    },
+    "security": {
+      "smoke": 2,
+      "sanity": 3
     }
   },
   "cases": [
@@ -699,6 +703,20 @@
       "rca": null
     },
     {
+      "id": "ui.question_bank",
+      "name": "Questions you can ask copies into chat",
+      "layer": "ui",
+      "suites": [
+        "sanity"
+      ],
+      "endpoint": null,
+      "status": "pass",
+      "duration_ms": 720,
+      "expected": "question bank categories + Copy, no auto-ask",
+      "actual": "copied",
+      "rca": null
+    },
+    {
       "id": "ui.search_datasets",
       "name": "UI search returns postgres datasets",
       "layer": "ui",
@@ -946,6 +964,34 @@
       "rca": null
     },
     {
+      "id": "ui.security_chat",
+      "name": "Security chat and Security tab",
+      "layer": "ui",
+      "suites": [
+        "regression"
+      ],
+      "endpoint": null,
+      "status": "pass",
+      "duration_ms": 840,
+      "expected": "AUTH-OPEN, SECRET-IN-LOG, Checked \u2014 not the cause",
+      "actual": "security RCA",
+      "rca": null
+    },
+    {
+      "id": "ui.child_chats",
+      "name": "API and UI child chats scoped pipeline",
+      "layer": "ui",
+      "suites": [
+        "regression"
+      ],
+      "endpoint": null,
+      "status": "pass",
+      "duration_ms": 980,
+      "expected": "child agent, last SHA, git_pull=false",
+      "actual": "scoped job",
+      "rca": null
+    },
+    {
       "id": "perf.mae_memory_headroom",
       "name": "MAE consumer memory under 90% of limit",
       "layer": "performance",
@@ -965,6 +1011,85 @@
         ],
         "cause": "1536 MiB is too small for MAE + Elasticsearch bulk buffers at even 140 assets.",
         "fix": "This is the first config change before any 1M / 10M ingest plan."
+      }
+    },
+    {
+      "id": "security.fixture_mocked",
+      "name": "Security fixture is mocked, not a live scan",
+      "layer": "security",
+      "suites": [
+        "smoke"
+      ],
+      "endpoint": null,
+      "status": "pass",
+      "duration_ms": 18,
+      "expected": "note not a live scan; secret already redacted",
+      "actual": "mocked",
+      "rca": null
+    },
+    {
+      "id": "security.tls_on",
+      "name": "GMS TLS is on in the fixture",
+      "layer": "security",
+      "suites": [
+        "smoke"
+      ],
+      "endpoint": null,
+      "status": "pass",
+      "duration_ms": 16,
+      "expected": "gms.tls true",
+      "actual": "true",
+      "rca": null
+    },
+    {
+      "id": "security.auth_open_recorded",
+      "name": "AUTH-OPEN fires from the fixture",
+      "layer": "security",
+      "suites": [
+        "sanity"
+      ],
+      "endpoint": null,
+      "status": "pass",
+      "duration_ms": 22,
+      "expected": "AUTH-OPEN in fired",
+      "actual": "AUTH-OPEN",
+      "rca": null
+    },
+    {
+      "id": "security.tls_not_cause",
+      "name": "TLS is Checked \u2014 not the cause",
+      "layer": "security",
+      "suites": [
+        "sanity"
+      ],
+      "endpoint": null,
+      "status": "pass",
+      "duration_ms": 20,
+      "expected": "TLS skipped",
+      "actual": "Checked \u2014 not the cause",
+      "rca": null
+    },
+    {
+      "id": "security.gms_requires_auth",
+      "name": "GMS rejects anonymous GraphQL/REST",
+      "layer": "security",
+      "suites": [
+        "sanity"
+      ],
+      "endpoint": null,
+      "status": "fail",
+      "duration_ms": 24,
+      "expected": "gms.auth_required true",
+      "actual": "auth_required false (AUTH-OPEN)",
+      "rca": {
+        "symptom": "Mocked datahub-gms GraphQL and REST answered without a session cookie.",
+        "evidence": [
+          "security fixture gms.auth_required=false",
+          "AUTH-OPEN fired; TLS skipped (not the cause)",
+          "source=agent/fixtures/security.json"
+        ],
+        "cause": "Auth is not required on this lab GMS endpoint (AUTH-OPEN). App health is DEGRADED. Not a live exploit.",
+        "fix": "Require a session (PLAY_SESSION) on GMS before serving metadata. Do not treat /health 200 as proof that auth is on."
       }
     }
   ]

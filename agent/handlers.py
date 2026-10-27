@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from agent import executor, rca_engine
+from agent import executor, rca_engine, security_engine
 
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
 RECIPES = Path(__file__).resolve().parent / "recipes"
@@ -298,7 +298,8 @@ def fallback(question: str) -> dict[str, Any]:
                 "CPU, or asset totals. Try: crashing/OOM pods, CPU of datahub-gms, "
                 "how many assets, how many alerts, login with emuser/empass, "
                 "run API sanity, check UI sanity, current state of the application, "
-                "list the lab tools, or what config to upgrade for 1M / 10M assets."
+                "list the lab tools, any security issues, why GMS is exposed, "
+                "or what config to upgrade for 1M / 10M assets."
             ),
             "metrics": None,
             "citations": [],
@@ -319,6 +320,18 @@ def _format_rca_block(rca: dict[str, Any], heading: str | None = None) -> str:
     lines.append(f"Cause: {rca.get('cause')}")
     lines.append(f"Fix: {rca.get('fix')}")
     return "\n".join(lines)
+
+
+def _format_job(job: dict[str, Any]) -> str:
+    return (
+        "Pipeline job (write) — simulated GitHub Actions / Jenkins-shaped log.\n"
+        f"- id `{job.get('id')}`\n"
+        f"- SHA `{job.get('sha')}` on `{job.get('ref')}`\n"
+        f"- {job.get('provider')} · {job.get('jenkins_job')}\n"
+        "- git_pull=false credentials=none\n"
+        f"- {job.get('verdict')} {job.get('passed')}/{job.get('total')}\n"
+        "No git pull. No Jenkins credentials on this public site."
+    )
 
 
 def _format_suite(summary: dict[str, Any]) -> str:
@@ -412,6 +425,7 @@ def run_named_suite(question: str, suite: str | None = None, layer: str | None =
     if suite is None:
         return fallback(question)
     summary = executor.run_suite(suite, layer)
+    job = executor.record_job(suite, layer, summary)
     result = _base()
     result.update(
         {
@@ -421,7 +435,7 @@ def run_named_suite(question: str, suite: str | None = None, layer: str | None =
                 "read_fixture:agent/fixtures/suites.json",
                 f"pytest -m {suite}" + (f" and {layer}" if layer else ""),
             ],
-            "answer": _format_suite(summary),
+            "answer": _format_suite(summary) + "\n\n" + _format_job(job),
             "metrics": {
                 "suite": suite,
                 "layer": layer,
@@ -430,10 +444,85 @@ def run_named_suite(question: str, suite: str | None = None, layer: str | None =
                 "total": summary.get("total"),
                 "verdict": summary.get("verdict"),
                 "failed_ids": summary.get("failed_ids"),
+                "sha": job.get("sha"),
+                "git_pull": False,
             },
             "ui": "suite_report",
             "report": summary,
-            "citations": ["agent/fixtures/suites.json"],
+            "job": job,
+            "citations": ["agent/fixtures/suites.json", "agent/fixtures/pipeline.json"],
+        }
+    )
+    return result
+
+
+def pipeline_status(question: str) -> dict[str, Any]:
+    pipe = executor.pipeline_snapshot()
+    result = _base()
+    result.update(
+        {
+            "route": "pipeline_status",
+            "source": "handler:pipeline_status",
+            "tools": ["read_fixture:agent/fixtures/pipeline.json"],
+            "answer": (
+                "Last published snapshot (read). This site never git-pulls.\n"
+                f"SHA `{pipe.get('last_sha_short')}` on `{pipe.get('ref')}` "
+                f"({pipe.get('repo')}).\n"
+                f"Provider: {pipe.get('provider')} · job `{pipe.get('jenkins_job')}`.\n"
+                f"credentials={pipe.get('credentials')} git_pull={pipe.get('git_pull')}.\n"
+                "Chat is read. Say “run API smoke” or “run UI sanity” to record a "
+                "simulated job against this SHA — like Send preview now on email."
+            ),
+            "metrics": {
+                "sha": pipe.get("last_sha_short"),
+                "git_pull": False,
+                "credentials": "none",
+                "mode": "read",
+            },
+            "ui": "pipeline",
+            "pipeline": pipe,
+            "citations": ["agent/fixtures/pipeline.json"],
+        }
+    )
+    return result
+
+
+def suite_explain(question: str) -> dict[str, Any]:
+    suite, layer = executor.infer_suite(question)
+    pipe = executor.pipeline_snapshot()
+    if suite is None and layer is None:
+        return pipeline_status(question)
+    if suite is None:
+        suite = "sanity"
+    summary = executor.run_suite(suite, layer)
+    lines = [
+        "Catalog read — no job recorded, no git pull.",
+        f"Last SHA `{pipe.get('last_sha_short')}` on `{pipe.get('ref')}`.",
+        _format_suite(summary),
+        "Say “run …” to record a simulated Actions/Jenkins job against that SHA.",
+    ]
+    result = _base()
+    result.update(
+        {
+            "route": "suite_explain",
+            "source": "handler:suite_explain",
+            "tools": ["read_fixture:agent/fixtures/suites.json"],
+            "answer": "\n".join(lines),
+            "metrics": {
+                "suite": suite,
+                "layer": layer,
+                "passed": summary.get("passed"),
+                "failed": summary.get("failed"),
+                "total": summary.get("total"),
+                "verdict": summary.get("verdict"),
+                "failed_ids": summary.get("failed_ids"),
+                "sha": pipe.get("last_sha_short"),
+                "git_pull": False,
+                "mode": "read",
+            },
+            "ui": "suite_explain",
+            "report": summary,
+            "citations": ["agent/fixtures/suites.json", "agent/fixtures/pipeline.json"],
         }
     )
     return result
@@ -492,6 +581,10 @@ def app_status(question: str) -> dict[str, Any]:
     ]
     for title in health["rca_titles"]:
         lines.append(f"- {title}")
+    if health.get("security_titles"):
+        lines.append("Security (from fixtures):")
+        for title in health["security_titles"]:
+            lines.append(f"- {title}")
     smoke, sanity = health["smoke"], health["sanity"]
     lines.append(
         f"Auto-ran smoke: {smoke['verdict']} {smoke['passed']}/{smoke['total']} "
@@ -534,6 +627,7 @@ def app_status(question: str) -> dict[str, Any]:
                 "agent/fixtures/cluster.json",
                 "agent/fixtures/rca.json",
                 "agent/fixtures/suites.json",
+                "agent/fixtures/security.json",
             ],
         }
     )
@@ -590,6 +684,65 @@ def perf_rca(question: str) -> dict[str, Any]:
                 "agent/fixtures/cluster.json",
                 "agent/fixtures/metrics.json",
             ],
+        }
+    )
+    return result
+
+
+def security_rca(question: str) -> dict[str, Any]:
+    report = security_engine.evaluate()
+    result = _base()
+    result.update(
+        {
+            "route": "security_rca",
+            "source": "handler:security_rca",
+            "tools": [
+                "rule_rca:agent/security_engine.py",
+                "read_fixture:agent/fixtures/security.json",
+            ],
+            "answer": security_engine.format_report(report),
+            "metrics": {
+                "fired": [row["id"] for row in report["fired"]],
+                "skipped": [row["id"] for row in report["skipped"]],
+                "counts": report["counts"],
+            },
+            "ui": "security",
+            "security": report,
+            "citations": [
+                "agent/security_engine.py",
+                "agent/fixtures/security.json",
+            ],
+        }
+    )
+    return result
+
+
+def email_report(question: str) -> dict[str, Any]:
+    health = executor.app_health()
+    result = _base()
+    result.update(
+        {
+            "route": "email_report",
+            "source": "handler:email_report",
+            "tools": ["ui:email-report-tab"],
+            "answer": (
+                "Simulated email report — no SMTP host is contacted.\n"
+                "To: sanket.dhamke@gmail.com\n"
+                f"Subject would include App health {health['health']} "
+                "(this fixture is DEGRADED).\n"
+                "Schedule options: every 1h / 3h / 6h / 12h / 24h. "
+                "On new issue is on by default; duplicate signatures are skipped.\n"
+                "SMTP=none. Open the Email report tab and click Send preview now "
+                "to see the HTML body (pods, RCA, smoke).\n"
+                "Cited source: docs/console.html Email report tab."
+            ),
+            "metrics": {
+                "health": health["health"],
+                "smtp": "none",
+                "to": "sanket.dhamke@gmail.com",
+            },
+            "ui": "email",
+            "citations": ["docs/console.html"],
         }
     )
     return result

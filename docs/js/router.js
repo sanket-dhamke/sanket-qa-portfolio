@@ -63,6 +63,7 @@
     if (/\bui\b/.test(q)) layer = "ui";
     else if (/\bapi\b/.test(q)) layer = "api";
     else if (q.includes("performance")) layer = "performance";
+    else if (q.includes("security")) layer = "security";
     let suite = null;
     if (q.includes("regression")) suite = "regression";
     else if (q.includes("sanity")) suite = "sanity";
@@ -472,7 +473,7 @@
       lines.push("  Fix: " + row.recommendation);
       lines.push("");
     });
-    lines.push("Evaluated, not fired (this is part of the diagnosis):");
+    lines.push(report.skipped_heading || "Evaluated, not fired (this is part of the diagnosis):");
     (report.skipped || []).forEach((row) => {
       lines.push("- " + row.id + ": " + row.why);
     });
@@ -539,13 +540,50 @@
     };
   }
 
+  function securityRca(data) {
+    const report = data.security_report || { fired: [], skipped: [], principle: "", counts: {} };
+    return {
+      route: "security_rca",
+      source: "handler:security_rca",
+      tools: ["rule_rca:agent/security_engine.py", "read_fixture:agent/fixtures/security.json"],
+      answer: formatEngineReport(report),
+      metrics: {
+        fired: (report.fired || []).map((row) => row.id),
+        skipped: (report.skipped || []).map((row) => row.id),
+        counts: report.counts || {},
+      },
+      ui: "security",
+      security: report,
+      caveat: caveat(),
+    };
+  }
+
+  function emailReport(data) {
+    const snapshot = computeAppHealth(data, {
+      lastSmoke: runSuite(data, "smoke", null),
+      lastSanity: runSuite(data, "sanity", null),
+    });
+    return {
+      route: "email_report",
+      source: "handler:email_report",
+      tools: ["ui:email-report-tab"],
+      answer:
+        "Simulated email report — no SMTP host is contacted.\nTo: sanket.dhamke@gmail.com\nSubject would include App health " +
+        snapshot.health +
+        " (this fixture is DEGRADED).\nSchedule options: every 1h / 3h / 6h / 12h / 24h. On new issue is on by default; duplicate signatures are skipped.\nSMTP=none. Open the Email report tab and click Send preview now to see the HTML body (pods, RCA, smoke).\nCited source: docs/console.html Email report tab.",
+      metrics: { health: snapshot.health, smtp: "none", to: "sanket.dhamke@gmail.com" },
+      ui: "email",
+      caveat: caveat(),
+    };
+  }
+
   function fallback() {
     return {
       route: "fallback",
       source: "fallback:deterministic",
       tools: [],
       answer:
-        "No handler or catalog entry matched that question. This sample does not call a language model, so it will not invent pod counts, CPU, or asset totals. Try: crashing/OOM pods, CPU of datahub-gms, how many assets, how many alerts, login with emuser/empass, run API sanity, check UI sanity, current state of the application, list the lab tools, or what config to upgrade for 1M / 10M assets.",
+        "No handler or catalog entry matched that question. This sample does not call a language model, so it will not invent pod counts, CPU, or asset totals. Try: crashing/OOM pods, CPU of datahub-gms, how many assets, how many alerts, login with emuser/empass, run API sanity, check UI sanity, current state of the application, list the lab tools, any security issues, why GMS is exposed, or what config to upgrade for 1M / 10M assets.",
       metrics: null,
       ui: null,
       caveat: caveat(),
@@ -604,6 +642,133 @@
     };
   }
 
+  function pipelineOf(data) {
+    return (data && data.pipeline) || ((data && data.fixtures && data.fixtures.pipeline) || {});
+  }
+
+  function recordJob(data, suite, layer, summary) {
+    const pipe = pipelineOf(data);
+    const sha = pipe.last_sha_short || String(pipe.last_sha || "").slice(0, 7) || "unknown";
+    const layerBit = layer || "all";
+    return {
+      id: "job-" + layerBit + "-" + suite + "-" + sha,
+      suite: suite,
+      layer: layer || null,
+      sha: sha,
+      ref: pipe.ref || "main",
+      provider: pipe.provider,
+      jenkins_job: pipe.jenkins_job,
+      actions_url: pipe.actions_url,
+      credentials: "none",
+      git_pull: false,
+      mode: "write",
+      verdict: summary.verdict,
+      passed: summary.passed,
+      failed: summary.failed,
+      total: summary.total,
+      note: "Recorded against the last SHA snapshot. No git pull. No Jenkins credentials.",
+    };
+  }
+
+  function formatJob(job) {
+    return (
+      "Pipeline job (write) — simulated GitHub Actions / Jenkins-shaped log.\n" +
+      "- id `" +
+      job.id +
+      "`\n- SHA `" +
+      job.sha +
+      "` on `" +
+      job.ref +
+      "`\n- " +
+      job.provider +
+      " · " +
+      job.jenkins_job +
+      "\n- git_pull=" +
+      job.git_pull +
+      " credentials=" +
+      job.credentials +
+      "\n- " +
+      job.verdict +
+      " " +
+      job.passed +
+      "/" +
+      job.total +
+      "\nNo git pull. No Jenkins credentials on this public site."
+    );
+  }
+
+  function pipelineStatus(data) {
+    const pipe = pipelineOf(data);
+    return {
+      route: "pipeline_status",
+      source: "handler:pipeline_status",
+      tools: ["read_fixture:agent/fixtures/pipeline.json"],
+      answer:
+        "Last published snapshot (read). This site never git-pulls.\nSHA `" +
+        (pipe.last_sha_short || "") +
+        "` on `" +
+        (pipe.ref || "main") +
+        "` (" +
+        (pipe.repo || "") +
+        ").\nProvider: " +
+        (pipe.provider || "") +
+        " · job `" +
+        (pipe.jenkins_job || "") +
+        "`.\ncredentials=" +
+        (pipe.credentials || "none") +
+        " git_pull=" +
+        (pipe.git_pull === false ? "false" : pipe.git_pull) +
+        ".\nChat is read. Say “run API smoke” or “run UI sanity” to record a simulated job against this SHA — like Send preview now on email.",
+      metrics: {
+        sha: pipe.last_sha_short,
+        git_pull: false,
+        credentials: "none",
+        mode: "read",
+      },
+      ui: "pipeline",
+      pipeline: pipe,
+      caveat: caveat(),
+    };
+  }
+
+  function suiteExplain(data, question) {
+    const inferred = inferSuite(question);
+    let suite = inferred.suite;
+    const layer = inferred.layer;
+    if (!suite && !layer) return pipelineStatus(data);
+    if (!suite) suite = "sanity";
+    const summary = runSuite(data, suite, layer || null);
+    const pipe = pipelineOf(data);
+    return {
+      route: "suite_explain",
+      source: "handler:suite_explain",
+      tools: ["read_fixture:agent/fixtures/suites.json"],
+      answer:
+        "Catalog read — no job recorded, no git pull.\nLast SHA `" +
+        (pipe.last_sha_short || "") +
+        "` on `" +
+        (pipe.ref || "main") +
+        "`.\n" +
+        formatSuite(summary) +
+        "\nSay “run …” to record a simulated Actions/Jenkins job against that SHA.",
+      metrics: {
+        suite: suite,
+        layer: layer || null,
+        passed: summary.passed,
+        failed: summary.failed,
+        total: summary.total,
+        verdict: summary.verdict,
+        failed_ids: summary.failed_ids,
+        sha: pipe.last_sha_short,
+        git_pull: false,
+        mode: "read",
+      },
+      ui: "suite_explain",
+      report: summary,
+      caveat: caveat(),
+    };
+  }
+
   function runNamedSuite(data, question, suite, layer) {
     if (!suite) {
       const inferred = inferSuite(question);
@@ -613,11 +778,12 @@
     if (!suite && layer) suite = "sanity";
     if (!suite) return fallback();
     const summary = runSuite(data, suite, layer || null);
+    const job = recordJob(data, suite, layer || null, summary);
     return {
       route: "run_suite",
       source: "handler:run_suite:" + suite + (layer ? ":" + layer : ""),
       tools: ["read_fixture:agent/fixtures/suites.json"],
-      answer: formatSuite(summary),
+      answer: formatSuite(summary) + "\n\n" + formatJob(job),
       metrics: {
         suite,
         layer: layer || null,
@@ -626,9 +792,12 @@
         total: summary.total,
         verdict: summary.verdict,
         failed_ids: summary.failed_ids,
+        sha: job.sha,
+        git_pull: false,
       },
       ui: "suite_report",
       report: summary,
+      job: job,
       session_update: { awaiting_regression: false },
       awaiting_regression: false,
       caveat: caveat(),
@@ -691,6 +860,8 @@
     const sanityFail = !!(lastSanity && lastSanity.verdict === "FAIL");
     const criticalRca = fired.some((f) => String(f.severity || "").toUpperCase() === "CRITICAL");
     const highRca = fired.some((f) => String(f.severity || "").toUpperCase() === "HIGH");
+    const secFired = (((data || {}).security_report || {}).fired) || [];
+    const authOpen = secFired.some((f) => f.id === "AUTH-OPEN");
     const restarts = pods.some((p) => Number(p.restarts || 0) > 0);
     const errors = pods.some((p) => {
       const reason = String(p.last_reason || "");
@@ -713,6 +884,7 @@
       if (restarts) reasons.push("restarts");
       if (errors) reasons.push("pod errors");
       if (!allRunning) reasons.push("pod not ready");
+      if (authOpen) reasons.push("AUTH-OPEN");
       const healthyOk =
         allRunning &&
         smokePassed &&
@@ -722,7 +894,8 @@
         !highRca &&
         !restarts &&
         !errors &&
-        !sanityFail;
+        !sanityFail &&
+        !authOpen;
       if (healthyOk) {
         health = "HEALTHY";
         reasons.push("pods Running, smoke PASS, no CRITICAL RCA");
@@ -746,6 +919,7 @@
       allRunning: allRunning,
       smokePassed: smokePassed,
       fired: fired,
+      authOpen: authOpen,
     };
   }
 
@@ -771,6 +945,13 @@
     fired.forEach((f) =>
       lines.push("- " + f.severity + " " + (f.id ? f.id + " " : "") + (f.component || "") + ": " + f.title)
     );
+    const secFiredTitles = ((data.security_report || {}).fired) || [];
+    if (secFiredTitles.length) {
+      lines.push("Security (from fixtures):");
+      secFiredTitles.forEach((f) =>
+        lines.push("- " + f.severity + " " + (f.id ? f.id + " " : "") + (f.component || "") + ": " + f.title)
+      );
+    }
     lines.push(
       "Auto-ran smoke: " + smoke.verdict + " " + smoke.passed + "/" + smoke.total + " and sanity: " + sanity.verdict + " " + sanity.passed + "/" + sanity.total + "."
     );
@@ -863,6 +1044,8 @@
 
   const HANDLERS = {
     login_api: loginApi,
+    pipeline_status: pipelineStatus,
+    suite_explain: suiteExplain,
     run_suite: runNamedSuite,
     app_status: appStatus,
     capacity_plan: capacityPlan,
@@ -873,6 +1056,8 @@
     ingestion_assets: ingestionAssets,
     kb_retrieve: kbRetrieve,
     perf_rca: perfRca,
+    security_rca: securityRca,
+    email_report: emailReport,
     tool_catalog: toolCatalog,
   };
 

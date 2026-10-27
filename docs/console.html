@@ -73,11 +73,15 @@
     </div>
     <div class="layout">
       <section class="panel chat">
-        <h2>Hybrid AI Agent for performance testing</h2>
+        <div class="chat-head">
+          <h2>Hybrid AI Agent for performance testing</h2>
+          <button type="button" id="btn-qbank" class="qbank-link" data-testid="qbank-toggle" aria-expanded="false">Questions you can ask</button>
+        </div>
+        <div id="qbank" class="qbank hidden" data-testid="qbank" hidden></div>
         <div class="log" id="log"></div>
         <div class="canned" id="canned"></div>
         <div class="composer">
-          <input id="q" type="text" placeholder="Ask, then press Enter — the box clears. Try login, sanity, alerts, 1M config…" aria-label="Question">
+          <input id="q" type="text" placeholder="Ask, then press Enter — the box clears. Try login, sanity, security, 1M config…" aria-label="Question">
           <button type="button" id="ask">Ask</button>
         </div>
       </section>
@@ -87,6 +91,7 @@
           <button type="button" class="tab on" data-tab="perf" aria-selected="true">Performance</button>
           <button type="button" class="tab" data-tab="suites" aria-selected="false">Suites</button>
           <button type="button" class="tab" data-tab="rca" aria-selected="false">RCA</button>
+          <button type="button" class="tab" data-tab="security" aria-selected="false">Security</button>
           <button type="button" class="tab" data-tab="capacity" aria-selected="false">Capacity</button>
           <button type="button" class="tab" data-tab="email" aria-selected="false">Email report</button>
           <button type="button" class="tab" data-tab="tools" aria-selected="false">Tools</button>
@@ -134,6 +139,15 @@
         </div>
         <div class="tab-panel" id="tab-rca">
           <div class="rca-list" id="rca-list"></div>
+        </div>
+        <div class="tab-panel" id="tab-security">
+          <p class="hint">Mocked DataHub security fixture — not a live scan, no exploits. Findings first, then RCA. Secrets are redacted.</p>
+          <div id="sec-findings" data-testid="sec-findings"></div>
+          <div class="perf-rca" id="sec-rca" data-testid="sec-rca">
+            <h2>Root cause</h2>
+            <p class="hint">Fired rules vs Checked — not the cause. TLS and live scanning are not why GMS is open.</p>
+            <div class="rca-list" id="sec-rca-list"></div>
+          </div>
         </div>
         <div class="tab-panel" id="tab-capacity">
           <p class="hint">Ask how many assets, or what to upgrade for 1 million / 10 million. The bar is the 140-asset fixture against those targets.</p>

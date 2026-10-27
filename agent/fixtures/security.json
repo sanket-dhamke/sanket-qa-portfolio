@@ -1,0 +1,25 @@
+{
+  "generated_at": "2026-10-01T12:00:00Z",
+  "note": "Mocked DataHub security snapshot. Not a live scan. No exploits, no payloads, no internet probing. Fictional demo tenant.",
+  "gms": {
+    "component": "datahub-gms",
+    "url": "http://datahub-gms:8080",
+    "auth_required": false,
+    "anonymous_graphql": true,
+    "anonymous_rest": true,
+    "tls": true,
+    "health_without_session": true
+  },
+  "secret_in_log": {
+    "component": "datahub-frontend",
+    "token_like": true,
+    "line": "PLAY_SESSION=dh_lab_****redacted**** login ok emuser",
+    "kind": "session cookie"
+  },
+  "dependency": {
+    "package": "com.fasterxml.jackson.core:jackson-databind",
+    "advisory": "Mocked lab advisory (lab_issue): jackson-databind unsafe default typing. Not a live scan.",
+    "cited_as": "lab_issue",
+    "cve": null
+  }
+}

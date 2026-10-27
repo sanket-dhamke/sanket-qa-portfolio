@@ -211,7 +211,7 @@ def run_suite(suite: str, layer: str | None = None) -> dict[str, Any]:
     layer = layer.lower().strip() if layer else None
     if suite not in {"smoke", "sanity", "regression"}:
         return {"error": f"unknown suite '{suite}'", "suite": suite, "layer": layer}
-    if layer and layer not in {"api", "ui", "performance"}:
+    if layer and layer not in {"api", "ui", "performance", "security"}:
         return {"error": f"unknown layer '{layer}'", "suite": suite, "layer": layer}
     cases = _cases(suite, layer)
     summary = summarize_cases(cases)
@@ -232,16 +232,17 @@ def compute_app_health(
     rca_report: dict[str, Any] | None,
     smoke: dict[str, Any] | None,
     sanity: dict[str, Any] | None = None,
+    security_report: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """HEALTHY / DEGRADED / CRITICAL from pods, RCA, smoke, and sanity if run.
 
     CRITICAL only when smoke failed (GMS-level outage). Green smoke next to
     CRITICAL would mean the suite is wrong.
     DEGRADED: mae-consumer CrashLoop/OOM, restarts, log errors, sanity fail,
-    HIGH or CRITICAL component RCA, or a pod that is not Running.
+    HIGH or CRITICAL component RCA, AUTH-OPEN, or a pod that is not Running.
     HEALTHY only if every pod is Running, smoke passed, no CrashLoop/OOM,
-    and no CRITICAL RCA (sanity pass if it ran).
-    Never returns unknown.
+    no AUTH-OPEN, and no CRITICAL RCA (sanity pass if it ran).
+    Never returns unknown. AUTH-OPEN never makes CRITICAL (smoke-fail only).
     """
     pods = list(cluster.get("pods") or [])
     fired = list((rca_report or {}).get("fired") or [])
@@ -256,6 +257,8 @@ def compute_app_health(
     sanity_fail = _suite_fail(sanity)
     critical_rca = any(str(row.get("severity") or "").upper() == "CRITICAL" for row in fired)
     high_rca = any(str(row.get("severity") or "").upper() == "HIGH" for row in fired)
+    sec_fired = list((security_report or {}).get("fired") or [])
+    auth_open = any(str(row.get("id") or "") == "AUTH-OPEN" for row in sec_fired)
     restarts = any(int(pod.get("restarts") or 0) > 0 for pod in pods)
     errors = any(
         bool(pod.get("last_reason")) and "oom" not in str(pod.get("last_reason")).lower()
@@ -286,6 +289,8 @@ def compute_app_health(
             reasons.append("pod errors")
         if not all_running:
             reasons.append("pod not ready")
+        if auth_open:
+            reasons.append("AUTH-OPEN")
         healthy_ok = (
             all_running
             and smoke_passed
@@ -296,6 +301,7 @@ def compute_app_health(
             and not restarts
             and not errors
             and not sanity_fail
+            and not auth_open
         )
         if healthy_ok:
             health = "HEALTHY"
@@ -317,11 +323,13 @@ def compute_app_health(
         "all_running": all_running,
         "smoke_passed": smoke_passed,
         "sanity_ran": sanity is not None,
+        "auth_open": auth_open,
     }
 
 
 def app_health(*, run_sanity: bool = True) -> dict[str, Any]:
     from agent.rca_engine import evaluate as evaluate_rca
+    from agent.security_engine import evaluate as evaluate_security
 
     cluster = load("cluster.json")
     rca = load("rca.json")
@@ -331,7 +339,10 @@ def app_health(*, run_sanity: bool = True) -> dict[str, Any]:
     smoke = run_suite("smoke")
     sanity = run_suite("sanity") if run_sanity else None
     rules = evaluate_rca(cluster=cluster)
-    snapshot = compute_app_health(cluster, rules, smoke, sanity)
+    security = evaluate_security()
+    snapshot = compute_app_health(
+        cluster, rules, smoke, sanity, security_report=security
+    )
     payload: dict[str, Any] = {
         "cluster": cluster["cluster"],
         "namespace": cluster["namespace"],
@@ -343,6 +354,9 @@ def app_health(*, run_sanity: bool = True) -> dict[str, Any]:
         "smoke": {k: smoke[k] for k in ("passed", "failed", "total", "verdict")},
         "rca_titles": [
             f"{row['severity']} {row['id']}: {row['title']}" for row in rules["fired"]
+        ],
+        "security_titles": [
+            f"{row['severity']} {row['id']}: {row['title']}" for row in security["fired"]
         ],
         "health": snapshot["health"],
         "health_reasons": snapshot["reasons"],
@@ -379,6 +393,37 @@ def capacity_plan(targets: list[int]) -> dict[str, Any]:
     }
 
 
+def pipeline_snapshot() -> dict[str, Any]:
+    return load("pipeline.json")
+
+
+def record_job(suite: str, layer: str | None, summary: dict[str, Any]) -> dict[str, Any]:
+    pipe = pipeline_snapshot()
+    sha = str(pipe.get("last_sha_short") or (pipe.get("last_sha") or "")[:7] or "unknown")
+    layer_bit = layer or "all"
+    return {
+        "id": f"job-{layer_bit}-{suite}-{sha}",
+        "suite": suite,
+        "layer": layer,
+        "sha": sha,
+        "ref": pipe.get("ref") or "main",
+        "provider": pipe.get("provider"),
+        "jenkins_job": pipe.get("jenkins_job"),
+        "actions_url": pipe.get("actions_url"),
+        "credentials": "none",
+        "git_pull": False,
+        "mode": "write",
+        "verdict": summary.get("verdict"),
+        "passed": summary.get("passed"),
+        "failed": summary.get("failed"),
+        "total": summary.get("total"),
+        "note": (
+            "Recorded against the last SHA snapshot. No git pull. "
+            "No Jenkins credentials."
+        ),
+    }
+
+
 def infer_suite(question: str) -> tuple[str | None, str | None]:
     q = question.lower()
     layer = None
@@ -388,6 +433,8 @@ def infer_suite(question: str) -> tuple[str | None, str | None]:
         layer = "api"
     elif "performance" in q:
         layer = "performance"
+    elif "security" in q:
+        layer = "security"
     suite = None
     if "regression" in q:
         suite = "regression"

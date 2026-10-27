@@ -14,6 +14,103 @@
     "What configuration needs to be upgraded to ingest 10m or 1m assets?",
     "List the lab tools"
   ],
+  "questions": [
+    {
+      "id": "health",
+      "title": "App health",
+      "questions": [
+        "What is the current state of the application?",
+        "What is the health of the application?"
+      ]
+    },
+    {
+      "id": "pods",
+      "title": "Pods / OOM / RCA",
+      "questions": [
+        "Which pods are crashing or restarting after OOM?",
+        "Why is DataHub slow?"
+      ]
+    },
+    {
+      "id": "suites",
+      "title": "Smoke / sanity / regression",
+      "questions": [
+        "Run smoke suite",
+        "Run API sanity suite",
+        "Check UI sanity",
+        "Run security smoke"
+      ]
+    },
+    {
+      "id": "email",
+      "title": "Email / schedule",
+      "questions": [
+        "How does the email report schedule work?",
+        "Send an email preview"
+      ]
+    },
+    {
+      "id": "performance",
+      "title": "Performance",
+      "questions": [
+        "Show CPU and memory of datahub-gms",
+        "Why is DataHub slow?",
+        "What configuration needs to be upgraded to ingest 10m or 1m assets?"
+      ]
+    },
+    {
+      "id": "security",
+      "title": "Security",
+      "questions": [
+        "any security issues?",
+        "why is GMS exposed?",
+        "Is there a secret in the logs?",
+        "Is TLS the cause?"
+      ]
+    }
+  ],
+  "child_questions": {
+    "api": [
+      {
+        "id": "read",
+        "title": "Read (no job)",
+        "questions": [
+          "Why did API sanity fail?",
+          "How many API smoke tests are there?",
+          "What is the last pipeline SHA?"
+        ]
+      },
+      {
+        "id": "run",
+        "title": "Run (records a job)",
+        "questions": [
+          "Run API smoke",
+          "Run API sanity suite",
+          "Run API regression"
+        ]
+      }
+    ],
+    "ui": [
+      {
+        "id": "read",
+        "title": "Read (no job)",
+        "questions": [
+          "Why did UI sanity fail?",
+          "How many UI smoke tests are there?",
+          "What is the last pipeline SHA?"
+        ]
+      },
+      {
+        "id": "run",
+        "title": "Run (records a job)",
+        "questions": [
+          "Run UI smoke",
+          "Check UI sanity",
+          "Run UI regression"
+        ]
+      }
+    ]
+  },
   "rules": [
     {
       "route": "login_api",
@@ -26,6 +123,34 @@
         "login with",
         "username as",
         "password as"
+      ]
+    },
+    {
+      "route": "pipeline_status",
+      "source": "handler:pipeline_status",
+      "any": [
+        "last sha",
+        "last pipeline",
+        "pipeline sha",
+        "jenkins",
+        "github actions",
+        "git pull",
+        "git fetch"
+      ]
+    },
+    {
+      "route": "suite_explain",
+      "source": "handler:suite_explain",
+      "any": [
+        "why did",
+        "why does",
+        "how many smoke",
+        "how many sanity",
+        "how many regression",
+        "how many api",
+        "how many ui",
+        "suite pyramid",
+        "test pyramid"
       ]
     },
     {
@@ -43,7 +168,17 @@
         "check ui sanity",
         "check api sanity",
         "run api tests",
-        "run ui tests"
+        "run ui tests",
+        "run api smoke",
+        "run ui smoke",
+        "api smoke",
+        "ui smoke",
+        "run api regression",
+        "run ui regression",
+        "security smoke",
+        "security sanity",
+        "run security smoke",
+        "run security sanity"
       ]
     },
     {
@@ -94,6 +229,19 @@
       ]
     },
     {
+      "route": "email_report",
+      "source": "handler:email_report",
+      "any": [
+        "email report",
+        "email preview",
+        "email schedule",
+        "smtp",
+        "on new issue",
+        "send an email",
+        "how does the email"
+      ]
+    },
+    {
       "route": "perf_rca",
       "source": "handler:perf_rca",
       "any": [
@@ -107,6 +255,21 @@
         "what's wrong",
         "diagnose performance",
         "why search is empty"
+      ]
+    },
+    {
+      "route": "security_rca",
+      "source": "handler:security_rca",
+      "any": [
+        "any security issues",
+        "security issues",
+        "security",
+        "secret",
+        "cve",
+        "exposed",
+        "tls",
+        "auth",
+        "why is gms exposed"
       ]
     },
     {
@@ -642,7 +805,7 @@
     },
     "suites": {
       "generated_at": "2026-10-01T12:00:00Z",
-      "note": "Recorded smoke / sanity / regression results for the in-browser agent. API and UI cases are 1:1 with pytest markers (live excluded). Performance extras are catalog-only. GitHub Pages cannot spawn pytest, so the handler replays this catalog.",
+      "note": "Recorded smoke / sanity / regression results for the in-browser agent. API and UI cases are 1:1 with pytest markers (live excluded). Security layer is 1:1 with tests/security (smoke < sanity). Performance extras are catalog-only. GitHub Pages cannot spawn pytest, so the handler replays this catalog.",
       "counts": {
         "api": {
           "smoke": 6,
@@ -651,11 +814,15 @@
         },
         "ui": {
           "smoke": 3,
-          "sanity": 10,
-          "regression": 16
+          "sanity": 11,
+          "regression": 18
         },
         "performance": {
           "regression": 1
+        },
+        "security": {
+          "smoke": 2,
+          "sanity": 3
         }
       },
       "cases": [
@@ -1341,6 +1508,20 @@
           "rca": null
         },
         {
+          "id": "ui.question_bank",
+          "name": "Questions you can ask copies into chat",
+          "layer": "ui",
+          "suites": [
+            "sanity"
+          ],
+          "endpoint": null,
+          "status": "pass",
+          "duration_ms": 720,
+          "expected": "question bank categories + Copy, no auto-ask",
+          "actual": "copied",
+          "rca": null
+        },
+        {
           "id": "ui.search_datasets",
           "name": "UI search returns postgres datasets",
           "layer": "ui",
@@ -1588,6 +1769,34 @@
           "rca": null
         },
         {
+          "id": "ui.security_chat",
+          "name": "Security chat and Security tab",
+          "layer": "ui",
+          "suites": [
+            "regression"
+          ],
+          "endpoint": null,
+          "status": "pass",
+          "duration_ms": 840,
+          "expected": "AUTH-OPEN, SECRET-IN-LOG, Checked \u2014 not the cause",
+          "actual": "security RCA",
+          "rca": null
+        },
+        {
+          "id": "ui.child_chats",
+          "name": "API and UI child chats scoped pipeline",
+          "layer": "ui",
+          "suites": [
+            "regression"
+          ],
+          "endpoint": null,
+          "status": "pass",
+          "duration_ms": 980,
+          "expected": "child agent, last SHA, git_pull=false",
+          "actual": "scoped job",
+          "rca": null
+        },
+        {
           "id": "perf.mae_memory_headroom",
           "name": "MAE consumer memory under 90% of limit",
           "layer": "performance",
@@ -1607,6 +1816,85 @@
             ],
             "cause": "1536 MiB is too small for MAE + Elasticsearch bulk buffers at even 140 assets.",
             "fix": "This is the first config change before any 1M / 10M ingest plan."
+          }
+        },
+        {
+          "id": "security.fixture_mocked",
+          "name": "Security fixture is mocked, not a live scan",
+          "layer": "security",
+          "suites": [
+            "smoke"
+          ],
+          "endpoint": null,
+          "status": "pass",
+          "duration_ms": 18,
+          "expected": "note not a live scan; secret already redacted",
+          "actual": "mocked",
+          "rca": null
+        },
+        {
+          "id": "security.tls_on",
+          "name": "GMS TLS is on in the fixture",
+          "layer": "security",
+          "suites": [
+            "smoke"
+          ],
+          "endpoint": null,
+          "status": "pass",
+          "duration_ms": 16,
+          "expected": "gms.tls true",
+          "actual": "true",
+          "rca": null
+        },
+        {
+          "id": "security.auth_open_recorded",
+          "name": "AUTH-OPEN fires from the fixture",
+          "layer": "security",
+          "suites": [
+            "sanity"
+          ],
+          "endpoint": null,
+          "status": "pass",
+          "duration_ms": 22,
+          "expected": "AUTH-OPEN in fired",
+          "actual": "AUTH-OPEN",
+          "rca": null
+        },
+        {
+          "id": "security.tls_not_cause",
+          "name": "TLS is Checked \u2014 not the cause",
+          "layer": "security",
+          "suites": [
+            "sanity"
+          ],
+          "endpoint": null,
+          "status": "pass",
+          "duration_ms": 20,
+          "expected": "TLS skipped",
+          "actual": "Checked \u2014 not the cause",
+          "rca": null
+        },
+        {
+          "id": "security.gms_requires_auth",
+          "name": "GMS rejects anonymous GraphQL/REST",
+          "layer": "security",
+          "suites": [
+            "sanity"
+          ],
+          "endpoint": null,
+          "status": "fail",
+          "duration_ms": 24,
+          "expected": "gms.auth_required true",
+          "actual": "auth_required false (AUTH-OPEN)",
+          "rca": {
+            "symptom": "Mocked datahub-gms GraphQL and REST answered without a session cookie.",
+            "evidence": [
+              "security fixture gms.auth_required=false",
+              "AUTH-OPEN fired; TLS skipped (not the cause)",
+              "source=agent/fixtures/security.json"
+            ],
+            "cause": "Auth is not required on this lab GMS endpoint (AUTH-OPEN). App health is DEGRADED. Not a live exploit.",
+            "fix": "Require a session (PLAY_SESSION) on GMS before serving metadata. Do not treat /health 200 as proof that auth is on."
           }
         }
       ]
@@ -1704,8 +1992,76 @@
           "needs": "app_config.json",
           "gms": false,
           "returns": "1M / 10M upgrade table from the 140-asset fixture"
+        },
+        {
+          "id": "auth_open",
+          "needs": "security fixture",
+          "gms": false,
+          "returns": "Whether mocked GMS answered without a session (AUTH-OPEN)"
+        },
+        {
+          "id": "secret_in_log",
+          "needs": "security fixture",
+          "gms": false,
+          "returns": "Token-like log line, already redacted (SECRET-IN-LOG)"
+        },
+        {
+          "id": "dep_advisory",
+          "needs": "security fixture",
+          "gms": false,
+          "returns": "Mocked jackson-databind advisory cited as lab_issue \u2014 no invented CVE"
+        },
+        {
+          "id": "security_rca",
+          "needs": "security fixture",
+          "gms": false,
+          "returns": "Fired security rules plus Checked \u2014 not the cause (TLS, live scan)"
+        },
+        {
+          "id": "pipeline_status",
+          "needs": "pipeline fixture",
+          "gms": false,
+          "returns": "Last SHA snapshot \u2014 read only, never git-pulls"
         }
       ]
+    },
+    "security": {
+      "generated_at": "2026-10-01T12:00:00Z",
+      "note": "Mocked DataHub security snapshot. Not a live scan. No exploits, no payloads, no internet probing. Fictional demo tenant.",
+      "gms": {
+        "component": "datahub-gms",
+        "url": "http://datahub-gms:8080",
+        "auth_required": false,
+        "anonymous_graphql": true,
+        "anonymous_rest": true,
+        "tls": true,
+        "health_without_session": true
+      },
+      "secret_in_log": {
+        "component": "datahub-frontend",
+        "token_like": true,
+        "line": "PLAY_SESSION=dh_lab_****redacted**** login ok emuser",
+        "kind": "session cookie"
+      },
+      "dependency": {
+        "package": "com.fasterxml.jackson.core:jackson-databind",
+        "advisory": "Mocked lab advisory (lab_issue): jackson-databind unsafe default typing. Not a live scan.",
+        "cited_as": "lab_issue",
+        "cve": null
+      }
+    },
+    "pipeline": {
+      "generated_at": "2026-10-01T12:00:00Z",
+      "note": "Simulated GitHub Actions / Jenkins-shaped snapshot. No credentials on this public site. Chat answers are reads. Suite runs record a job against last_sha. This site never git-pulls.",
+      "provider": "GitHub Actions (Jenkins-shaped log)",
+      "repo": "sanket-dhamke/sanket-qa-portfolio",
+      "ref": "main",
+      "last_sha": "864fb4f9b8dff18125acb3f20710b10c92879d5e",
+      "last_sha_short": "864fb4f",
+      "actions_url": "https://github.com/sanket-dhamke/sanket-qa-portfolio/actions",
+      "jenkins_job": "datahub-lab-suites (simulated)",
+      "credentials": "none",
+      "git_pull": false
     }
   },
   "recipes": {
@@ -2092,6 +2448,19 @@
       ]
     }
   ],
+  "pipeline": {
+    "generated_at": "2026-10-01T12:00:00Z",
+    "note": "Simulated GitHub Actions / Jenkins-shaped snapshot. No credentials on this public site. Chat answers are reads. Suite runs record a job against last_sha. This site never git-pulls.",
+    "provider": "GitHub Actions (Jenkins-shaped log)",
+    "repo": "sanket-dhamke/sanket-qa-portfolio",
+    "ref": "main",
+    "last_sha": "864fb4f9b8dff18125acb3f20710b10c92879d5e",
+    "last_sha_short": "864fb4f",
+    "actions_url": "https://github.com/sanket-dhamke/sanket-qa-portfolio/actions",
+    "jenkins_job": "datahub-lab-suites (simulated)",
+    "credentials": "none",
+    "git_pull": false
+  },
   "rca_report": {
     "principle": "Exit 137 is SIGKILL, not necessarily an OOM kill. Count memory pressure only when Kubernetes last_reason is OOMKilled. The rest is PROBE-KILL. Conflating them sends you to tune memory when the hang is a probe timeout.",
     "fired": [
@@ -2233,6 +2602,83 @@
     },
     "pod_count": 5,
     "unhealthy": 1
+  },
+  "security_report": {
+    "principle": "Security rules read a mocked DataHub fixture. The model does not invent findings, CVE numbers, or exploit steps. AUTH-OPEN means GMS answered without a session. Secrets in logs are shown redacted. No live scan.",
+    "skipped_heading": "Checked \u2014 not the cause",
+    "fired": [
+      {
+        "id": "AUTH-OPEN",
+        "severity": "HIGH",
+        "component": "datahub-gms",
+        "title": "GMS is reachable without signing in",
+        "observation": "Mocked datahub-gms GraphQL and REST answered without a session cookie.",
+        "symptom": "Mocked datahub-gms GraphQL and REST answered without a session cookie.",
+        "cause": "Auth is not required on this lab GMS endpoint. Anyone who can reach the service can read metadata. This is a fixture finding, not a live exploit.",
+        "likely_cause": "Auth is not required on this lab GMS endpoint. Anyone who can reach the service can read metadata. This is a fixture finding, not a live exploit.",
+        "recommendation": "Require a session (PLAY_SESSION) on GMS before serving metadata. A 200 from /health is not proof that auth is on.",
+        "suggested": "Require a session (PLAY_SESSION) on GMS before serving metadata. A 200 from /health is not proof that auth is on.",
+        "fix": "Require a session (PLAY_SESSION) on GMS before serving metadata. A 200 from /health is not proof that auth is on.",
+        "evidence": [
+          "url=http://datahub-gms:8080",
+          "anonymous_graphql=True",
+          "anonymous_rest=True",
+          "source=agent/fixtures/security.json"
+        ]
+      },
+      {
+        "id": "SECRET-IN-LOG",
+        "severity": "MEDIUM",
+        "component": "datahub-frontend",
+        "title": "Token-like value in a pod log (redacted)",
+        "observation": "A session cookie appeared in `datahub-frontend` logs. Shown redacted: PLAY_SESSION=dh_lab_****redacted**** login ok emuser.",
+        "symptom": "A session cookie appeared in `datahub-frontend` logs. Shown redacted: PLAY_SESSION=dh_lab_****redacted**** login ok emuser.",
+        "cause": "The lab frontend echoed a PLAY_SESSION cookie into logs. The raw value is never shown in this console.",
+        "likely_cause": "The lab frontend echoed a PLAY_SESSION cookie into logs. The raw value is never shown in this console.",
+        "recommendation": "Stop logging Authorization and session headers. Rotate the lab session cookie.",
+        "suggested": "Stop logging Authorization and session headers. Rotate the lab session cookie.",
+        "fix": "Stop logging Authorization and session headers. Rotate the lab session cookie.",
+        "evidence": [
+          "PLAY_SESSION=dh_lab_****redacted**** login ok emuser",
+          "source=agent/fixtures/security.json"
+        ]
+      },
+      {
+        "id": "DEP-CVE",
+        "severity": "WARN",
+        "component": "com.fasterxml.jackson.core:jackson-databind",
+        "title": "Mocked dependency advisory (lab_issue)",
+        "observation": "com.fasterxml.jackson.core:jackson-databind: Mocked lab advisory (lab_issue): jackson-databind unsafe default typing. Not a live scan.",
+        "symptom": "com.fasterxml.jackson.core:jackson-databind: Mocked lab advisory (lab_issue): jackson-databind unsafe default typing. Not a live scan.",
+        "cause": "Cited as `lab_issue` in the security fixture. Not a live scan. No CVE number is invented.",
+        "likely_cause": "Cited as `lab_issue` in the security fixture. Not a live scan. No CVE number is invented.",
+        "recommendation": "Track the advisory in the lab catalog. Do not treat this as a production CVE match.",
+        "suggested": "Track the advisory in the lab catalog. Do not treat this as a production CVE match.",
+        "fix": "Track the advisory in the lab catalog. Do not treat this as a production CVE match.",
+        "evidence": [
+          "package=com.fasterxml.jackson.core:jackson-databind",
+          "cited_as=lab_issue",
+          "cve=none (not invented)",
+          "source=agent/fixtures/security.json"
+        ]
+      }
+    ],
+    "skipped": [
+      {
+        "id": "TLS",
+        "why": "Checked \u2014 not the cause. datahub-gms already has TLS in this fixture. Open GMS is an auth gap, not a missing certificate."
+      },
+      {
+        "id": "LIVE-SCAN",
+        "why": "Checked \u2014 not the cause. This lab never scans the internet. Findings come only from the security fixture."
+      }
+    ],
+    "counts": {
+      "HIGH": 1,
+      "MEDIUM": 1,
+      "WARN": 1
+    },
+    "kind": "security"
   },
   "caveat": "In-browser demo is a vanilla JS port of the Python router. Python plus tests/test_routing.py are the source of truth. Fictional DataHub demo tenant. Not a live cluster."
 }

@@ -14,7 +14,7 @@ jobs:
       - run: python scripts/write_suites_catalog.py
       - run: python -m agent.export_web
       - run: python scripts/write_suite_results.py
-      - run: pytest -p no:playwright tests/test_routing.py tests/test_hybrid_agent.py tests/test_rca_engine.py tests/test_layout.py tests/test_app_health.py tests/api -m "not lab_issue"
+      - run: pytest -p no:playwright tests/test_routing.py tests/test_hybrid_agent.py tests/test_rca_engine.py tests/test_layout.py tests/test_app_health.py tests/test_security.py tests/security tests/api -m "not lab_issue"
   playwright:
     runs-on: ubuntu-latest
     steps:

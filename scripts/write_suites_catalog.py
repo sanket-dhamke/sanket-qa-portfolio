@@ -41,6 +41,17 @@ PERF_RCA = {
     "fix": "This is the first config change before any 1M / 10M ingest plan.",
 }
 
+SEC_AUTH_RCA = {
+    "symptom": "Mocked datahub-gms GraphQL and REST answered without a session cookie.",
+    "evidence": [
+        "security fixture gms.auth_required=false",
+        "AUTH-OPEN fired; TLS skipped (not the cause)",
+        "source=agent/fixtures/security.json",
+    ],
+    "cause": "Auth is not required on this lab GMS endpoint (AUTH-OPEN). App health is DEGRADED. Not a live exploit.",
+    "fix": "Require a session (PLAY_SESSION) on GMS before serving metadata. Do not treat /health 200 as proof that auth is on.",
+}
+
 
 def case(
     cid: str,
@@ -175,6 +186,8 @@ CASES = [
          expected="Does not choose tools", actual="visible"),
     case("ui.app_health_rca", "Console App health DEGRADED and Performance RCA", "ui", "sanity", duration_ms=860,
          expected="DEGRADED, MEM-PRESSURE, table above RCA", actual="DEGRADED"),
+    case("ui.question_bank", "Questions you can ask copies into chat", "ui", "sanity", duration_ms=720,
+         expected="question bank categories + Copy, no auto-ask", actual="copied"),
     case(
         "ui.search_datasets",
         "UI search returns postgres datasets",
@@ -219,6 +232,10 @@ CASES = [
          expected="simulated", actual="visible"),
     case("ui.allure_link", "UI Allure link is separate from API", "ui", "regression", duration_ms=490,
          expected="reports/allure-ui/index.html", actual="href allure-ui"),
+    case("ui.security_chat", "Security chat and Security tab", "ui", "regression", duration_ms=840,
+         expected="AUTH-OPEN, SECRET-IN-LOG, Checked — not the cause", actual="security RCA"),
+    case("ui.child_chats", "API and UI child chats scoped pipeline", "ui", "regression", duration_ms=980,
+         expected="child agent, last SHA, git_pull=false", actual="scoped job"),
     case(
         "perf.mae_memory_headroom",
         "MAE consumer memory under 90% of limit",
@@ -229,6 +246,25 @@ CASES = [
         expected="memory_mib / memory_limit_mib < 0.90",
         actual="1536 / 1536 = 100%",
         rca=PERF_RCA,
+    ),
+    case("security.fixture_mocked", "Security fixture is mocked, not a live scan", "security", "smoke", duration_ms=18,
+         expected="note not a live scan; secret already redacted", actual="mocked"),
+    case("security.tls_on", "GMS TLS is on in the fixture", "security", "smoke", duration_ms=16,
+         expected="gms.tls true", actual="true"),
+    case("security.auth_open_recorded", "AUTH-OPEN fires from the fixture", "security", "sanity", duration_ms=22,
+         expected="AUTH-OPEN in fired", actual="AUTH-OPEN"),
+    case("security.tls_not_cause", "TLS is Checked — not the cause", "security", "sanity", duration_ms=20,
+         expected="TLS skipped", actual="Checked — not the cause"),
+    case(
+        "security.gms_requires_auth",
+        "GMS rejects anonymous GraphQL/REST",
+        "security",
+        "sanity",
+        status="fail",
+        duration_ms=24,
+        expected="gms.auth_required true",
+        actual="auth_required false (AUTH-OPEN)",
+        rca=SEC_AUTH_RCA,
     ),
 ]
 
@@ -245,6 +281,7 @@ def main() -> None:
         "note": (
             "Recorded smoke / sanity / regression results for the in-browser agent. "
             "API and UI cases are 1:1 with pytest markers (live excluded). "
+            "Security layer is 1:1 with tests/security (smoke < sanity). "
             "Performance extras are catalog-only. GitHub Pages cannot spawn pytest, so the handler replays this catalog."
         ),
         "counts": counts,
