@@ -11,6 +11,34 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
+RESUME_PDF = "Sanket_Dhamke_AI_Quality_Automation_Engineer_Resume.pdf"
+COVER_PDF = "Sanket_Dhamke_AI_Quality_Automation_Engineer_Cover_Letter.pdf"
+
+
+def _assert_view_and_download_pdf_links(html: str) -> None:
+    assert "View resume" in html
+    assert "View cover letter" in html
+    assert "Download resume" in html
+    assert "Download cover letter" in html
+    for testid, pdf in (("view-resume", RESUME_PDF), ("view-cover-letter", COVER_PDF)):
+        match = re.search(rf'<a[^>]*data-testid="{testid}"[^>]*>', html)
+        assert match, testid
+        tag = match.group(0)
+        assert f'href="{pdf}"' in tag
+        assert 'target="_blank"' in tag
+        assert "noopener" in tag
+        assert "download=" not in tag
+    for testid, pdf in (
+        ("download-resume", RESUME_PDF),
+        ("download-cover-letter", COVER_PDF),
+    ):
+        match = re.search(rf'<a[^>]*data-testid="{testid}"[^>]*>', html)
+        assert match, testid
+        tag = match.group(0)
+        assert f'href="{pdf}"' in tag
+        assert "download=" in tag
+        assert 'target="_blank"' not in tag
+
 
 def _allure_decoded(path: Path) -> str:
     raw = path.read_text(encoding="utf-8", errors="ignore")
@@ -187,10 +215,7 @@ def test_home_cards_split_api_and_ui() -> None:
     assert 'data-testid="try-this-api"' in api_card
     assert 'data-testid="try-this-ui"' in ui_card
     assert 'data-testid="about-downloads"' in text
-    assert "Download resume" in text
-    assert "Download cover letter" in text
-    assert "Sanket_Dhamke_AI_Quality_Automation_Engineer_Resume.pdf" in text
-    assert "Sanket_Dhamke_AI_Quality_Automation_Engineer_Cover_Letter.pdf" in text
+    _assert_view_and_download_pdf_links(text)
 
 
 def test_resume_and_cover_letter_pdfs_are_in_docs() -> None:
@@ -199,10 +224,9 @@ def test_resume_and_cover_letter_pdfs_are_in_docs() -> None:
     assert resume.read_bytes()[:4] == b"%PDF"
     assert cover.read_bytes()[:4] == b"%PDF"
     about = (ROOT / "docs" / "about.html").read_text(encoding="utf-8")
-    assert "Download resume" in about
-    assert "Download cover letter" in about
-    assert 'href="Sanket_Dhamke_AI_Quality_Automation_Engineer_Resume.pdf"' in about
-    assert 'href="Sanket_Dhamke_AI_Quality_Automation_Engineer_Cover_Letter.pdf"' in about
+    home = (ROOT / "docs" / "index.html").read_text(encoding="utf-8")
+    _assert_view_and_download_pdf_links(about)
+    _assert_view_and_download_pdf_links(home)
 
 
 def test_api_allure_report_is_api_only() -> None:

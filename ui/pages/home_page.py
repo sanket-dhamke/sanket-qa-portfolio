@@ -53,15 +53,25 @@ class HomePage:
         about = self.page.locator('[data-testid="about-downloads"]')
         expect(about).to_be_visible()
         expect(about.get_by_role("heading", name="About")).to_be_visible()
-        expect(about.locator('[data-testid="download-resume"]')).to_have_text(
-            "Download resume"
-        )
-        expect(about.locator('[data-testid="download-cover-letter"]')).to_have_text(
-            "Download cover letter"
-        )
-        expect(about.locator('[data-testid="download-resume"]')).to_have_attribute(
-            "href", "Sanket_Dhamke_AI_Quality_Automation_Engineer_Resume.pdf"
-        )
-        expect(about.locator('[data-testid="download-cover-letter"]')).to_have_attribute(
-            "href", "Sanket_Dhamke_AI_Quality_Automation_Engineer_Cover_Letter.pdf"
-        )
+        resume_pdf = "Sanket_Dhamke_AI_Quality_Automation_Engineer_Resume.pdf"
+        cover_pdf = "Sanket_Dhamke_AI_Quality_Automation_Engineer_Cover_Letter.pdf"
+        view_resume = about.locator('[data-testid="view-resume"]')
+        view_cover = about.locator('[data-testid="view-cover-letter"]')
+        download_resume = about.locator('[data-testid="download-resume"]')
+        download_cover = about.locator('[data-testid="download-cover-letter"]')
+        expect(view_resume).to_have_text("View resume")
+        expect(view_cover).to_have_text("View cover letter")
+        expect(view_resume).to_have_attribute("href", resume_pdf)
+        expect(view_cover).to_have_attribute("href", cover_pdf)
+        expect(view_resume).to_have_attribute("target", "_blank")
+        expect(view_cover).to_have_attribute("target", "_blank")
+        expect(view_resume).to_have_attribute("rel", "noopener")
+        expect(view_cover).to_have_attribute("rel", "noopener")
+        expect(view_resume).not_to_have_attribute("download")
+        expect(view_cover).not_to_have_attribute("download")
+        expect(download_resume).to_have_text("Download resume")
+        expect(download_cover).to_have_text("Download cover letter")
+        expect(download_resume).to_have_attribute("href", resume_pdf)
+        expect(download_cover).to_have_attribute("href", cover_pdf)
+        expect(download_resume).to_have_attribute("download", resume_pdf)
+        expect(download_cover).to_have_attribute("download", cover_pdf)
