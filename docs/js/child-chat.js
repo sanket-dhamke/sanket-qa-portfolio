@@ -13,13 +13,6 @@
   const session = {};
   let data = null;
 
-  function escapeHtml(s) {
-    return String(s || "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
-  }
-
   function withScope(question) {
     let t = String(question || "").trim();
     if (!t) return t;
@@ -46,27 +39,23 @@
     return (
       "This child agent only answers " +
       label +
-      " smoke / sanity / regression. Chat is read; “run …” records a simulated Actions/Jenkins job against the last SHA (no git pull, no Jenkins credentials). The main Hybrid AI Agent on the lab console is the root for performance, security, API, and UI."
+      " smoke / sanity / regression. Open the main Hybrid AI Agent on the lab console for performance, security, API, and UI."
     );
   }
 
   function addMsg(kind, text, result) {
     const el = document.createElement("div");
     el.className = "child-msg " + kind;
-    const body = document.createElement("div");
-    body.textContent = text;
-    el.appendChild(body);
-    if (result) {
-      const chips = document.createElement("div");
-      chips.className = "child-chips";
-      const src = document.createElement("span");
-      src.dataset.testid = "result-source";
-      src.textContent = "source " + (result.source || "");
-      chips.appendChild(src);
-      const route = document.createElement("span");
-      route.textContent = "route " + (result.route || "");
-      chips.appendChild(route);
-      el.appendChild(chips);
+    const isSuite =
+      result &&
+      result.report &&
+      (result.route === "run_suite" || result.route === "suite_explain" || result.ui === "suite_report");
+    if (kind === "bot" && isSuite && window.LabRouter.renderSuiteCard) {
+      window.LabRouter.renderSuiteCard(el, result);
+    } else {
+      const body = document.createElement("div");
+      body.textContent = text;
+      el.appendChild(body);
     }
     logEl.appendChild(el);
     logEl.scrollTop = logEl.scrollHeight;
@@ -74,36 +63,24 @@
 
   function paintJob(result) {
     if (!jobEl) return;
-    const pipe = (data && data.pipeline) || {};
-    const sha = pipe.last_sha_short || (pipe.last_sha || "").slice(0, 7) || "unknown";
-    if (result && result.job) {
-      const job = result.job;
-      jobEl.innerHTML =
-        "<strong>Job recorded (write)</strong> " +
-        escapeHtml(job.id) +
-        " · SHA <code>" +
-        escapeHtml(job.sha || sha) +
-        "</code> · " +
-        escapeHtml(job.provider || "GitHub Actions") +
-        " / " +
-        escapeHtml(job.jenkins_job || "simulated") +
-        " · " +
-        escapeHtml(job.verdict || "") +
-        " " +
-        (job.passed || 0) +
-        "/" +
-        (job.total || 0) +
-        " · git_pull=false · credentials=none";
+    const links = (result && result.allure) || [];
+    if (result && result.report && links.length) {
+      jobEl.innerHTML = "";
+      links.forEach((a) => {
+        const link = document.createElement("a");
+        link.className = "allure-open";
+        link.setAttribute("data-testid", "allure-link");
+        link.href = a.href;
+        link.textContent = a.label;
+        jobEl.appendChild(link);
+      });
       return;
     }
-    jobEl.innerHTML =
-      "<strong>Read only</strong> — no job recorded. Last snapshot SHA <code>" +
-      escapeHtml(sha) +
-      "</code> on " +
-      escapeHtml(pipe.ref || "main") +
-      ". Chat does not git-pull. Say “run " +
-      SCOPE +
-      " smoke” to record a simulated job.";
+    if (result && result.report) {
+      jobEl.textContent = ((result.answer || "").split("\n")[0]) || "Suite result";
+      return;
+    }
+    jobEl.textContent = "No suite run this session.";
   }
 
   function ask(question) {
@@ -114,13 +91,7 @@
     const scoped = withScope(raw);
     const result = window.LabRouter.route(data, scoped, session);
     if (!inScope(result)) {
-      const refusal = {
-        route: "fallback",
-        source: "fallback:child-scope",
-        answer: outOfScopeAnswer(),
-      };
-      addMsg("bot", refusal.answer, refusal);
-      paintJob(null);
+      addMsg("bot", outOfScopeAnswer());
       return;
     }
     addMsg("bot", result.answer, result);
@@ -191,10 +162,7 @@
     addMsg(
       "bot",
       (SCOPE === "ui" ? "UI" : "API") +
-        " child agent ready. Same keyword router as the lab console, scoped to this page’s suites. Chat is read; run records a job against last SHA " +
-        (((data.pipeline || {}).last_sha_short) || "") +
-        ". No git pull. Open “Questions you can ask” to copy a prompt.",
-      { source: "handler:pipeline_status", route: "hello" }
+        " agent ready. Ask about smoke, sanity, or regression — or open “Questions you can ask” and copy a prompt."
     );
   }
 

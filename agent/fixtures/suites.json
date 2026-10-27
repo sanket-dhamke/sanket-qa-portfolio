@@ -10,7 +10,7 @@
     "ui": {
       "smoke": 3,
       "sanity": 11,
-      "regression": 18
+      "regression": 19
     },
     "performance": {
       "regression": 1
@@ -987,8 +987,22 @@
       "endpoint": null,
       "status": "pass",
       "duration_ms": 980,
-      "expected": "child agent, last SHA, git_pull=false",
-      "actual": "scoped job",
+      "expected": "Open Allure report, no git_pull dump",
+      "actual": "scoped allure",
+      "rca": null
+    },
+    {
+      "id": "ui.suite_allure_chat",
+      "name": "Console run API smoke shows Allure",
+      "layer": "ui",
+      "suites": [
+        "regression"
+      ],
+      "endpoint": null,
+      "status": "pass",
+      "duration_ms": 860,
+      "expected": "API smoke passed (6/6), Open Allure report",
+      "actual": "allure link",
       "rca": null
     },
     {

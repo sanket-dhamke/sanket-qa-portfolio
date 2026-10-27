@@ -331,3 +331,13 @@ def test_api_and_ui_pyramids_match_catalog_and_collection() -> None:
     assert "git pull origin" not in js
     assert "git fetch origin" not in js
     assert "gitPull(" not in js
+    assert "Open Allure report" in js
+    assert "GitHub Pages does not spawn pytest" not in js
+    assert "Pipeline job (write)" not in js
+    child = (ROOT / "docs" / "js" / "child-chat.js").read_text(encoding="utf-8")
+    assert "git_pull=false" not in child
+    assert "route hello" not in child
+    assert "source handler" not in child
+    assert "Jenkins" not in child
+    assert "Jenkins" not in api_page.split("child-chat", 1)[1].split("Folder map", 1)[0]
+    assert "Jenkins" not in ui_page.split("child-chat", 1)[1].split("Folder map", 1)[0]

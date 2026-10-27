@@ -578,17 +578,6 @@
   }
 
   function addStructured(el, result) {
-    if (result.ui === "suite_report" && result.report) {
-      const wrap = document.createElement("div");
-      wrap.className = "result-table";
-      wrap.innerHTML = `<table>${(result.report.cases || [])
-        .map(
-          (c) =>
-            `<tr><td class="badge ${c.status}">${c.status.toUpperCase()}</td><td>${c.layer}</td><td>${c.name}</td></tr>`
-        )
-        .join("")}</table>`;
-      el.appendChild(wrap);
-    }
     if (result.awaiting_regression) {
       const row = document.createElement("div");
       row.className = "confirm";
@@ -607,19 +596,29 @@
   function addMsg(kind, text, result) {
     const el = document.createElement("div");
     el.className = "msg " + kind;
-    const body = document.createElement("div");
-    body.className = "body";
-    body.textContent = text;
-    el.appendChild(body);
-    if (result) {
+    const isSuite =
+      result &&
+      result.report &&
+      (result.ui === "suite_report" ||
+        result.ui === "suite_explain" ||
+        result.route === "run_suite");
+    if (kind === "bot" && isSuite && window.LabRouter && window.LabRouter.renderSuiteCard) {
+      window.LabRouter.renderSuiteCard(el, result);
+    } else {
+      const body = document.createElement("div");
+      body.className = "body";
+      body.textContent = text;
+      el.appendChild(body);
+    }
+    if (result && !isSuite) {
       const chips = document.createElement("div");
       chips.className = "chips";
-      const kind = document.createElement("span");
+      const kindChip = document.createElement("span");
       const kindName = result.source_kind || "handler";
-      kind.className = "chip kind-" + kindName;
-      kind.dataset.testid = "source-kind";
-      kind.textContent = result.source_label || kindName;
-      chips.appendChild(kind);
+      kindChip.className = "chip kind-" + kindName;
+      kindChip.dataset.testid = "source-kind";
+      kindChip.textContent = result.source_label || kindName;
+      chips.appendChild(kindChip);
       const source = document.createElement("span");
       source.className = "chip source";
       source.dataset.testid = "result-source";
@@ -642,8 +641,8 @@
         chips.appendChild(t);
       });
       el.appendChild(chips);
-      addStructured(el, result);
     }
+    if (result) addStructured(el, result);
     $("log").appendChild(el);
     $("log").scrollTop = $("log").scrollHeight;
   }

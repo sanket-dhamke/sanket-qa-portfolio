@@ -124,39 +124,130 @@
     return summarizeCases(cases, suite, layer);
   }
 
+  const SUITE_FOOTNOTE = "Catalog replay — not a live pytest run.";
+  const ALLURE_BY_LAYER = {
+    api: "reports/allure-api/index.html",
+    ui: "reports/allure-ui/index.html",
+  };
+
+  function layerTitle(layer) {
+    if (layer === "api") return "API ";
+    if (layer === "ui") return "UI ";
+    if (layer === "security") return "Security ";
+    if (layer === "performance") return "Performance ";
+    return "";
+  }
+
+  function approxMs(ms) {
+    const n = Number(ms || 0);
+    if (n >= 50) return "~" + Math.round(n / 10) * 10 + " ms";
+    return n + " ms";
+  }
+
+  function plainFailWhy(c) {
+    const rca = (c && c.rca) || {};
+    const blob = [rca.symptom, rca.cause, (rca.evidence || []).join(" "), c && c.actual]
+      .filter(Boolean)
+      .join(" ");
+    if (blob.indexOf("AUTH-OPEN") !== -1) return "GMS does not require login (AUTH-OPEN)";
+    if (blob.indexOf("MEM-PRESSURE") !== -1 || blob.indexOf("OOM") !== -1) {
+      return "mae-consumer ran out of memory, so search is stale (MEM-PRESSURE)";
+    }
+    const text = rca.symptom || rca.cause || (c && c.actual) || "failed";
+    return String(text).split(".")[0].trim();
+  }
+
+  function allureLinks(summary) {
+    let layers = [];
+    if (summary && summary.layer) layers = [summary.layer];
+    else {
+      (summary.cases || []).forEach((c) => {
+        if (c.layer && layers.indexOf(c.layer) === -1) layers.push(c.layer);
+      });
+    }
+    const present = layers.filter((layer) => ALLURE_BY_LAYER[layer]);
+    return present.map((layer) => ({
+      href: ALLURE_BY_LAYER[layer],
+      label: present.length > 1 ? "Open " + layer.toUpperCase() + " Allure report" : "Open Allure report",
+      layer: layer,
+    }));
+  }
+
+  function suiteView(summary) {
+    const suite = (summary && summary.suite) || "suite";
+    const passed = (summary && summary.passed) || 0;
+    const failed = (summary && summary.failed) || 0;
+    const total = (summary && summary.total) || 0;
+    const verb = failed === 0 ? "passed" : "failed";
+    const headline =
+      layerTitle(summary && summary.layer) + suite + " " + verb + " (" + passed + "/" + total + ") in " + approxMs(summary && summary.duration_ms);
+    const cases = (summary && summary.cases) || [];
+    const items = cases.map((c) => ({
+      name: c.name || c.id || "test",
+      status: c.status,
+      why: c.status === "fail" ? plainFailWhy(c) : "",
+    }));
+    const fails = items.filter((i) => i.status === "fail");
+    return {
+      headline: headline,
+      items: items,
+      fails: fails,
+      allure: allureLinks(summary || {}),
+      footnote: SUITE_FOOTNOTE,
+    };
+  }
+
   function formatSuite(summary) {
-    const layer = summary.layer || "api+ui+performance";
-    const lines = [
-      "Suite `" +
-        summary.suite +
-        "` layer=" +
-        layer +
-        " → " +
-        summary.verdict +
-        " (" +
-        summary.passed +
-        " passed, " +
-        summary.failed +
-        " failed, " +
-        summary.total +
-        " total, " +
-        summary.duration_ms +
-        " ms).",
-      "This is a replay of the checked-in suite catalog — the same smoke/sanity/regression markers as pytest. GitHub Pages does not spawn pytest.",
-    ];
-    (summary.cases || []).forEach((c) => {
-      const mark = c.status === "pass" ? "PASS" : "FAIL";
-      lines.push("- [" + mark + "] " + c.layer + " " + c.id + ": " + c.name + " (" + c.duration_ms + " ms)");
-      if (c.status === "fail") {
-        lines.push("    expected: " + c.expected);
-        lines.push("    actual:   " + c.actual);
-      }
-    });
-    (summary.rcas || []).forEach((rca) => {
+    const view = suiteView(summary);
+    const lines = [view.headline, ""];
+    if (view.fails.length) {
+      lines.push(view.fails.length === 1 ? "1 failed:" : view.fails.length + " failed:");
+      view.fails.forEach((f) => lines.push("- " + f.name + " — " + f.why));
+    } else {
+      view.items.forEach((i) => lines.push("- " + i.name));
+    }
+    if (view.allure.length) {
       lines.push("");
-      lines.push(formatRca(rca, rca.name));
-    });
+      view.allure.forEach((a) => lines.push(a.label));
+    }
+    lines.push("");
+    lines.push(view.footnote);
     return lines.join("\n");
+  }
+
+  function renderSuiteCard(target, result) {
+    const view = suiteView((result && result.report) || {});
+    const card = document.createElement("div");
+    card.className = "suite-card";
+    card.setAttribute("data-testid", "suite-card");
+    const h = document.createElement("p");
+    h.className = "suite-headline";
+    h.setAttribute("data-testid", "suite-headline");
+    h.textContent = view.headline;
+    card.appendChild(h);
+    const ul = document.createElement("ul");
+    ul.className = "suite-tests";
+    const rows = view.fails.length ? view.fails : view.items;
+    rows.forEach((row) => {
+      const li = document.createElement("li");
+      li.textContent = row.why ? row.name + " — " + row.why : row.name;
+      ul.appendChild(li);
+    });
+    card.appendChild(ul);
+    view.allure.forEach((a) => {
+      const link = document.createElement("a");
+      link.className = "allure-open";
+      link.setAttribute("data-testid", "allure-link");
+      link.href = a.href;
+      link.textContent = a.label;
+      card.appendChild(link);
+    });
+    const foot = document.createElement("p");
+    foot.className = "suite-footnote";
+    foot.textContent = view.footnote;
+    card.appendChild(foot);
+    target.appendChild(card);
+    return view;
   }
 
   function login(data, username, password) {
@@ -670,33 +761,6 @@
     };
   }
 
-  function formatJob(job) {
-    return (
-      "Pipeline job (write) — simulated GitHub Actions / Jenkins-shaped log.\n" +
-      "- id `" +
-      job.id +
-      "`\n- SHA `" +
-      job.sha +
-      "` on `" +
-      job.ref +
-      "`\n- " +
-      job.provider +
-      " · " +
-      job.jenkins_job +
-      "\n- git_pull=" +
-      job.git_pull +
-      " credentials=" +
-      job.credentials +
-      "\n- " +
-      job.verdict +
-      " " +
-      job.passed +
-      "/" +
-      job.total +
-      "\nNo git pull. No Jenkins credentials on this public site."
-    );
-  }
-
   function pipelineStatus(data) {
     const pipe = pipelineOf(data);
     return {
@@ -743,14 +807,7 @@
       route: "suite_explain",
       source: "handler:suite_explain",
       tools: ["read_fixture:agent/fixtures/suites.json"],
-      answer:
-        "Catalog read — no job recorded, no git pull.\nLast SHA `" +
-        (pipe.last_sha_short || "") +
-        "` on `" +
-        (pipe.ref || "main") +
-        "`.\n" +
-        formatSuite(summary) +
-        "\nSay “run …” to record a simulated Actions/Jenkins job against that SHA.",
+      answer: formatSuite(summary),
       metrics: {
         suite: suite,
         layer: layer || null,
@@ -765,6 +822,8 @@
       },
       ui: "suite_explain",
       report: summary,
+      allure: allureLinks(summary),
+      footnote: SUITE_FOOTNOTE,
       caveat: caveat(),
     };
   }
@@ -783,7 +842,7 @@
       route: "run_suite",
       source: "handler:run_suite:" + suite + (layer ? ":" + layer : ""),
       tools: ["read_fixture:agent/fixtures/suites.json"],
-      answer: formatSuite(summary) + "\n\n" + formatJob(job),
+      answer: formatSuite(summary),
       metrics: {
         suite,
         layer: layer || null,
@@ -798,6 +857,8 @@
       ui: "suite_report",
       report: summary,
       job: job,
+      allure: allureLinks(summary),
+      footnote: SUITE_FOOTNOTE,
       session_update: { awaiting_regression: false },
       awaiting_regression: false,
       caveat: caveat(),
@@ -1094,5 +1155,5 @@
     return annotateSource(result);
   }
 
-  root.LabRouter = { route, namedComponent, runSuite, computeAppHealth };
+  root.LabRouter = { route, namedComponent, runSuite, computeAppHealth, renderSuiteCard, suiteView };
 })(window);

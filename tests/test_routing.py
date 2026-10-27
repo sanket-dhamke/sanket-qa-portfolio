@@ -77,11 +77,16 @@ def test_why_api_sanity_fail_is_read_not_a_job() -> None:
     assert result["metrics"]["mode"] == "read"
     assert result["metrics"]["git_pull"] is False
     assert "job" not in result
-    assert "Catalog read" in result["answer"]
+    assert result["answer"].startswith("API sanity failed (11/12)")
+    assert "Open Allure report" in result["answer"]
+    assert "Catalog replay" in result["answer"]
+    assert "Catalog read" not in result["answer"]
+    assert "git_pull" not in result["answer"]
     assert "api.mae_search_index" in (result["metrics"].get("failed_ids") or [])
+    assert result["allure"][0]["href"] == "reports/allure-api/index.html"
 
 
-def test_run_api_smoke_records_job_against_sha() -> None:
+def test_run_api_smoke_is_user_friendly_with_allure() -> None:
     result = route("Run API smoke")
     assert result["route"] == "run_suite"
     assert result["metrics"]["layer"] == "api"
@@ -89,8 +94,17 @@ def test_run_api_smoke_records_job_against_sha() -> None:
     assert result["job"]["git_pull"] is False
     assert result["job"]["credentials"] == "none"
     assert result["job"]["sha"]
-    assert "Pipeline job (write)" in result["answer"]
-    assert "git_pull=false" in result["answer"]
+    assert result["answer"].splitlines()[0] == "API smoke passed (6/6) in ~400 ms"
+    assert "GMS GET /health" in result["answer"]
+    assert "Open Allure report" in result["answer"]
+    assert "Catalog replay — not a live pytest run." in result["answer"]
+    assert "Pipeline job" not in result["answer"]
+    assert "git_pull" not in result["answer"]
+    assert "Jenkins" not in result["answer"]
+    assert "handler:run_suite" not in result["answer"]
+    assert "GitHub Pages does not spawn" not in result["answer"]
+    assert result["allure"][0]["href"] == "reports/allure-api/index.html"
+    assert result["allure"][0]["label"] == "Open Allure report"
 
 
 def test_last_pipeline_sha_is_read() -> None:

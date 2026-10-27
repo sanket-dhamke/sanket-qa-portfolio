@@ -70,6 +70,25 @@ def test_console_graphql_chip_is_knowledge_base(page, site_url: str) -> None:
     console.expect_kb_chip()
 
 
+@pytest.mark.regression
+def test_console_run_api_smoke_shows_allure(page, site_url: str) -> None:
+    console = ConsolePage(page)
+    console.open(site_url)
+    console.ask("Run API smoke")
+    log = page.locator("#log")
+    expect(log).to_contain_text("API smoke passed (6/6)")
+    expect(log).to_contain_text("GMS GET /health")
+    expect(log).to_contain_text("Catalog replay")
+    expect(log.locator('[data-testid="allure-link"]')).to_have_attribute(
+        "href", "reports/allure-api/index.html"
+    )
+    expect(log.locator('[data-testid="allure-link"]')).to_contain_text("Open Allure report")
+    expect(log).not_to_contain_text("source handler:run_suite")
+    expect(log).not_to_contain_text("git_pull")
+    expect(log).not_to_contain_text("Jenkins")
+    expect(log).not_to_contain_text("GitHub Pages does not spawn")
+
+
 @pytest.mark.sanity
 def test_console_enter_clears_question(page, site_url: str) -> None:
     console = ConsolePage(page)

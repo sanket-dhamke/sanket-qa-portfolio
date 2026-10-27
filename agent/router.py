@@ -80,7 +80,7 @@ CHILD_QUESTIONS = {
     "api": [
         {
             "id": "read",
-            "title": "Read (no job)",
+            "title": "Look up",
             "questions": [
                 "Why did API sanity fail?",
                 "How many API smoke tests are there?",
@@ -89,7 +89,7 @@ CHILD_QUESTIONS = {
         },
         {
             "id": "run",
-            "title": "Run (records a job)",
+            "title": "Run a suite",
             "questions": [
                 "Run API smoke",
                 "Run API sanity suite",
@@ -100,7 +100,7 @@ CHILD_QUESTIONS = {
     "ui": [
         {
             "id": "read",
-            "title": "Read (no job)",
+            "title": "Look up",
             "questions": [
                 "Why did UI sanity fail?",
                 "How many UI smoke tests are there?",
@@ -109,7 +109,7 @@ CHILD_QUESTIONS = {
         },
         {
             "id": "run",
-            "title": "Run (records a job)",
+            "title": "Run a suite",
             "questions": [
                 "Run UI smoke",
                 "Check UI sanity",

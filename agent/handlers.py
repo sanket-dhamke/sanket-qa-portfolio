@@ -322,40 +322,97 @@ def _format_rca_block(rca: dict[str, Any], heading: str | None = None) -> str:
     return "\n".join(lines)
 
 
-def _format_job(job: dict[str, Any]) -> str:
-    return (
-        "Pipeline job (write) — simulated GitHub Actions / Jenkins-shaped log.\n"
-        f"- id `{job.get('id')}`\n"
-        f"- SHA `{job.get('sha')}` on `{job.get('ref')}`\n"
-        f"- {job.get('provider')} · {job.get('jenkins_job')}\n"
-        "- git_pull=false credentials=none\n"
-        f"- {job.get('verdict')} {job.get('passed')}/{job.get('total')}\n"
-        "No git pull. No Jenkins credentials on this public site."
+SUITE_FOOTNOTE = "Catalog replay — not a live pytest run."
+ALLURE_BY_LAYER = {
+    "api": "reports/allure-api/index.html",
+    "ui": "reports/allure-ui/index.html",
+}
+
+
+def _layer_title(layer: str | None) -> str:
+    if layer == "api":
+        return "API "
+    if layer == "ui":
+        return "UI "
+    if layer == "security":
+        return "Security "
+    if layer == "performance":
+        return "Performance "
+    return ""
+
+
+def _approx_ms(ms: int | None) -> str:
+    n = int(ms or 0)
+    if n >= 50:
+        return f"~{int(round(n / 10.0) * 10)} ms"
+    return f"{n} ms"
+
+
+def _plain_fail_why(case: dict[str, Any]) -> str:
+    rca = case.get("rca") or {}
+    blob = " ".join(
+        [
+            str(rca.get("symptom") or ""),
+            str(rca.get("cause") or ""),
+            " ".join(rca.get("evidence") or []),
+            str(case.get("actual") or ""),
+        ]
     )
+    if "AUTH-OPEN" in blob:
+        return "GMS does not require login (AUTH-OPEN)"
+    if "MEM-PRESSURE" in blob or "OOM" in blob:
+        return "mae-consumer ran out of memory, so search is stale (MEM-PRESSURE)"
+    text = rca.get("symptom") or rca.get("cause") or case.get("actual") or "failed"
+    return str(text).split(".")[0].strip()
+
+
+def allure_links(summary: dict[str, Any]) -> list[dict[str, str]]:
+    layers: list[str] = []
+    if summary.get("layer"):
+        layers = [str(summary["layer"])]
+    else:
+        for case in summary.get("cases") or []:
+            layer = case.get("layer")
+            if layer and layer not in layers:
+                layers.append(str(layer))
+    present = [layer for layer in layers if layer in ALLURE_BY_LAYER]
+    links = []
+    for layer in present:
+        label = "Open Allure report"
+        if len(present) > 1:
+            label = f"Open {layer.upper()} Allure report"
+        links.append({"href": ALLURE_BY_LAYER[layer], "label": label, "layer": layer})
+    return links
 
 
 def _format_suite(summary: dict[str, Any]) -> str:
-    label = summary.get("suite", "suite")
-    layer = summary.get("layer") or "api+ui+performance"
-    lines = [
-        f"Suite `{label}` layer={layer} → {summary['verdict']} "
-        f"({summary['passed']} passed, {summary['failed']} failed, "
-        f"{summary['total']} total, {summary['duration_ms']} ms).",
-        "This is a replay of the checked-in suite catalog — the same smoke/sanity/"
-        "regression markers as pytest. GitHub Pages does not spawn pytest.",
-    ]
-    for case in summary.get("cases") or []:
-        mark = "PASS" if case["status"] == "pass" else "FAIL"
-        lines.append(
-            f"- [{mark}] {case['layer']} {case['id']}: {case['name']} "
-            f"({case['duration_ms']} ms)"
-        )
-        if case["status"] == "fail":
-            lines.append(f"    expected: {case.get('expected')}")
-            lines.append(f"    actual:   {case.get('actual')}")
-    for rca in summary.get("rcas") or []:
+    suite = summary.get("suite") or "suite"
+    passed = int(summary.get("passed") or 0)
+    failed = int(summary.get("failed") or 0)
+    total = int(summary.get("total") or 0)
+    verb = "passed" if failed == 0 else "failed"
+    headline = (
+        f"{_layer_title(summary.get('layer'))}{suite} {verb} "
+        f"({passed}/{total}) in {_approx_ms(summary.get('duration_ms'))}"
+    )
+    lines = [headline, ""]
+    cases = summary.get("cases") or []
+    if failed:
+        lines.append("1 failed:" if failed == 1 else f"{failed} failed:")
+        for case in cases:
+            if case.get("status") == "fail":
+                name = case.get("name") or case.get("id") or "test"
+                lines.append(f"- {name} — {_plain_fail_why(case)}")
+    else:
+        for case in cases:
+            lines.append(f"- {case.get('name') or case.get('id')}")
+    links = allure_links(summary)
+    if links:
         lines.append("")
-        lines.append(_format_rca_block(rca, rca.get("name")))
+        for link in links:
+            lines.append(link["label"])
+    lines.append("")
+    lines.append(SUITE_FOOTNOTE)
     return "\n".join(lines)
 
 
@@ -435,7 +492,7 @@ def run_named_suite(question: str, suite: str | None = None, layer: str | None =
                 "read_fixture:agent/fixtures/suites.json",
                 f"pytest -m {suite}" + (f" and {layer}" if layer else ""),
             ],
-            "answer": _format_suite(summary) + "\n\n" + _format_job(job),
+            "answer": _format_suite(summary),
             "metrics": {
                 "suite": suite,
                 "layer": layer,
@@ -450,6 +507,8 @@ def run_named_suite(question: str, suite: str | None = None, layer: str | None =
             "ui": "suite_report",
             "report": summary,
             "job": job,
+            "allure": allure_links(summary),
+            "footnote": SUITE_FOOTNOTE,
             "citations": ["agent/fixtures/suites.json", "agent/fixtures/pipeline.json"],
         }
     )
@@ -495,19 +554,13 @@ def suite_explain(question: str) -> dict[str, Any]:
     if suite is None:
         suite = "sanity"
     summary = executor.run_suite(suite, layer)
-    lines = [
-        "Catalog read — no job recorded, no git pull.",
-        f"Last SHA `{pipe.get('last_sha_short')}` on `{pipe.get('ref')}`.",
-        _format_suite(summary),
-        "Say “run …” to record a simulated Actions/Jenkins job against that SHA.",
-    ]
     result = _base()
     result.update(
         {
             "route": "suite_explain",
             "source": "handler:suite_explain",
             "tools": ["read_fixture:agent/fixtures/suites.json"],
-            "answer": "\n".join(lines),
+            "answer": _format_suite(summary),
             "metrics": {
                 "suite": suite,
                 "layer": layer,
@@ -522,6 +575,8 @@ def suite_explain(question: str) -> dict[str, Any]:
             },
             "ui": "suite_explain",
             "report": summary,
+            "allure": allure_links(summary),
+            "footnote": SUITE_FOOTNOTE,
             "citations": ["agent/fixtures/suites.json", "agent/fixtures/pipeline.json"],
         }
     )

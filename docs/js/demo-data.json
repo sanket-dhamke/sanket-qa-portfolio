@@ -73,7 +73,7 @@
     "api": [
       {
         "id": "read",
-        "title": "Read (no job)",
+        "title": "Look up",
         "questions": [
           "Why did API sanity fail?",
           "How many API smoke tests are there?",
@@ -82,7 +82,7 @@
       },
       {
         "id": "run",
-        "title": "Run (records a job)",
+        "title": "Run a suite",
         "questions": [
           "Run API smoke",
           "Run API sanity suite",
@@ -93,7 +93,7 @@
     "ui": [
       {
         "id": "read",
-        "title": "Read (no job)",
+        "title": "Look up",
         "questions": [
           "Why did UI sanity fail?",
           "How many UI smoke tests are there?",
@@ -102,7 +102,7 @@
       },
       {
         "id": "run",
-        "title": "Run (records a job)",
+        "title": "Run a suite",
         "questions": [
           "Run UI smoke",
           "Check UI sanity",
@@ -815,7 +815,7 @@
         "ui": {
           "smoke": 3,
           "sanity": 11,
-          "regression": 18
+          "regression": 19
         },
         "performance": {
           "regression": 1
@@ -1792,8 +1792,22 @@
           "endpoint": null,
           "status": "pass",
           "duration_ms": 980,
-          "expected": "child agent, last SHA, git_pull=false",
-          "actual": "scoped job",
+          "expected": "Open Allure report, no git_pull dump",
+          "actual": "scoped allure",
+          "rca": null
+        },
+        {
+          "id": "ui.suite_allure_chat",
+          "name": "Console run API smoke shows Allure",
+          "layer": "ui",
+          "suites": [
+            "regression"
+          ],
+          "endpoint": null,
+          "status": "pass",
+          "duration_ms": 860,
+          "expected": "API smoke passed (6/6), Open Allure report",
+          "actual": "allure link",
           "rca": null
         },
         {
@@ -2056,8 +2070,8 @@
       "provider": "GitHub Actions (Jenkins-shaped log)",
       "repo": "sanket-dhamke/sanket-qa-portfolio",
       "ref": "main",
-      "last_sha": "864fb4f9b8dff18125acb3f20710b10c92879d5e",
-      "last_sha_short": "864fb4f",
+      "last_sha": "4fb5b94c633fca0ac45bc2f033d93ce15517dc78",
+      "last_sha_short": "4fb5b94",
       "actions_url": "https://github.com/sanket-dhamke/sanket-qa-portfolio/actions",
       "jenkins_job": "datahub-lab-suites (simulated)",
       "credentials": "none",
@@ -2454,8 +2468,8 @@
     "provider": "GitHub Actions (Jenkins-shaped log)",
     "repo": "sanket-dhamke/sanket-qa-portfolio",
     "ref": "main",
-    "last_sha": "864fb4f9b8dff18125acb3f20710b10c92879d5e",
-    "last_sha_short": "864fb4f",
+    "last_sha": "4fb5b94c633fca0ac45bc2f033d93ce15517dc78",
+    "last_sha_short": "4fb5b94",
     "actions_url": "https://github.com/sanket-dhamke/sanket-qa-portfolio/actions",
     "jenkins_job": "datahub-lab-suites (simulated)",
     "credentials": "none",

@@ -36,9 +36,12 @@ def test_api_sanity_suite_reports_mae_rca() -> None:
     assert result["metrics"]["layer"] == "api"
     assert result["metrics"]["verdict"] == "FAIL"
     assert "api.mae_search_index" in result["metrics"]["failed_ids"]
-    assert "OOM" in result["answer"] or "mae-consumer" in result["answer"]
-    assert "Cause:" in result["answer"]
-    assert "Fix:" in result["answer"]
+    assert result["answer"].startswith("API sanity failed (11/12)")
+    assert "mae-consumer" in result["answer"]
+    assert "Open Allure report" in result["answer"]
+    assert "Cause:" not in result["answer"]
+    assert "Fix:" not in result["answer"]
+    assert result["allure"][0]["href"] == "reports/allure-api/index.html"
 
 
 def test_ui_sanity_suite_reports_search_rca() -> None:
@@ -47,9 +50,12 @@ def test_ui_sanity_suite_reports_search_rca() -> None:
     assert result["metrics"]["layer"] == "ui"
     assert result["metrics"]["verdict"] == "FAIL"
     assert "ui.search_datasets" in result["metrics"]["failed_ids"]
-    assert "MAE consumer" in result["answer"] or "mae-consumer" in result["answer"]
-    assert "Cause:" in result["answer"]
-    assert "Fix:" in result["answer"]
+    assert result["answer"].startswith("UI sanity failed")
+    assert "mae-consumer" in result["answer"]
+    assert "Open Allure report" in result["answer"]
+    assert "Cause:" not in result["answer"]
+    assert "Fix:" not in result["answer"]
+    assert result["allure"][0]["href"] == "reports/allure-ui/index.html"
 
 
 def test_how_many_assets_stays_on_ingestion_handler() -> None:
