@@ -91,19 +91,6 @@ nav a[aria-current="page"], nav a:hover { color: #fff; border-bottom: 2px solid 
 }
 .card .try-this { margin-top: 14px; }
 
-.about-band {
-  background: var(--card);
-  border: 1px solid var(--line);
-  padding: 24px 28px 28px;
-  margin: 0 0 40px;
-}
-.about-band h2 {
-  font-family: Fraunces, Georgia, serif;
-  font-size: 28px;
-  font-weight: 500;
-  margin: 0 0 8px;
-}
-.about-band p { margin: 0 0 16px; max-width: 62ch; }
 .downloads {
   display: flex;
   gap: 12px;

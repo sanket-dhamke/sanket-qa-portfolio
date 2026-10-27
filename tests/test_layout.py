@@ -214,8 +214,14 @@ def test_home_cards_split_api_and_ui() -> None:
     assert 'data-testid="try-this-hybrid"' in hybrid
     assert 'data-testid="try-this-api"' in api_card
     assert 'data-testid="try-this-ui"' in ui_card
-    assert 'data-testid="about-downloads"' in text
-    _assert_view_and_download_pdf_links(text)
+    assert 'href="about.html">About</a>' in text
+    assert 'data-testid="about-downloads"' not in text
+    assert "View resume" not in text
+    assert "Download resume" not in text
+    assert "View cover letter" not in text
+    assert "Download cover letter" not in text
+    assert 'id="about"' not in text
+    assert "about-band" not in text
 
 
 def test_resume_and_cover_letter_pdfs_are_in_docs() -> None:
@@ -226,7 +232,12 @@ def test_resume_and_cover_letter_pdfs_are_in_docs() -> None:
     about = (ROOT / "docs" / "about.html").read_text(encoding="utf-8")
     home = (ROOT / "docs" / "index.html").read_text(encoding="utf-8")
     _assert_view_and_download_pdf_links(about)
-    _assert_view_and_download_pdf_links(home)
+    assert 'data-testid="about-downloads"' not in home
+    assert "View resume" not in home
+    assert "Download resume" not in home
+    assert "View cover letter" not in home
+    assert "Download cover letter" not in home
+    assert 'href="about.html">About</a>' in home
 
 
 def test_api_allure_report_is_api_only() -> None:
