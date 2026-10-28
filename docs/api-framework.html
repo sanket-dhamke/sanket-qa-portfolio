@@ -132,7 +132,7 @@ allure generate reports/allure-results -o docs/reports/allure-api --clean --sing
 # optional mock server for requests (not required for TestClient)
 uvicorn api.app:app --port 8080
 pytest tests/api --run-live -m live</pre>
-    <p>Domain asserts: HTTP status, JSON shape, fixture asset counts (140), <code>durationMs</code> from the mock execution, elapsed time under 1s. How-to: <a href="https://github.com/sanket-dhamke/sanket-qa-portfolio/blob/main/docs/API.md">docs/API.md</a>.</p>
+    <p>Domain asserts: HTTP status, JSON shape, fixture asset counts (140), <code>durationMs</code> from the mock execution, elapsed time under 1s. How-to: <code>docs/API.md</code>.</p>
     <h2>Allure report</h2>
     <p><a href="reports/allure-api/index.html">Allure report</a> — full API export. The agent chat opens the slice you ran: <a href="reports/allure-api-smoke/index.html">smoke</a>, <a href="reports/allure-api-sanity/index.html">sanity</a>, or <a href="reports/allure-api-regression/index.html">regression</a>.</p>
     <iframe class="report-frame" title="API Allure report" src="reports/allure-api/index.html"></iframe>

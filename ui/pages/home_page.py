@@ -50,6 +50,9 @@ class HomePage:
                 "link", name="Open the Hybrid AI Agent for performance testing"
             )
         ).to_be_visible()
+        expect(self.page.get_by_role("link", name="LinkedIn")).to_be_visible()
+        expect(self.page.get_by_role("link", name="GitHub repo")).to_have_count(0)
+        expect(self.page.locator('a[href*="github.com/sanket-dhamke"]')).to_have_count(0)
         expect(self.page.get_by_role("navigation").get_by_role("link", name="About")).to_have_attribute(
             "href", "about.html"
         )

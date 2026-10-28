@@ -171,6 +171,8 @@ def test_api_page_does_not_document_playwright() -> None:
     assert 'href="reports/allure-api/index.html">Allure report</a>' in text
     assert "Try this out — click here to see how it works." in text
     assert 'data-testid="try-this"' in text
+    assert "github.com/sanket-dhamke" not in text
+    assert "docs/API.md" in text
 
 
 def test_ui_page_does_not_document_api_payloads() -> None:
@@ -188,6 +190,7 @@ def test_ui_page_does_not_document_api_payloads() -> None:
     assert "SKILLS.md" in text
     assert "pytest-html" not in text
     assert 'href="reports/allure-ui/index.html">Allure report</a>' in text
+    assert "github.com/sanket-dhamke" not in text
 
 
 def test_home_cards_split_api_and_ui() -> None:
@@ -215,6 +218,8 @@ def test_home_cards_split_api_and_ui() -> None:
     assert 'data-testid="try-this-api"' in api_card
     assert 'data-testid="try-this-ui"' in ui_card
     assert 'href="about.html">About</a>' in text
+    assert "GitHub repo" not in text
+    assert "github.com/sanket-dhamke" not in text
     assert 'data-testid="about-downloads"' not in text
     assert "View resume" not in text
     assert "Download resume" not in text
@@ -222,6 +227,22 @@ def test_home_cards_split_api_and_ui() -> None:
     assert "Download cover letter" not in text
     assert 'id="about"' not in text
     assert "about-band" not in text
+
+
+def test_public_html_has_no_github_repo_links() -> None:
+    pages = (
+        "index.html",
+        "about.html",
+        "console.html",
+        "architecture.html",
+        "api-framework.html",
+        "ui-framework.html",
+        "404.html",
+    )
+    for name in pages:
+        text = (ROOT / "docs" / name).read_text(encoding="utf-8")
+        assert "GitHub repo" not in text, name
+        assert "github.com/sanket-dhamke" not in text, name
 
 
 def test_resume_and_cover_letter_pdfs_are_in_docs() -> None:
