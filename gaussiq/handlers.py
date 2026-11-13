@@ -910,6 +910,35 @@ def suite_explain(question: str) -> dict[str, Any]:
     }
 
 
+def email_report(_question: str = "") -> dict[str, Any]:
+    snapshot = compute_app_health(last_smoke=run_suite("smoke"), last_sanity=run_suite("sanity"))
+    return {
+        "route": "email_report",
+        "source": "handler:email_report",
+        "tools": ["ui:email-report-tab"],
+        "answer": (
+            "Simulated email report — no SMTP host is contacted.\n"
+            "To: sanket.dhamke@gmail.com\n"
+            f"Subject would include quality {snapshot['health']} "
+            "(this fixture is DEGRADED).\n"
+            "Schedule options: every 1h / 3h / 6h / 12h / 24h. "
+            "On new issue is on by default; duplicate signatures are skipped.\n"
+            "SMTP=none. Open the Email report tab and click Send preview now "
+            "to see the HTML body (service health, platform performance, security, "
+            "plain-language RCA with Ruled out / not the cause, smoke).\n"
+            "Cited source: docs/gaussiq.html Email report tab. "
+            "Not affiliated with GaussIQ. Fixtures only, not live production."
+        ),
+        "metrics": {
+            "health": snapshot["health"],
+            "smtp": "none",
+            "to": "sanket.dhamke@gmail.com",
+        },
+        "ui": "email",
+        "caveat": caveat(),
+    }
+
+
 def fallback(_question: str = "") -> dict[str, Any]:
     return {
         "route": "fallback",
@@ -919,7 +948,8 @@ def fallback(_question: str = "") -> dict[str, Any]:
             "No handler or catalog entry matched that question. This sample does not call a language model, "
             "so it will not invent MTTR, CPU, memory, or RCA times. Try: current quality of GaussIQ 1.0, "
             "why CPU/memory is high, how long for RCA on a huge evidence case, add more evidence, "
-            "any security issues, why AJ18991 returned HTTP 500, run smoke, run sanity, or run regression."
+            "any security issues, why AJ18991 returned HTTP 500, run smoke, run sanity, "
+            "run regression, or send an email preview."
         ),
         "metrics": None,
         "ui": None,

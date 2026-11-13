@@ -107,7 +107,15 @@ def test_gaussiq_page_disclaimer_and_no_github_repo() -> None:
     assert ".table-scroll" in css
     assert "allure-open" in css
     assert "kpi-jump" in css
-    assert "v=chat7" in text
+    assert "v=chat8" in text
+    assert 'data-tab="email"' in text
+    assert 'id="tab-email"' in text
+    assert 'id="btn-email-preview"' in text
+    assert 'value="sanket.dhamke@gmail.com"' in text
+    assert "Send preview now" in text
+    assert "SMTP" in (ROOT / "docs" / "js" / "gaussiq-lab.js").read_text(encoding="utf-8")
+    assert "Ruled out / not the cause" in (ROOT / "docs" / "js" / "gaussiq-lab.js").read_text(encoding="utf-8")
+    assert "smtp.gmail.com" not in text.lower()
     assert "Product lens" not in text
     for layer, suite in (
         ("api", "smoke"),

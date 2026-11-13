@@ -96,6 +96,14 @@ QUESTION_BANK = [
         ],
     },
     {
+        "id": "email",
+        "title": "Email / schedule",
+        "questions": [
+            "How does the email report schedule work?",
+            "Send an email preview",
+        ],
+    },
+    {
         "id": "login",
         "title": "Lab login",
         "questions": [
@@ -318,6 +326,19 @@ RULES: list[dict[str, Any]] = [
             "service health",
             "crashloop",
             "connector",
+        ],
+    },
+    {
+        "route": "email_report",
+        "source": "handler:email_report",
+        "handler": handlers.email_report,
+        "any": [
+            "email report",
+            "email preview",
+            "email schedule",
+            "send preview",
+            "send an email",
+            "how does the email",
         ],
     },
     {

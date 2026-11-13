@@ -181,3 +181,17 @@ def test_evidence_pack_timing_then_add_more() -> None:
 def test_no_model_flag() -> None:
     result = route("What is net MTTR?")
     assert result["model_available"] is False
+
+
+def test_email_preview_is_simulated() -> None:
+    result = route("Send an email preview")
+    assert result["source"] == "handler:email_report"
+    assert result["ui"] == "email"
+    assert result["metrics"]["smtp"] == "none"
+    assert result["metrics"]["to"] == "sanket.dhamke@gmail.com"
+    assert "sanket.dhamke@gmail.com" in result["answer"]
+    assert "no SMTP" in result["answer"]
+    assert "github.com/sanket-dhamke" not in result["answer"]
+    sched = route("How does the email report schedule work?")
+    assert sched["source"] == "handler:email_report"
+    assert "every 1h" in sched["answer"]

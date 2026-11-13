@@ -84,6 +84,14 @@
       ]
     },
     {
+      "id": "email",
+      "title": "Email / schedule",
+      "questions": [
+        "How does the email report schedule work?",
+        "Send an email preview"
+      ]
+    },
+    {
       "id": "login",
       "title": "Lab login",
       "questions": [
@@ -289,6 +297,18 @@
         "service health",
         "crashloop",
         "connector"
+      ]
+    },
+    {
+      "route": "email_report",
+      "source": "handler:email_report",
+      "any": [
+        "email report",
+        "email preview",
+        "email schedule",
+        "send preview",
+        "send an email",
+        "how does the email"
       ]
     },
     {

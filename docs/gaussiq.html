@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/gaussiq.css?v=chat7">
+  <link rel="stylesheet" href="css/gaussiq.css?v=chat8">
 </head>
 <body class="giq">
   <header class="giq-header">
@@ -170,6 +170,7 @@
         <button type="button" class="tab" data-tab="skills" aria-selected="false">Skills</button>
         <button type="button" class="tab" data-tab="suites" aria-selected="false">Suites</button>
         <button type="button" class="tab" data-tab="rca" aria-selected="false">RCA detail</button>
+        <button type="button" class="tab" data-tab="email" aria-selected="false">Email report</button>
       </div>
       <div class="tab-panel on" id="tab-cases">
         <p class="hint">Invented support cases. AJ18991 and Jetsons names appear on GaussIQ public marketing as DEMO examples — not a live customer.</p>
@@ -196,12 +197,47 @@
       <div class="tab-panel" id="tab-rca">
         <div class="rca-list" id="rca-list"></div>
       </div>
+      <div class="tab-panel" id="tab-email">
+        <p class="hint">How the email looks. Simulated only — no SMTP host is contacted. Smoke is always attached. Check sanity or regression to replay those suites first and add their blocks. Not affiliated with GaussIQ. Fixtures, not live production.</p>
+        <div class="email-controls">
+          <label>To
+            <input id="email-to" type="email" value="sanket.dhamke@gmail.com" autocomplete="off">
+          </label>
+          <div class="email-suites">
+            <label class="check"><input id="email-smoke" type="checkbox" checked disabled> smoke (always)</label>
+            <label class="check"><input id="email-sanity" type="checkbox"> sanity</label>
+            <label class="check"><input id="email-regression" type="checkbox"> regression</label>
+          </div>
+          <fieldset class="email-schedule">
+            <legend>Schedule</legend>
+            <label><input type="radio" name="email-every" value="1" checked> every 1h</label>
+            <label><input type="radio" name="email-every" value="3"> 3h</label>
+            <label><input type="radio" name="email-every" value="6"> 6h</label>
+            <label><input type="radio" name="email-every" value="12"> 12h</label>
+            <label><input type="radio" name="email-every" value="24"> 24h</label>
+            <label class="check"><input id="email-on-issue" type="checkbox" checked> On new issue</label>
+          </fieldset>
+          <button type="button" id="btn-email-preview">Send preview now</button>
+        </div>
+        <div class="email-chrome" id="email-chrome">
+          <div class="email-headers">
+            <div><span>From</span><strong id="email-from">GaussIQ lab reports &lt;noreply@gaussiq-lab.example&gt;</strong></div>
+            <div><span>To</span><strong id="email-to-view">sanket.dhamke@gmail.com</strong></div>
+            <div><span>Subject</span><strong id="email-subject">— click Send preview now —</strong></div>
+          </div>
+          <div class="email-body" id="email-body">
+            <p class="hint">Click Send preview now to render the HTML body (service health, performance, security, RCA with Ruled out / not the cause, smoke).</p>
+          </div>
+        </div>
+        <h2 class="email-log-h">Last sent / next scheduled</h2>
+        <pre class="gql" id="email-log">No preview sent yet. On new issue is on; duplicate signatures are skipped until the time schedule.</pre>
+      </div>
     </section>
   </div>
   <footer class="site-footer">
     <p class="note">This is not GaussIQ’s product. It is Sanket Dhamke’s hybrid QA agent configured for Execution Intelligence so a CTO can see quality and agents on <em>this</em> problem — not on DataHub. Personal lab. Not affiliated with GaussIQ. Not employment. Metrics, cases, and suite runs are simulated fixtures, not live production. Demo names such as AJ18991 / George Jetson appear on GaussIQ public marketing; this page does not copy their UI.</p>
   </footer>
-  <script src="js/gaussiq-router.js?v=chat7"></script>
-  <script src="js/gaussiq-lab.js?v=chat7"></script>
+  <script src="js/gaussiq-router.js?v=chat8"></script>
+  <script src="js/gaussiq-lab.js?v=chat8"></script>
 </body>
 </html>

@@ -920,13 +920,32 @@
     };
   }
 
+  function emailReport(data) {
+    const snapshot = computeAppHealth(data, {
+      lastSmoke: runSuite(data, "smoke", null),
+      lastSanity: runSuite(data, "sanity", null),
+    });
+    return {
+      route: "email_report",
+      source: "handler:email_report",
+      tools: ["ui:email-report-tab"],
+      answer:
+        "Simulated email report — no SMTP host is contacted.\nTo: sanket.dhamke@gmail.com\nSubject would include quality " +
+        snapshot.health +
+        " (this fixture is DEGRADED).\nSchedule options: every 1h / 3h / 6h / 12h / 24h. On new issue is on by default; duplicate signatures are skipped.\nSMTP=none. Open the Email report tab and click Send preview now to see the HTML body (service health, platform performance, security, plain-language RCA with Ruled out / not the cause, smoke).\nCited source: docs/gaussiq.html Email report tab. Not affiliated with GaussIQ. Fixtures only, not live production.",
+      metrics: { health: snapshot.health, smtp: "none", to: "sanket.dhamke@gmail.com" },
+      ui: "email",
+      caveat: caveat(),
+    };
+  }
+
   function fallback() {
     return {
       route: "fallback",
       source: "fallback:deterministic",
       tools: [],
       answer:
-        "No handler or catalog entry matched that question. This sample does not call a language model, so it will not invent MTTR, CPU, memory, or RCA times. Try: current quality of GaussIQ 1.0, why CPU/memory is high, how long for RCA on a huge evidence case, add more evidence, any security issues, why AJ18991 returned HTTP 500, run smoke, run sanity, or run regression.",
+        "No handler or catalog entry matched that question. This sample does not call a language model, so it will not invent MTTR, CPU, memory, or RCA times. Try: current quality of GaussIQ 1.0, why CPU/memory is high, how long for RCA on a huge evidence case, add more evidence, any security issues, why AJ18991 returned HTTP 500, run smoke, run sanity, run regression, or send an email preview.",
       metrics: null,
       ui: null,
       caveat: caveat(),
@@ -952,6 +971,7 @@
     perf_rca: perfRca,
     service_health: serviceHealth,
     kb_retrieve: kbRetrieve,
+    email_report: emailReport,
   };
 
   function route(data, question, session) {

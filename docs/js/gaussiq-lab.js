@@ -14,6 +14,12 @@
     lastSmoke: null,
     lastSanity: null,
     connected: false,
+    email: {
+      signatures: [],
+      log: [],
+      lastSent: null,
+      nextAt: null,
+    },
   };
 
   const $ = (id) => document.getElementById(id);
@@ -527,6 +533,282 @@
     if (extra) extra.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
+  function scheduleHours() {
+    const picked = document.querySelector('input[name="email-every"]:checked');
+    return Number((picked && picked.value) || "1");
+  }
+
+  function issueSignature(suites) {
+    const fired = (((state.data.rca_report || {}).fired) || []).map((f) => f.id || f.title).join(",");
+    const fails = suites
+      .flatMap((s) => s.cases || [])
+      .filter((c) => c.status === "fail")
+      .map((c) => c.id)
+      .join(",");
+    const bad = ((state.data.fixtures.services.services) || [])
+      .filter((s) => s.status !== "Running" || s.last_reason)
+      .map((s) => s.id + ":" + (s.last_reason || s.status))
+      .join(",");
+    return fired + "|" + fails + "|" + bad || "none";
+  }
+
+  function suiteOrder() {
+    const extra = [];
+    if ($("email-sanity").checked) extra.push("sanity");
+    if ($("email-regression").checked) extra.push("regression");
+    extra.push("smoke");
+    return extra;
+  }
+
+  function runEmailSuites() {
+    return suiteOrder().map((name) => window.GiqLabRouter.runSuite(state.data, name, null));
+  }
+
+  function suiteBlockHtml(summary) {
+    const rows = (summary.cases || [])
+      .map((c) => {
+        const detail =
+          c.status === "fail"
+            ? escapeHtml((c.actual || "") + (c.rca && c.rca.cause ? " — " + c.rca.cause : ""))
+            : c.duration_ms + " ms";
+        return (
+          "<tr><td class='" +
+          (c.status === "pass" ? "pass" : "fail") +
+          "'>" +
+          String(c.status || "").toUpperCase() +
+          "</td><td>" +
+          escapeHtml(c.layer || "") +
+          "</td><td>" +
+          escapeHtml(c.name || c.id || "") +
+          "</td><td>" +
+          detail +
+          "</td></tr>"
+        );
+      })
+      .join("");
+    const rcas = (summary.rcas || [])
+      .map(
+        (r) =>
+          "<p><strong>Failure RCA — " +
+          escapeHtml(r.name || r.id || "") +
+          "</strong><br>Symptom: " +
+          escapeHtml(redactSecrets(r.symptom || "")) +
+          "<br>Cause: " +
+          escapeHtml(redactSecrets(r.cause || "")) +
+          "<br>Fix: " +
+          escapeHtml(redactSecrets(r.fix || "")) +
+          "</p>"
+      )
+      .join("");
+    return (
+      "<h3>" +
+      escapeHtml(summary.suite) +
+      " — " +
+      escapeHtml(summary.verdict) +
+      " (" +
+      summary.passed +
+      " passed / " +
+      summary.failed +
+      " failed)</h3><table><thead><tr><th>Result</th><th>Layer</th><th>Case</th><th>Detail</th></tr></thead><tbody>" +
+      rows +
+      "</tbody></table>" +
+      rcas
+    );
+  }
+
+  function currentHealthSnapshot(suites) {
+    const list = suites || [];
+    const smoke = list.find((s) => s.suite === "smoke") || state.lastSmoke;
+    const sanity = list.find((s) => s.suite === "sanity") || state.lastSanity;
+    return window.GiqLabRouter.computeAppHealth(state.data, { lastSmoke: smoke, lastSanity: sanity });
+  }
+
+  function buildEmailHtml(suites) {
+    const svc = state.data.fixtures.services;
+    const perf = state.data.fixtures.performance;
+    const rca = state.data.rca_report || {};
+    const sec = state.data.security_report || {};
+    const health = currentHealthSnapshot(suites).health;
+    const rows = svc.services || [];
+    const hottest = rows.reduce((a, b) => (memPct(a) >= memPct(b) ? a : b), rows[0] || {});
+    const svcRows = rows
+      .map((s) => {
+        return (
+          "<tr><td>" +
+          escapeHtml(s.id) +
+          "</td><td>" +
+          escapeHtml(s.status) +
+          "</td><td>" +
+          s.restarts +
+          "</td><td>" +
+          escapeHtml(s.last_reason || "—") +
+          "</td><td>" +
+          s.cpu_pct +
+          "%</td><td>" +
+          s.memory_mib +
+          "/" +
+          s.memory_limit_mib +
+          " (" +
+          memPct(s) +
+          "%)</td></tr>"
+        );
+      })
+      .join("");
+    const fired = (rca.fired || []).concat(sec.fired || []);
+    const seen = {};
+    const rcaHtml = fired
+      .map((f) => {
+        const id = f.id || "";
+        if (id && seen[id]) return "";
+        if (id) seen[id] = true;
+        const plain = (id && PLAIN_CAUSE[id]) || {};
+        return (
+          "<p><strong>" +
+          escapeHtml((id ? id + " · " : "") + (plain.title || f.title || "")) +
+          "</strong><br>Symptom: " +
+          escapeHtml(redactSecrets(plain.observation || f.observation || f.symptom || "")) +
+          "<br>Cause: " +
+          escapeHtml(redactSecrets(plain.cause || f.likely_cause || f.cause || "")) +
+          "<br>Fix: " +
+          escapeHtml(redactSecrets(plain.fix || f.fix || f.recommendation || "")) +
+          "</p>"
+        );
+      })
+      .join("");
+    const skipped = (rca.skipped || []).concat(sec.skipped || []);
+    const skipSeen = {};
+    const skipHtml = skipped
+      .map((row) => {
+        const id = row.id || "";
+        if (id && skipSeen[id]) return "";
+        if (id) skipSeen[id] = true;
+        const body = RULED_OUT[id] || row.why || "";
+        return "<p><strong>" + escapeHtml(id) + "</strong><br>" + escapeHtml(redactSecrets(body)) + "</p>";
+      })
+      .join("");
+    const secFired = (sec.fired || [])
+      .map((f) => {
+        const plain = (f.id && PLAIN_CAUSE[f.id]) || {};
+        return (
+          "<li><strong>" +
+          escapeHtml((f.id ? f.id + " · " : "") + (plain.title || f.title || "Finding")) +
+          "</strong> — " +
+          escapeHtml(redactSecrets(plain.observation || f.observation || "")) +
+          "</li>"
+        );
+      })
+      .join("");
+    const suiteHtml = suites.map(suiteBlockHtml).join("");
+    return (
+      "<p>Simulated GaussIQ 1.0 lab report. Tenant <code>" +
+      escapeHtml(state.session.tenant || svc.tenant) +
+      "</code> · queue <code>" +
+      escapeHtml(state.session.queue || svc.queue) +
+      "</code>. Quality verdict: <strong>" +
+      escapeHtml(health) +
+      "</strong>. Not affiliated with GaussIQ. Fixtures, not live production.</p>" +
+      "<h3>Health / performance / security</h3>" +
+      "<p>Hottest memory: <strong>" +
+      escapeHtml(shortName(hottest.id)) +
+      " " +
+      memPct(hottest) +
+      "%</strong> (" +
+      hottest.memory_mib +
+      "/" +
+      hottest.memory_limit_mib +
+      " MiB). Gross MTTR " +
+      perf.gross_mttr_hours +
+      " h vs baseline " +
+      perf.baseline.gross_mttr_hours +
+      " h. Open cases " +
+      perf.open_cases +
+      ".</p>" +
+      "<h3>Service health</h3><table><thead><tr><th>Service</th><th>Status</th><th>Rst</th><th>Last reason</th><th>CPU %</th><th>Memory MiB</th></tr></thead><tbody>" +
+      svcRows +
+      "</tbody></table>" +
+      "<h3>Security findings</h3><ul>" +
+      (secFired || "<li>None fired.</li>") +
+      "</ul>" +
+      "<h3>RCA (plain language)</h3>" +
+      (rcaHtml || "<p>No fired rules.</p>") +
+      "<h3>Ruled out / not the cause</h3>" +
+      (skipHtml || "<p>None skipped.</p>") +
+      suiteHtml +
+      "<p style='color:#5c6675;font-size:12px'>Keyword/hybrid agent — a model did not invent these numbers. SMTP=none. Catalog replay, not a live pytest spawn. This is not GaussIQ’s product.</p>"
+    );
+  }
+
+  function emailSubject(suites) {
+    const health = currentHealthSnapshot(suites).health;
+    const smoke = suites.find((s) => s.suite === "smoke");
+    const fail = suites.some((s) => s.failed);
+    return (
+      "[GaussIQ lab] " +
+      health +
+      " · rec-engine MEM-PRESSURE · smoke " +
+      ((smoke && smoke.verdict) || "n/a") +
+      (fail ? " · failures attached" : "")
+    );
+  }
+
+  function appendEmailLog(line) {
+    state.email.log.unshift(line);
+    $("email-log").textContent = state.email.log.join("\n");
+  }
+
+  function sendEmailPreview() {
+    if (!state.connected) return;
+    const to = $("email-to").value.trim() || "sanket.dhamke@gmail.com";
+    $("email-to-view").textContent = to;
+    const suites = runEmailSuites();
+    suites.forEach((summary) => {
+      if (summary.suite === "smoke") state.lastSmoke = summary;
+      if (summary.suite === "sanity") state.lastSanity = summary;
+      renderSuitePanel(summary);
+    });
+    paintAppHealth();
+    const signature = issueSignature(suites);
+    const hours = scheduleHours();
+    const onIssue = $("email-on-issue").checked;
+    const now = new Date();
+    const next = new Date(now.getTime() + hours * 3600 * 1000);
+    const already = state.email.signatures.indexOf(signature) !== -1;
+    const html = buildEmailHtml(suites);
+    $("email-subject").textContent = emailSubject(suites);
+    $("email-body").innerHTML = html;
+    showTab("email");
+    if (already && onIssue) {
+      appendEmailLog(
+        now.toISOString() +
+          "  deduped On new issue — signature already emailed. Waiting for every " +
+          hours +
+          "h schedule (next " +
+          (state.email.nextAt || next.toISOString()) +
+          "). Preview refreshed. To=" +
+          to +
+          " SMTP=none"
+      );
+      return;
+    }
+    state.email.signatures.push(signature);
+    state.email.lastSent = now.toISOString();
+    state.email.nextAt = next.toISOString();
+    appendEmailLog(
+      now.toISOString() +
+        "  preview sent To=" +
+        to +
+        " signature=" +
+        signature.split("|")[0] +
+        " next=" +
+        state.email.nextAt +
+        " every=" +
+        hours +
+        "h onNewIssue=" +
+        onIssue +
+        " SMTP=none"
+    );
+  }
+
   function addStructured(el, result) {
     if (result.awaiting_regression) {
       const row = document.createElement("div");
@@ -645,6 +927,9 @@
     }
     if (result.ui === "health") {
       renderRca(null, result.rca);
+    }
+    if (result.ui === "email") {
+      jumpTab("email");
     }
     return result;
   }
@@ -786,6 +1071,7 @@
     $("btn-connect").addEventListener("click", () => {
       runConnect();
     });
+    $("btn-email-preview").addEventListener("click", sendEmailPreview);
   }
 
   async function main() {
@@ -794,6 +1080,6 @@
     bind();
   }
 
-  window.GiqLab = { ask, state, runConnect };
+  window.GiqLab = { ask, state, runConnect, sendEmailPreview };
   main();
 })();
