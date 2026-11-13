@@ -2,10 +2,23 @@
 
 from __future__ import annotations
 
+import base64
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 FORBIDDEN = ("BMC", "Beacon", "GATEZO", "H2O", "Bedrock", "ODIN")
+
+
+def _allure_decoded(path: Path) -> str:
+    raw = path.read_text(encoding="utf-8", errors="ignore")
+    parts = [raw]
+    for blob in re.findall(r"[A-Za-z0-9+/]{120,}={0,2}", raw):
+        try:
+            parts.append(base64.b64decode(blob).decode("utf-8", "ignore"))
+        except Exception:
+            continue
+    return "\n".join(parts)
 
 
 def _html() -> str:
@@ -58,7 +71,10 @@ def test_gaussiq_page_disclaimer_and_no_github_repo() -> None:
     assert "amazonaws.com" not in js
     assert "insertBefore" in js
     assert 'showTab("cases")' in js
-    assert 'showTab("suites")' not in js
+    assert "jumpTab" in js
+    assert 'data-jump="cases"' in text
+    assert 'data-testid="kpi-open-cases"' in text
+    assert 'data-testid="kpi-last-suite"' in text
     assert "insights" in js
     assert "connector" in js
     router = (ROOT / "docs" / "js" / "gaussiq-router.js").read_text(encoding="utf-8")
@@ -67,27 +83,49 @@ def test_gaussiq_page_disclaimer_and_no_github_repo() -> None:
     smoke = ROOT / "docs" / "reports" / "allure-gaussiq-api-smoke" / "index.html"
     sanity = ROOT / "docs" / "reports" / "allure-gaussiq-api-sanity" / "index.html"
     regression = ROOT / "docs" / "reports" / "allure-gaussiq-api-regression" / "index.html"
+    ui_smoke = ROOT / "docs" / "reports" / "allure-gaussiq-ui-smoke" / "index.html"
     assert smoke.is_file()
     assert sanity.is_file()
     assert regression.is_file()
-    assert "github.com/sanket-dhamke" not in smoke.read_text(encoding="utf-8")
-    assert "BMC" not in smoke.read_text(encoding="utf-8")
-    assert "not a live pytest" in smoke.read_text(encoding="utf-8").lower()
+    assert ui_smoke.is_file()
+    smoke_html = smoke.read_text(encoding="utf-8", errors="ignore")
+    smoke_head = smoke_html.split("<script", 1)[0]
+    assert "github.com/sanket-dhamke" not in smoke_html
+    assert "BMC" not in smoke_head
+    assert "allure-report-uuid" in smoke_html
+    assert "allureVersion" in smoke_html
+    assert "__allureCoreLoaded" in smoke_html
+    assert "<title>GaussIQ API smoke</title>" in smoke_html
+    assert "This page stands in for an Allure slice" not in smoke_html
+    assert "<table>" not in smoke_html.split("<body", 1)[-1][:800]
+    decoded_smoke = _allure_decoded(smoke)
+    decoded_sanity = _allure_decoded(sanity)
+    assert "test_case_intel_health" in decoded_smoke
+    assert "test_signal_connector_not_ready_in_fixture" not in decoded_smoke
+    assert "test_signal_connector_not_ready_in_fixture" in decoded_sanity
     css = (ROOT / "docs" / "css" / "gaussiq.css").read_text(encoding="utf-8")
     assert ".table-scroll" in css
     assert "allure-open" in css
-    assert "v=chat5" in text
+    assert "kpi-jump" in css
+    assert "v=chat6" in text
     assert "Product lens" not in text
     for layer, suite in (
         ("api", "smoke"),
         ("api", "sanity"),
         ("api", "regression"),
-        ("security", "regression"),
-        ("performance", "sanity"),
-        ("performance", "regression"),
+        ("ui", "smoke"),
+        ("ui", "sanity"),
+        ("ui", "regression"),
     ):
         path = ROOT / "docs" / "reports" / f"allure-gaussiq-{layer}-{suite}" / "index.html"
         assert path.is_file(), path
+        html = path.read_text(encoding="utf-8", errors="ignore")
+        head = html.split("<script", 1)[0]
+        assert "allureVersion" in html
+        assert "BMC" not in head
+        assert "github.com/sanket-dhamke" not in html
+    assert not (ROOT / "docs" / "reports" / "allure-gaussiq-security-smoke").exists()
+    assert not (ROOT / "docs" / "reports" / "allure-gaussiq-performance-sanity").exists()
 
 
 def test_gaussiq_tree_has_no_forbidden_brands() -> None:

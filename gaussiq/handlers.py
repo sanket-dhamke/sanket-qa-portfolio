@@ -16,15 +16,23 @@ YES = re.compile(
 NO = re.compile(r"^\s*(n|no|nope|skip|not now|later|don't|dont)\b", re.I)
 
 SUITE_FOOTNOTE = "Catalog replay — not a live pytest run."
-ALLURE_LAYERS = ("api", "security", "performance")
+ALLURE_LAYERS = ("api", "ui")
 ALLURE_SUITES = ("smoke", "sanity", "regression")
 
 
+def report_layer(layer: str | None) -> str:
+    """Committed Allure slices are api|ui, matching DataHub."""
+    if layer == "ui":
+        return "ui"
+    return "api"
+
+
 def allure_href(layer: str | None, suite: str | None) -> str | None:
-    if layer not in ALLURE_LAYERS:
+    dest = report_layer(layer)
+    if dest not in ALLURE_LAYERS:
         return None
     if suite in ALLURE_SUITES:
-        return f"reports/allure-gaussiq-{layer}-{suite}/index.html"
+        return f"reports/allure-gaussiq-{dest}-{suite}/index.html"
     return None
 
 
@@ -37,8 +45,14 @@ def allure_links(summary: dict[str, Any]) -> list[dict[str, str]]:
             layer = case.get("layer")
             if layer and layer not in layers:
                 layers.append(str(layer))
+    if not layers:
+        layers = ["api"]
     suite = summary.get("suite")
-    present = [layer for layer in layers if layer in ALLURE_LAYERS]
+    present: list[str] = []
+    for layer in layers:
+        dest = report_layer(layer)
+        if dest not in present:
+            present.append(dest)
     links = []
     for layer in present:
         href = allure_href(layer, suite)

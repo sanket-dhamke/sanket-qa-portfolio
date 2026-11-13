@@ -68,6 +68,11 @@ body.giq {
 .kpi.degraded strong { color: var(--warn); }
 .kpi.critical strong { color: var(--bad); }
 .kpi.ok strong { color: var(--ok); }
+.kpi-jump { cursor: pointer; }
+.kpi-jump:hover, .kpi-jump:focus {
+  border-color: var(--copper);
+  outline: none;
+}
 
 .page-hero {
   max-width: 820px;

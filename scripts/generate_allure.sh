@@ -44,4 +44,6 @@ for suite in smoke sanity regression; do
   run_allure generate "$SPLIT_ROOT/ui/$suite" -o "docs/reports/allure-ui-${suite}" --clean --single-file --name "UI ${suite}"
 done
 
+"$ROOT/scripts/generate_gaussiq_allure.sh"
+
 echo "Wrote docs/reports/allure-api, allure-ui, and per-suite smoke/sanity/regression slices"

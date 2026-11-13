@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/gaussiq.css?v=chat5">
+  <link rel="stylesheet" href="css/gaussiq.css?v=chat6">
 </head>
 <body class="giq">
   <header class="giq-header">
@@ -88,8 +88,12 @@
       <div class="kpi"><span>1.0 quality</span><strong id="health-live">—</strong></div>
       <div class="kpi"><span>Hottest mem</span><strong id="mem-live">—</strong></div>
       <div class="kpi"><span>Gross MTTR</span><strong id="mttr-live">—</strong></div>
-      <div class="kpi"><span>Open cases</span><strong id="cases-live">—</strong></div>
-      <div class="kpi"><span>Last suite</span><strong id="suite-live">idle</strong></div>
+      <div class="kpi kpi-jump" data-jump="cases" data-testid="kpi-open-cases" role="button" tabindex="0" title="Open the Cases tab">
+        <span>Open cases</span><strong id="cases-live">—</strong>
+      </div>
+      <div class="kpi kpi-jump" data-jump="suites" data-testid="kpi-last-suite" role="button" tabindex="0" title="Open the Suites tab">
+        <span>Last suite</span><strong id="suite-live">idle</strong>
+      </div>
     </div>
     <section id="quality-dash" class="quality-dash" data-testid="quality-dash">
       <h2 class="dash-title">Quality dashboard <span>chat on the left · platform pods · ops KPIs · security · RCA fire / skip</span></h2>
@@ -197,7 +201,7 @@
   <footer class="site-footer">
     <p class="note">This is not GaussIQ’s product. It is Sanket Dhamke’s hybrid QA agent configured for Execution Intelligence so a CTO can see quality and agents on <em>this</em> problem — not on DataHub. Personal lab. Not affiliated with GaussIQ. Not employment. Metrics, cases, and suite runs are simulated fixtures, not live production. Demo names such as AJ18991 / George Jetson appear on GaussIQ public marketing; this page does not copy their UI.</p>
   </footer>
-  <script src="js/gaussiq-router.js?v=chat5"></script>
-  <script src="js/gaussiq-lab.js?v=chat5"></script>
+  <script src="js/gaussiq-router.js?v=chat6"></script>
+  <script src="js/gaussiq-lab.js?v=chat6"></script>
 </body>
 </html>

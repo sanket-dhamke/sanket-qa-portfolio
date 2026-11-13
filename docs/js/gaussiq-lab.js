@@ -521,6 +521,12 @@
     });
   }
 
+  function jumpTab(id) {
+    showTab(id);
+    const extra = document.querySelector(".extra");
+    if (extra) extra.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   function addStructured(el, result) {
     if (result.awaiting_regression) {
       const row = document.createElement("div");
@@ -766,6 +772,16 @@
     document.querySelector(".tabs").addEventListener("click", (e) => {
       const tab = e.target.closest(".tab");
       if (tab) showTab(tab.dataset.tab);
+    });
+    document.querySelectorAll("[data-jump]").forEach((el) => {
+      const go = () => jumpTab(el.dataset.jump);
+      el.addEventListener("click", go);
+      el.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          go();
+        }
+      });
     });
     $("btn-connect").addEventListener("click", () => {
       runConnect();

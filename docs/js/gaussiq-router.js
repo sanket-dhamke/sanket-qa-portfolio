@@ -112,13 +112,18 @@
   }
 
   const SUITE_FOOTNOTE = "Catalog replay — not a live pytest run.";
-  const ALLURE_LAYERS = ["api", "security", "performance"];
+  const ALLURE_LAYERS = ["api", "ui"];
   const ALLURE_SUITES = ["smoke", "sanity", "regression"];
 
+  function reportLayer(layer) {
+    return layer === "ui" ? "ui" : "api";
+  }
+
   function allureHref(layer, suite) {
-    if (ALLURE_LAYERS.indexOf(layer) === -1) return null;
+    const dest = reportLayer(layer);
+    if (ALLURE_LAYERS.indexOf(dest) === -1) return null;
     if (ALLURE_SUITES.indexOf(suite) === -1) return null;
-    return "reports/allure-gaussiq-" + layer + "-" + suite + "/index.html";
+    return "reports/allure-gaussiq-" + dest + "-" + suite + "/index.html";
   }
 
   function allureLinks(summary) {
@@ -129,8 +134,13 @@
         if (c.layer && layers.indexOf(c.layer) === -1) layers.push(c.layer);
       });
     }
+    if (!layers.length) layers = ["api"];
     const suite = summary && summary.suite;
-    const present = layers.filter((layer) => ALLURE_LAYERS.indexOf(layer) !== -1);
+    const present = [];
+    layers.forEach((layer) => {
+      const dest = reportLayer(layer);
+      if (present.indexOf(dest) === -1) present.push(dest);
+    });
     return present
       .map((layer) => {
         const href = allureHref(layer, suite);

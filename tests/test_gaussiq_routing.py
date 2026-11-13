@@ -120,8 +120,8 @@ def test_regression_suite_links_regression_allure() -> None:
     result = route("Run regression suite")
     assert result["metrics"]["suite"] == "regression"
     hrefs = [row["href"] for row in result["allure"]]
-    assert "reports/allure-gaussiq-api-regression/index.html" in hrefs
-    assert "reports/allure-gaussiq-security-regression/index.html" in hrefs
+    assert hrefs == ["reports/allure-gaussiq-api-regression/index.html"]
+    assert result["allure"][0]["label"] == "Open Allure report"
 
 
 def test_login_requires_named_creds() -> None:
