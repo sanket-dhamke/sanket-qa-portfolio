@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/gaussiq.css?v=chat3">
+  <link rel="stylesheet" href="css/gaussiq.css?v=chat5">
 </head>
 <body class="giq">
   <header class="giq-header">
@@ -107,6 +107,7 @@
               <canvas id="mem-chart"></canvas>
             </div>
           </div>
+          <div class="legend" id="svc-legend" data-testid="svc-legend"></div>
           <div class="ops-kpis" data-testid="ops-kpis">
             <h3>Ops KPIs <span>MTTR / eng assist — support metrics, not pod performance</span></h3>
             <div class="charts-grid">
@@ -128,14 +129,16 @@
         <article class="panel">
           <h2>Service health</h2>
           <p class="hint">24x7 health of GaussIQ 1.0 demo services. CPU is % of each service limit. Not a live cluster.</p>
+          <div class="table-scroll" data-testid="svc-scroll">
           <table id="svc-table" data-testid="svc-table">
             <thead>
               <tr>
-                <th>Service</th><th>Product lens</th><th>Status</th><th>Restarts</th><th>CPU % limit</th><th>Memory</th>
+                <th>Service</th><th>Status</th><th>Rst</th><th>CPU %</th><th>Memory MiB</th>
               </tr>
             </thead>
             <tbody id="svc-body"></tbody>
           </table>
+          </div>
         </article>
         <article class="panel">
           <h2>Security findings</h2>
@@ -194,7 +197,7 @@
   <footer class="site-footer">
     <p class="note">This is not GaussIQ’s product. It is Sanket Dhamke’s hybrid QA agent configured for Execution Intelligence so a CTO can see quality and agents on <em>this</em> problem — not on DataHub. Personal lab. Not affiliated with GaussIQ. Not employment. Metrics, cases, and suite runs are simulated fixtures, not live production. Demo names such as AJ18991 / George Jetson appear on GaussIQ public marketing; this page does not copy their UI.</p>
   </footer>
-  <script src="js/gaussiq-router.js?v=chat3"></script>
-  <script src="js/gaussiq-lab.js?v=chat3"></script>
+  <script src="js/gaussiq-router.js?v=chat5"></script>
+  <script src="js/gaussiq-lab.js?v=chat5"></script>
 </body>
 </html>

@@ -218,11 +218,10 @@
         const memClass = pct >= 90 ? "status-bad" : s.cpu_pct >= 80 ? "status-warn" : "";
         return `<tr>
           <td>${s.id}</td>
-          <td>${s.product}</td>
           <td class="${statusClass}">${s.status}</td>
           <td>${s.restarts}</td>
           <td class="${s.cpu_pct >= 80 ? "status-bad" : ""}">${s.cpu_pct}%</td>
-          <td class="${memClass}">${s.memory_mib} / ${s.memory_limit_mib} MiB (${pct}%)</td>
+          <td class="${memClass}">${s.memory_mib}/${s.memory_limit_mib} (${pct}%)</td>
         </tr>`;
       })
       .join("");
@@ -296,7 +295,20 @@
       ctx.fillStyle = "#8aa297";
       ctx.textAlign = "center";
       ctx.textBaseline = "alphabetic";
-      wrapLabel(ctx, row.label, x + barW / 2, height - 6, barW + 6);
+      if (opts && opts.angle) {
+        ctx.save();
+        ctx.font = "10px IBM Plex Sans, sans-serif";
+        ctx.translate(x + barW / 2, height - bottomPad + 10);
+        ctx.rotate(-Math.PI / 4);
+        ctx.textAlign = "right";
+        ctx.textBaseline = "top";
+        ctx.fillText(row.label, 4, 2);
+        ctx.restore();
+        ctx.textAlign = "center";
+        ctx.textBaseline = "alphabetic";
+      } else {
+        wrapLabel(ctx, row.label, x + barW / 2, height - 6, barW + 6);
+      }
       const valueText = String(row.value);
       ctx.fillStyle = "#eef4ef";
       const valueY = y < topPad + 2 ? y + 14 : y - 6;
@@ -334,7 +346,7 @@
         value: s.cpu_pct,
         color: COLORS[s.id] || "#8aa297",
       })),
-      { max: 100, topPad: 26 }
+      { max: 100, topPad: 26, bottomPad: 78, angle: true }
     );
     drawBars(
       "mem-chart",
@@ -343,8 +355,17 @@
         value: memPct(s),
         color: COLORS[s.id] || "#8aa297",
       })),
-      { max: 100, topPad: 26 }
+      { max: 100, topPad: 26, bottomPad: 78, angle: true }
     );
+    const legend = $("svc-legend");
+    if (legend) {
+      legend.innerHTML = rows
+        .map(
+          (s) =>
+            `<span><i style="background:${COLORS[s.id] || "#8aa297"}"></i>${shortName(s.id)}</span>`
+        )
+        .join("");
+    }
     drawBars(
       "mttr-chart",
       [
@@ -488,12 +509,14 @@
   }
 
   function showTab(id) {
-    document.querySelectorAll(".tab").forEach((t) => {
+    const extra = document.querySelector(".extra");
+    if (!extra) return;
+    extra.querySelectorAll(".tab").forEach((t) => {
       const on = t.dataset.tab === id;
       t.classList.toggle("on", on);
       t.setAttribute("aria-selected", on ? "true" : "false");
     });
-    document.querySelectorAll(".tab-panel").forEach((p) => {
+    extra.querySelectorAll(".tab-panel").forEach((p) => {
       p.classList.toggle("on", p.id === "tab-" + id);
     });
   }
@@ -562,8 +585,18 @@
       el.appendChild(chips);
     }
     if (result) addStructured(el, result);
-    $("log").appendChild(el);
-    $("log").scrollTop = $("log").scrollHeight;
+    const log = $("log");
+    if (kind === "user") {
+      state._pendingUser = el;
+      return el;
+    }
+    const frag = document.createDocumentFragment();
+    if (state._pendingUser) frag.appendChild(state._pendingUser);
+    frag.appendChild(el);
+    log.insertBefore(frag, log.firstChild);
+    state._pendingUser = null;
+    log.scrollTop = 0;
+    return el;
   }
 
   function applySession(result) {
@@ -584,7 +617,6 @@
     applySession(result);
     addMsg("bot", result.answer, result);
     if (result.ui === "suite_report") {
-      showTab("suites");
       renderSuitePanel(result.report);
       if (result.report && result.report.suite === "smoke") state.lastSmoke = result.report;
       if (result.report && result.report.suite === "sanity") state.lastSanity = result.report;
@@ -605,7 +637,6 @@
     if (result.ui === "security") {
       renderSecurity(result.security);
     }
-    if (result.ui === "skills") showTab("skills");
     if (result.ui === "health") {
       renderRca(null, result.rca);
     }
@@ -692,6 +723,7 @@
     state.lastSanity = window.GiqLabRouter.runSuite(state.data, "sanity", null);
     const snapshot = paintAppHealth();
     renderSuitePanel(state.lastSanity);
+    showTab("cases");
     const canned = $("canned");
     canned.innerHTML = "";
     state.data.canned.forEach((q) => {

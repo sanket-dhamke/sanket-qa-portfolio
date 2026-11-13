@@ -101,9 +101,48 @@
     } else {
       cases.forEach((row) => lines.push("- " + (row.name || row.id)));
     }
+    const links = allureLinks(summary || {});
+    if (links.length) {
+      lines.push("");
+      links.forEach((a) => lines.push(a.label));
+    }
     lines.push("");
-    lines.push("Catalog replay — not a live pytest run.");
+    lines.push(SUITE_FOOTNOTE);
     return lines.join("\n");
+  }
+
+  const SUITE_FOOTNOTE = "Catalog replay — not a live pytest run.";
+  const ALLURE_LAYERS = ["api", "security", "performance"];
+  const ALLURE_SUITES = ["smoke", "sanity", "regression"];
+
+  function allureHref(layer, suite) {
+    if (ALLURE_LAYERS.indexOf(layer) === -1) return null;
+    if (ALLURE_SUITES.indexOf(suite) === -1) return null;
+    return "reports/allure-gaussiq-" + layer + "-" + suite + "/index.html";
+  }
+
+  function allureLinks(summary) {
+    let layers = [];
+    if (summary && summary.layer) layers = [summary.layer];
+    else {
+      (summary.cases || []).forEach((c) => {
+        if (c.layer && layers.indexOf(c.layer) === -1) layers.push(c.layer);
+      });
+    }
+    const suite = summary && summary.suite;
+    const present = layers.filter((layer) => ALLURE_LAYERS.indexOf(layer) !== -1);
+    return present
+      .map((layer) => {
+        const href = allureHref(layer, suite);
+        if (!href) return null;
+        return {
+          href: href,
+          label: present.length > 1 ? "Open " + layer.toUpperCase() + " Allure report" : "Open Allure report",
+          layer: layer,
+          suite: suite || "",
+        };
+      })
+      .filter(Boolean);
   }
 
   function formatEngineReport(report) {
@@ -811,6 +850,10 @@
   }
 
   function runNamedSuite(data, question, suite, layer) {
+    if (suite && typeof suite !== "string") {
+      suite = null;
+      layer = null;
+    }
     if (!suite) {
       const inferred = inferSuite(question);
       suite = inferred.suite;
@@ -835,6 +878,7 @@
       },
       ui: "suite_report",
       report: summary,
+      allure: allureLinks(summary),
       session_update: { awaiting_regression: false },
       awaiting_regression: false,
       caveat: caveat(),
@@ -861,6 +905,7 @@
       },
       ui: "suite_explain",
       report: summary,
+      allure: allureLinks(summary),
       caveat: caveat(),
     };
   }
@@ -924,7 +969,13 @@
     const rule = matchRule(text, data.rules);
     let result;
     if (!rule) result = fallback();
-    else if (HANDLERS[rule.route]) result = HANDLERS[rule.route](data, text, session);
+    else if (HANDLERS[rule.route]) {
+      if (rule.route === "evidence_timing" || rule.route === "add_evidence") {
+        result = HANDLERS[rule.route](data, text, session);
+      } else {
+        result = HANDLERS[rule.route](data, text);
+      }
+    }
     else result = fallback();
     result.question = text;
     result.model_available = false;
@@ -952,9 +1003,20 @@
       ul.appendChild(li);
     });
     card.appendChild(ul);
+    const links = (result && result.allure) || allureLinks(summary);
+    links.forEach((a) => {
+      const link = document.createElement("a");
+      link.className = "allure-open";
+      link.setAttribute("data-testid", "allure-link");
+      link.href = a.href;
+      link.target = "_blank";
+      link.rel = "noopener";
+      link.textContent = a.label;
+      card.appendChild(link);
+    });
     const foot = document.createElement("p");
     foot.className = "suite-footnote";
-    foot.textContent = "Catalog replay — not a live pytest run.";
+    foot.textContent = SUITE_FOOTNOTE;
     card.appendChild(foot);
     target.appendChild(card);
   }

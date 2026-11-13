@@ -72,6 +72,12 @@ def test_api_smoke_on_case_plan() -> None:
     assert result["metrics"]["suite"] == "smoke"
     assert result["metrics"]["layer"] == "api"
     assert result["metrics"]["verdict"] == "PASS"
+    assert result["metrics"]["passed"] == 3
+    assert result["metrics"]["total"] == 3
+    assert "API smoke passed (3/3)" in result["answer"]
+    assert "Open Allure report" in result["answer"]
+    assert result["allure"][0]["href"] == "reports/allure-gaussiq-api-smoke/index.html"
+    assert result["allure"][0]["label"] == "Open Allure report"
 
 
 def test_skills_handler() -> None:
@@ -105,6 +111,17 @@ def test_sanity_suite_fails_on_connector_and_cert() -> None:
     ids = result["metrics"]["failed_ids"]
     assert "test_signal_connector_ready" in ids
     assert "test_case_aj18991_cert_plan" in ids
+    hrefs = [row["href"] for row in result["allure"]]
+    assert "reports/allure-gaussiq-api-sanity/index.html" in hrefs
+    assert "Open Allure report" in result["answer"] or "Open API Allure report" in result["answer"]
+
+
+def test_regression_suite_links_regression_allure() -> None:
+    result = route("Run regression suite")
+    assert result["metrics"]["suite"] == "regression"
+    hrefs = [row["href"] for row in result["allure"]]
+    assert "reports/allure-gaussiq-api-regression/index.html" in hrefs
+    assert "reports/allure-gaussiq-security-regression/index.html" in hrefs
 
 
 def test_login_requires_named_creds() -> None:

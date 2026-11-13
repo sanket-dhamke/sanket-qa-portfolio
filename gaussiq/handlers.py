@@ -15,6 +15,41 @@ YES = re.compile(
 )
 NO = re.compile(r"^\s*(n|no|nope|skip|not now|later|don't|dont)\b", re.I)
 
+SUITE_FOOTNOTE = "Catalog replay — not a live pytest run."
+ALLURE_LAYERS = ("api", "security", "performance")
+ALLURE_SUITES = ("smoke", "sanity", "regression")
+
+
+def allure_href(layer: str | None, suite: str | None) -> str | None:
+    if layer not in ALLURE_LAYERS:
+        return None
+    if suite in ALLURE_SUITES:
+        return f"reports/allure-gaussiq-{layer}-{suite}/index.html"
+    return None
+
+
+def allure_links(summary: dict[str, Any]) -> list[dict[str, str]]:
+    layers: list[str] = []
+    if summary.get("layer"):
+        layers = [str(summary["layer"])]
+    else:
+        for case in summary.get("cases") or []:
+            layer = case.get("layer")
+            if layer and layer not in layers:
+                layers.append(str(layer))
+    suite = summary.get("suite")
+    present = [layer for layer in layers if layer in ALLURE_LAYERS]
+    links = []
+    for layer in present:
+        href = allure_href(layer, suite)
+        if not href:
+            continue
+        label = "Open Allure report"
+        if len(present) > 1:
+            label = f"Open {layer.upper()} Allure report"
+        links.append({"href": href, "label": label, "layer": layer, "suite": str(suite or "")})
+    return links
+
 
 def caveat() -> str:
     return (
@@ -195,8 +230,13 @@ def format_suite(summary: dict[str, Any]) -> str:
     else:
         for row in summary.get("cases") or []:
             lines.append(f"- {row.get('name') or row.get('id')}")
+    links = allure_links(summary)
+    if links:
+        lines.append("")
+        for link in links:
+            lines.append(link["label"])
     lines.append("")
-    lines.append("Catalog replay — not a live pytest run.")
+    lines.append(SUITE_FOOTNOTE)
     return "\n".join(lines)
 
 
@@ -823,6 +863,7 @@ def run_named_suite(question: str, suite: str | None = None, layer: str | None =
         },
         "ui": "suite_report",
         "report": summary,
+        "allure": allure_links(summary),
         "session_update": {"awaiting_regression": False},
         "awaiting_regression": False,
         "caveat": caveat(),
@@ -850,6 +891,7 @@ def suite_explain(question: str) -> dict[str, Any]:
         },
         "ui": "suite_explain",
         "report": summary,
+        "allure": allure_links(summary),
         "caveat": caveat(),
     }
 

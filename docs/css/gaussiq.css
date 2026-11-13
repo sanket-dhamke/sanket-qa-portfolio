@@ -220,6 +220,18 @@ body.giq {
 .msg .suite-tests { margin: 0 0 12px; padding-left: 18px; }
 .msg .suite-tests li { margin: 3px 0; }
 .msg .suite-footnote { margin: 8px 0 0; font-size: 11px; color: var(--muted); }
+.msg .allure-open {
+  display: inline-block;
+  margin: 8px 8px 8px 0;
+  padding: 10px 16px;
+  background: var(--copper);
+  color: #12211c;
+  font-weight: 700;
+  font-size: 14px;
+  text-decoration: none;
+  border-radius: 4px;
+}
+.msg .allure-open:hover { filter: brightness(1.08); }
 
 .canned {
   display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 12px;
@@ -315,6 +327,24 @@ body.giq {
 .tab-panel.on { display: block; }
 .hint { margin: 8px 12px; font-size: 12px; color: var(--muted); }
 
+.table-scroll { overflow-x: auto; max-width: 100%; padding: 0 0 8px; }
+#svc-table { width: 100%; min-width: 28rem; table-layout: fixed; }
+#svc-table th { white-space: normal; line-height: 1.2; vertical-align: bottom; }
+#svc-table td { overflow-wrap: anywhere; }
+#svc-table th:nth-child(1), #svc-table td:nth-child(1) { width: 24%; }
+#svc-table th:nth-child(2), #svc-table td:nth-child(2) { width: 22%; }
+#svc-table th:nth-child(3), #svc-table td:nth-child(3) { width: 10%; }
+#svc-table th:nth-child(4), #svc-table td:nth-child(4) { width: 12%; }
+#svc-table th:last-child, #svc-table td:last-child {
+  width: 32%;
+  white-space: nowrap;
+  overflow: visible;
+  min-width: 8.5rem;
+  position: sticky;
+  right: 0;
+  background: var(--panel);
+  z-index: 1;
+}
 table { width: 100%; border-collapse: collapse; font-size: 12px; }
 th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); font-family: "IBM Plex Mono", ui-monospace, monospace; }
 th { color: var(--muted); font-weight: 500; }
@@ -393,6 +423,7 @@ input[type="text"], input[type="password"] {
 .chart-box { padding: 8px 12px 4px; }
 .chart-box p { margin: 0 0 4px; font-size: 12px; color: var(--muted); }
 canvas { width: 100%; height: 168px; display: block; background: #12241e; border-radius: 6px; }
+#cpu-chart, #mem-chart { height: 220px; }
 .legend { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 12px 8px; font-size: 11px; color: var(--muted); }
 .legend i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 4px; }
 .ops-kpis {

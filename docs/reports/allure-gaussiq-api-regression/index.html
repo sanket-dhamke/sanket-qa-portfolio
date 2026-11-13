@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="allure-report-uuid" content="f030cbc0-4e25-511e-a369-d9aae29c62b0">
+  <title>GaussIQ API regression</title>
+  <style>
+    body { font-family: IBM Plex Sans, system-ui, sans-serif; background: #12211c; color: #eef4ef; margin: 24px; }
+    h1 { font-size: 22px; font-weight: 600; }
+    .lede { color: #8aa297; max-width: 62ch; }
+    .ok { color: #3dba7a; } .bad { color: #e05d4f; }
+    table { width: 100%; max-width: 880px; border-collapse: collapse; font-size: 14px; }
+    th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #2f4a40; }
+    tr.fail td { color: #e05d4f; }
+    .note { margin-top: 24px; color: #8aa297; font-size: 12px; max-width: 68ch; }
+  </style>
+</head>
+<body>
+  <h1>GaussIQ API regression</h1>
+  <p class="lede">API regression failed (4/6). Catalog replay for the GaussIQ 1.0 QA lab — not a live pytest spawn, not GaussIQ production.</p>
+  <p class="bad">4 passed · 2 failed · 6 tests</p>
+  <table>
+    <thead><tr><th>Result</th><th>Case</th><th>Time</th></tr></thead>
+    <tbody>
+      <tr class='pass'><td>PASS</td><td>Case Intelligence API health is 200</td><td>42 ms</td></tr>
+<tr class='pass'><td>PASS</td><td>Skills Intelligence API health is 200</td><td>38 ms</td></tr>
+<tr class='pass'><td>PASS</td><td>Management Insights API health is 200</td><td>40 ms</td></tr>
+<tr class='fail'><td>FAIL</td><td>Signal connector stays Running so evidence is current</td><td>88 ms</td></tr>
+<tr class='fail'><td>FAIL</td><td>AJ18991 plan names cert SAN mismatch, not generic HTTP 500</td><td>110 ms</td></tr>
+<tr class='pass'><td>PASS</td><td>TLS / certificate skill gap is listed for this shift</td><td>19 ms</td></tr>
+    </tbody>
+  </table>
+  <p class="note">This is not GaussIQ’s product. Personal hybrid QA lab. Not affiliated. Not employment. Numbers are fixtures, not live production. This page stands in for an Allure slice so chat can link smoke, sanity, or regression without mixing suites.</p>
+</body>
+</html>

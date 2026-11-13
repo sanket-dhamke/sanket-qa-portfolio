@@ -36,6 +36,7 @@ def test_gaussiq_page_disclaimer_and_no_github_repo() -> None:
     assert "Ops KPIs" in text
     assert "cpu-chart" in text
     assert "mem-chart" in text
+    assert 'id="svc-legend"' in text
     assert 'data-testid="qbank-toggle"' in text
     assert "Questions you can ask" in text
     css = (ROOT / "docs" / "css" / "gaussiq.css").read_text(encoding="utf-8")
@@ -47,9 +48,46 @@ def test_gaussiq_page_disclaimer_and_no_github_repo() -> None:
     assert "Try this out" in text
     assert "Why is MTTR high" in (ROOT / "gaussiq" / "router.py").read_text(encoding="utf-8")
     assert "bedrock" not in text.lower()
-    js = (ROOT / "docs" / "js" / "gaussiq-lab.js").read_text(encoding="utf-8").lower()
-    assert "bedrock" not in js
+    assert "Memory MiB" in text
+    assert 'data-testid="svc-scroll"' in text
+    assert 'data-tab="cases"' in text
+    assert 'id="tab-cases"' in text
+    assert 'class="tab-panel on" id="tab-cases"' in text or 'id="tab-cases"' in text
+    js = (ROOT / "docs" / "js" / "gaussiq-lab.js").read_text(encoding="utf-8")
+    assert "bedrock" not in js.lower()
     assert "amazonaws.com" not in js
+    assert "insertBefore" in js
+    assert 'showTab("cases")' in js
+    assert 'showTab("suites")' not in js
+    assert "insights" in js
+    assert "connector" in js
+    router = (ROOT / "docs" / "js" / "gaussiq-router.js").read_text(encoding="utf-8")
+    assert "allure-gaussiq-" in router
+    assert "Open Allure report" in router
+    smoke = ROOT / "docs" / "reports" / "allure-gaussiq-api-smoke" / "index.html"
+    sanity = ROOT / "docs" / "reports" / "allure-gaussiq-api-sanity" / "index.html"
+    regression = ROOT / "docs" / "reports" / "allure-gaussiq-api-regression" / "index.html"
+    assert smoke.is_file()
+    assert sanity.is_file()
+    assert regression.is_file()
+    assert "github.com/sanket-dhamke" not in smoke.read_text(encoding="utf-8")
+    assert "BMC" not in smoke.read_text(encoding="utf-8")
+    assert "not a live pytest" in smoke.read_text(encoding="utf-8").lower()
+    css = (ROOT / "docs" / "css" / "gaussiq.css").read_text(encoding="utf-8")
+    assert ".table-scroll" in css
+    assert "allure-open" in css
+    assert "v=chat5" in text
+    assert "Product lens" not in text
+    for layer, suite in (
+        ("api", "smoke"),
+        ("api", "sanity"),
+        ("api", "regression"),
+        ("security", "regression"),
+        ("performance", "sanity"),
+        ("performance", "regression"),
+    ):
+        path = ROOT / "docs" / "reports" / f"allure-gaussiq-{layer}-{suite}" / "index.html"
+        assert path.is_file(), path
 
 
 def test_gaussiq_tree_has_no_forbidden_brands() -> None:
