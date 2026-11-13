@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/console.css">
+  <link rel="stylesheet" href="css/console.css?v=chat3">
 </head>
 <body class="console">
   <header class="console-header">
@@ -64,29 +64,30 @@
   </section>
 
   <div id="monitor" class="hidden" data-testid="monitor">
-    <div class="kpis" id="kpis">
-      <div class="kpi"><span>Assets</span><strong id="asset-live">140</strong></div>
-      <div class="kpi"><span>Sources</span><strong id="source-live">2</strong></div>
-      <div class="kpi"><span>Open incidents</span><strong id="alert-live">—</strong></div>
-      <div class="kpi"><span>App health</span><strong id="health-live">—</strong></div>
-      <div class="kpi"><span>Last suite</span><strong id="suite-live">idle</strong></div>
-    </div>
     <div class="layout">
-      <section class="panel chat">
+      <section class="panel chat" id="chat-panel">
         <div class="chat-head">
           <h2>Ask the quality agent <span class="chat-sub">Hybrid AI Agent · DataHub lab</span></h2>
           <button type="button" id="btn-qbank" class="qbank-link" data-testid="qbank-toggle" aria-expanded="false">Questions you can ask</button>
         </div>
-        <div class="composer" data-testid="composer">
-          <label class="composer-label" for="q">Question</label>
-          <textarea id="q" rows="2" placeholder="Ask about pods, OOM, sanity, security, 1M config…" aria-label="Question"></textarea>
-          <button type="button" id="ask">Ask</button>
-        </div>
         <div class="canned" id="canned"></div>
         <div id="qbank" class="qbank hidden" data-testid="qbank" hidden></div>
+        <div class="composer" data-testid="composer">
+          <label class="composer-label" for="q">Type a question</label>
+          <textarea id="q" rows="3" placeholder="Type a question…" aria-label="Question"></textarea>
+          <button type="button" id="ask">Ask</button>
+        </div>
         <div class="log" id="log"></div>
       </section>
 
+      <div class="dash-stack">
+      <div class="kpis" id="kpis">
+        <div class="kpi"><span>Assets</span><strong id="asset-live">140</strong></div>
+        <div class="kpi"><span>Sources</span><strong id="source-live">2</strong></div>
+        <div class="kpi"><span>Open incidents</span><strong id="alert-live">—</strong></div>
+        <div class="kpi"><span>App health</span><strong id="health-live">—</strong></div>
+        <div class="kpi"><span>Last suite</span><strong id="suite-live">idle</strong></div>
+      </div>
       <section class="panel dash">
         <div class="tabs" role="tablist">
           <button type="button" class="tab on" data-tab="perf" aria-selected="true">Performance</button>
@@ -230,9 +231,10 @@
           </div>
         </div>
       </section>
+      </div>
     </div>
   </div>
-  <script src="js/router.js"></script>
-  <script src="js/console.js"></script>
+  <script src="js/router.js?v=chat3"></script>
+  <script src="js/console.js?v=chat3"></script>
 </body>
 </html>

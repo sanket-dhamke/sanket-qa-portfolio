@@ -310,9 +310,14 @@ def test_console_has_connect_gate_and_email_tab() -> None:
     assert "Ask the quality agent" in text
     assert "<textarea" in text
     assert 'id="ask"' in text
+    assert "Type a question" in text
+    assert text.find('id="chat-panel"') < text.find('id="kpis"')
+    assert text.find('id="canned"') < text.find('id="q"')
     css = (ROOT / "docs" / "css" / "console.css").read_text(encoding="utf-8")
-    assert ".composer #ask" in css
+    assert ".composer #ask" in css or "button#ask" in css
     assert "box-shadow" in css
+    assert "5.5rem" in css
+    assert "#f7eedc" in css
     js = (ROOT / "docs" / "js" / "console.js").read_text(encoding="utf-8")
     assert 'textContent = "unknown"' not in js
     assert "computeAppHealth" in (ROOT / "docs" / "js" / "router.js").read_text(encoding="utf-8")

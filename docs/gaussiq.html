@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/gaussiq.css">
+  <link rel="stylesheet" href="css/gaussiq.css?v=chat3">
 </head>
 <body class="giq">
   <header class="giq-header">
@@ -67,6 +67,23 @@
   </section>
 
   <div id="monitor" class="hidden" data-testid="monitor">
+    <div class="layout">
+    <section class="panel chat" id="chat-panel">
+      <div class="chat-head">
+        <h2>Ask the quality agent <span class="chat-sub">GaussIQ 1.0 quality lab</span></h2>
+        <button type="button" id="btn-qbank" class="qbank-link" data-testid="qbank-toggle" aria-expanded="false">Questions you can ask</button>
+      </div>
+      <div class="canned" id="canned"></div>
+      <div id="qbank" class="qbank hidden" data-testid="qbank" hidden></div>
+      <div class="composer" data-testid="composer">
+        <label class="composer-label" for="q">Type a question</label>
+        <textarea id="q" rows="3" placeholder="Type a question…" aria-label="Question"></textarea>
+        <button type="button" id="ask">Ask</button>
+      </div>
+      <div class="log" id="log"></div>
+    </section>
+
+    <div class="dash-stack">
     <div class="kpis" id="kpis">
       <div class="kpi"><span>1.0 quality</span><strong id="health-live">—</strong></div>
       <div class="kpi"><span>Hottest mem</span><strong id="mem-live">—</strong></div>
@@ -74,23 +91,6 @@
       <div class="kpi"><span>Open cases</span><strong id="cases-live">—</strong></div>
       <div class="kpi"><span>Last suite</span><strong id="suite-live">idle</strong></div>
     </div>
-
-    <div class="layout">
-    <section class="panel chat" id="chat-panel">
-      <div class="chat-head">
-        <h2>Ask the quality agent</h2>
-        <button type="button" id="btn-qbank" class="qbank-link" data-testid="qbank-toggle" aria-expanded="false">Questions you can ask</button>
-      </div>
-      <div class="composer" data-testid="composer">
-        <label class="composer-label" for="q">Question</label>
-        <textarea id="q" rows="2" placeholder="Ask about quality, why CPU/memory is high, evidence-pack RCA time, security…" aria-label="Question"></textarea>
-        <button type="button" id="ask">Ask</button>
-      </div>
-      <div class="canned" id="canned"></div>
-      <div id="qbank" class="qbank hidden" data-testid="qbank" hidden></div>
-      <div class="log" id="log"></div>
-    </section>
-
     <section id="quality-dash" class="quality-dash" data-testid="quality-dash">
       <h2 class="dash-title">Quality dashboard <span>chat on the left · platform pods · ops KPIs · security · RCA fire / skip</span></h2>
       <div class="dashboard-grid">
@@ -155,6 +155,7 @@
       </div>
     </section>
     </div>
+    </div>
 
     <section class="panel extra">
       <div class="tabs" role="tablist">
@@ -193,7 +194,7 @@
   <footer class="site-footer">
     <p class="note">This is not GaussIQ’s product. It is Sanket Dhamke’s hybrid QA agent configured for Execution Intelligence so a CTO can see quality and agents on <em>this</em> problem — not on DataHub. Personal lab. Not affiliated with GaussIQ. Not employment. Metrics, cases, and suite runs are simulated fixtures, not live production. Demo names such as AJ18991 / George Jetson appear on GaussIQ public marketing; this page does not copy their UI.</p>
   </footer>
-  <script src="js/gaussiq-router.js"></script>
-  <script src="js/gaussiq-lab.js"></script>
+  <script src="js/gaussiq-router.js?v=chat3"></script>
+  <script src="js/gaussiq-lab.js?v=chat3"></script>
 </body>
 </html>

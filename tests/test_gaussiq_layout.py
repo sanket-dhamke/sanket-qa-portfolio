@@ -25,10 +25,13 @@ def test_gaussiq_page_disclaimer_and_no_github_repo() -> None:
     assert 'id="connect-gate"' in text
     assert 'id="quality-dash"' in text
     assert 'id="chat-panel"' in text
+    assert text.find('id="chat-panel"') < text.find('id="kpis"')
     assert text.find('id="chat-panel"') < text.find('id="quality-dash"')
+    assert text.find('id="canned"') < text.find('id="q"')
     assert "Ask the quality agent" in text
     assert 'id="ask"' in text
     assert "<textarea" in text
+    assert "Type a question" in text
     assert "Platform performance" in text
     assert "Ops KPIs" in text
     assert "cpu-chart" in text
@@ -36,8 +39,10 @@ def test_gaussiq_page_disclaimer_and_no_github_repo() -> None:
     assert 'data-testid="qbank-toggle"' in text
     assert "Questions you can ask" in text
     css = (ROOT / "docs" / "css" / "gaussiq.css").read_text(encoding="utf-8")
-    assert ".composer #ask" in css
+    assert ".composer #ask" in css or "button#ask" in css
     assert "box-shadow" in css
+    assert "5.5rem" in css
+    assert "#f4ead8" in css
     assert "rocket-pack-lab" in text
     assert "Try this out" in text
     assert "Why is MTTR high" in (ROOT / "gaussiq" / "router.py").read_text(encoding="utf-8")

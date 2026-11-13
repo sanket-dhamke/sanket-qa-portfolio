@@ -108,11 +108,18 @@ body.giq {
 
 .layout {
   display: grid;
-  grid-template-columns: minmax(340px, 420px) 1fr;
+  grid-template-columns: minmax(400px, 480px) 1fr;
   gap: 10px;
   padding: 10px 12px 0;
   align-items: start;
 }
+.dash-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+.dash-stack .kpis { padding: 0; }
 .panel {
   background: var(--panel);
   border: 1px solid var(--line);
@@ -134,17 +141,38 @@ body.giq {
 .chat {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 168px);
-  min-height: 540px;
+  height: calc(100vh - 72px);
+  min-height: 640px;
   max-height: none;
   margin: 0;
+  border: 2px solid var(--copper);
 }
 .extra { margin: 10px 12px 16px; }
 .chat-head {
   display: flex; align-items: center; justify-content: space-between; gap: 8px;
   border-bottom: 1px solid var(--line);
+  background: #1a332b;
 }
-.chat-head h2 { border-bottom: 0; flex: 1; min-width: 0; }
+.panel.chat .chat-head h2 {
+  border-bottom: 0;
+  flex: 1;
+  min-width: 0;
+  font-size: 22px;
+  line-height: 1.2;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text);
+  padding: 14px 16px 10px;
+}
+.chat-sub {
+  display: block;
+  color: var(--copper);
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  font-size: 12px;
+  margin-top: 4px;
+}
 .qbank-link {
   background: transparent; color: var(--copper); border: 0;
   text-decoration: underline; text-underline-offset: 3px;
@@ -194,69 +222,83 @@ body.giq {
 .msg .suite-footnote { margin: 8px 0 0; font-size: 11px; color: var(--muted); }
 
 .canned {
-  display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 10px;
-  border-top: 1px solid var(--line); max-height: 118px; overflow: auto;
+  display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 12px;
+  border-bottom: 1px solid var(--line); max-height: 88px; overflow: auto;
+  flex: 0 0 auto;
 }
 .canned button, .confirm button, .tab, .connect-actions button {
   background: #274238; color: var(--text); border: 1px solid var(--line);
   border-radius: 5px; padding: 6px 9px; font-size: 12px; cursor: pointer;
 }
 .canned button:hover, .confirm button:hover, .tab:hover { border-color: var(--copper); }
-.composer {
+.panel.chat .composer {
   display: grid;
   grid-template-columns: 1fr auto;
   grid-template-areas: "label label" "field ask";
-  gap: 8px 10px;
-  padding: 12px;
-  border-bottom: 2px solid var(--copper);
-  background: #173028;
+  gap: 8px 12px;
+  padding: 14px;
+  border-top: 0;
+  border-bottom: 3px solid var(--copper);
+  background: #1c3a31;
+  flex: 0 0 auto;
 }
 .composer-label {
   grid-area: label;
   margin: 0;
-  font-size: 11px;
-  letter-spacing: 0.08em;
+  font-size: 12px;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--copper);
-  font-weight: 600;
+  font-weight: 700;
 }
-.composer textarea, .composer input {
+.panel.chat .composer textarea#q,
+.panel.chat .composer textarea,
+.panel.chat .composer input {
   grid-area: field;
   width: 100%;
-  min-height: 52px;
+  min-height: 5.5rem;
+  height: 5.5rem;
   resize: vertical;
-  background: #0c1814;
-  color: var(--text);
-  border: 2px solid var(--copper);
+  background: #f4ead8;
+  color: #12211c;
+  border: 3px solid var(--copper);
   border-radius: 8px;
-  padding: 10px 12px;
+  padding: 12px 14px;
   font-family: "IBM Plex Sans", system-ui, sans-serif;
-  font-size: 14px;
-  line-height: 1.4;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.45;
 }
-.composer textarea::placeholder, .composer input::placeholder {
-  color: #c4b08a;
+.panel.chat .composer textarea#q::placeholder,
+.panel.chat .composer textarea::placeholder,
+.panel.chat .composer input::placeholder {
+  color: #6b5340;
   opacity: 1;
 }
-.composer textarea:focus, .composer input:focus {
+.panel.chat .composer textarea#q:focus,
+.panel.chat .composer textarea:focus,
+.panel.chat .composer input:focus {
   outline: none;
   border-color: #f0c48a;
-  box-shadow: 0 0 0 3px rgba(208, 138, 74, 0.35);
+  box-shadow: 0 0 0 3px rgba(208, 138, 74, 0.45);
 }
-.composer #ask {
+.panel.chat .composer button#ask,
+.panel.chat .composer #ask {
   grid-area: ask;
   align-self: stretch;
-  min-width: 96px;
+  min-width: 120px;
+  min-height: 5.5rem;
   background: var(--copper);
   color: #12211c;
   border: 0;
   border-radius: 8px;
-  padding: 12px 22px;
-  font-size: 15px;
-  font-weight: 700;
+  padding: 16px 28px;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
   cursor: pointer;
 }
-.composer #ask:hover, .composer #ask:focus {
+.panel.chat .composer #ask:hover, .panel.chat .composer #ask:focus {
   filter: brightness(1.08);
   outline: 2px solid #f0c48a;
   outline-offset: 2px;
@@ -374,7 +416,7 @@ canvas { width: 100%; height: 168px; display: block; background: #12241e; border
   .kpis { grid-template-columns: repeat(2, 1fr); }
   .layout, .dashboard-grid { grid-template-columns: 1fr; }
   .chat, .dash { height: auto; min-height: 0; }
-  .chat { max-height: none; min-height: 480px; }
+  .chat { max-height: none; min-height: 520px; }
   .connect-grid, .charts-grid { grid-template-columns: 1fr; }
   .page-hero h1 { font-size: 22px; }
 }
