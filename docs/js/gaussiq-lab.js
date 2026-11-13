@@ -33,6 +33,14 @@
       cause: "Ticketing signals are not landing, so Case Intelligence similar-case evidence goes stale.",
       fix: "Restore signal-connector before trusting empty case plans. Empty evidence is not a missing KB article.",
     },
+    "MEM-PRESSURE": {
+      title: "Working set near the memory limit",
+      observation:
+        "rec-engine memory 986/1024 MiB (96.3% of its limit), restarts=1, last_reason=WorkingSetHigh.",
+      cause:
+        "Recommendation engine is holding a large evidence working set. This is memory pressure, not CPU saturation and not the crash-looping connector.",
+      fix: "Raise the rec-engine memory limit or shrink the evidence pack before expecting fast RCA. Do not scale CPU for a memory finding.",
+    },
     "SKILL-GAP-TLS": {
       title: "No one on this shift has recent cert troubleshooting",
       observation: "TLS / certificate troubleshooting demand=High coverage=0 recency_days=240.",
@@ -56,7 +64,8 @@
   const RULED_OUT = {
     "APP-CODE-500":
       "Checked — not the cause. The 500 is the TLS SAN mismatch on AJ18991, not a defect in the SFM wizard code.",
-    "CPU-HOT": "Checked — not the cause. No sampled GaussIQ 1.0 service is at ≥80% of its CPU limit.",
+    "CPU-HOT":
+      "Checked — not the cause. No sampled GaussIQ 1.0 service is at ≥80% of its CPU limit. rec-engine is memory-bound (MEM-PRESSURE), not CPU-bound.",
     "INSIGHTS-DOWN":
       "Checked — not the cause. Management Insights API is Running. Stale case plans come from the connector, not Insights being down.",
     "TLS-MISSING":
@@ -182,19 +191,38 @@
       .replace(/"/g, "&quot;");
   }
 
+  function memPct(s) {
+    if (!s || !s.memory_limit_mib) return 0;
+    return Math.round((1000 * s.memory_mib) / s.memory_limit_mib) / 10;
+  }
+
+  function shortName(id) {
+    return (
+      {
+        "case-intel-api": "case",
+        "skills-intel-api": "skills",
+        "insights-api": "insights",
+        "signal-connector": "connector",
+        "rec-engine": "rec",
+      }[id] || String(id || "")
+    );
+  }
+
   function renderServices() {
     const rows = state.data.fixtures.services.services;
     $("svc-body").innerHTML = rows
       .map((s) => {
+        const pct = memPct(s);
         const statusClass =
-          s.status === "CrashLoopBackOff" ? "status-bad" : s.restarts ? "status-warn" : "status-ok";
+          s.status === "CrashLoopBackOff" ? "status-bad" : pct >= 90 || s.restarts ? "status-warn" : "status-ok";
+        const memClass = pct >= 90 ? "status-bad" : s.cpu_pct >= 80 ? "status-warn" : "";
         return `<tr>
           <td>${s.id}</td>
           <td>${s.product}</td>
           <td class="${statusClass}">${s.status}</td>
           <td>${s.restarts}</td>
-          <td>${s.cpu_pct}%</td>
-          <td>${s.memory_mib} / ${s.memory_limit_mib} MiB</td>
+          <td class="${s.cpu_pct >= 80 ? "status-bad" : ""}">${s.cpu_pct}%</td>
+          <td class="${memClass}">${s.memory_mib} / ${s.memory_limit_mib} MiB (${pct}%)</td>
         </tr>`;
       })
       .join("");
@@ -246,33 +274,52 @@
     return { ctx, width, height };
   }
 
-  function drawBars(canvasId, rows) {
+  function drawBars(canvasId, rows, opts) {
     const canvas = $(canvasId);
     if (!canvas) return;
     const { ctx, width, height } = sizeCanvas(canvas);
     ctx.clearRect(0, 0, width, height);
     if (!rows.length) return;
-    const max = Math.max.apply(null, rows.map((r) => r.value)) || 1;
-    const gap = 12;
-    const barW = (width - gap * (rows.length + 1)) / rows.length;
+    const topPad = (opts && opts.topPad) || 24;
+    const bottomPad = (opts && opts.bottomPad) || 22;
+    const max = (opts && opts.max) || Math.max.apply(null, rows.map((r) => r.value)) || 1;
+    const gap = 10;
+    const barW = Math.max(12, (width - gap * (rows.length + 1)) / rows.length);
+    ctx.font = "11px IBM Plex Sans, sans-serif";
     rows.forEach((row, i) => {
-      const h = ((row.value / max) * (height - 28)) | 0;
+      const inner = Math.max(8, height - topPad - bottomPad);
+      const h = Math.max(2, ((row.value / max) * inner) | 0);
       const x = gap + i * (barW + gap);
-      const y = height - 18 - h;
+      const y = height - bottomPad - h;
       ctx.fillStyle = row.color;
       ctx.fillRect(x, y, barW, h);
       ctx.fillStyle = "#8aa297";
-      ctx.font = "11px IBM Plex Sans, sans-serif";
       ctx.textAlign = "center";
-      ctx.fillText(row.label, x + barW / 2, height - 6);
+      ctx.textBaseline = "alphabetic";
+      wrapLabel(ctx, row.label, x + barW / 2, height - 6, barW + 6);
+      const valueText = String(row.value);
       ctx.fillStyle = "#eef4ef";
-      ctx.fillText(String(row.value), x + barW / 2, y - 4);
+      const valueY = y < topPad + 2 ? y + 14 : y - 6;
+      if (y < topPad + 2) ctx.fillStyle = "#12211c";
+      ctx.fillText(valueText, x + barW / 2, valueY);
     });
+  }
+
+  function wrapLabel(ctx, text, cx, y, maxW) {
+    const label = String(text || "");
+    if (ctx.measureText(label).width <= maxW) {
+      ctx.fillText(label, cx, y);
+      return;
+    }
+    const parts = label.split(" ");
+    ctx.fillText(parts[0], cx, y - 10);
+    ctx.fillText(parts.slice(1).join(" ") || parts[0], cx, y);
   }
 
   function renderPerformance() {
     const p = state.data.fixtures.performance;
     const b = p.baseline;
+    const rows = state.data.fixtures.services.services;
     $("perf-body").innerHTML = [
       ["Gross MTTR (h)", p.gross_mttr_hours, b.gross_mttr_hours],
       ["Net MTTR (h)", p.net_mttr_hours, b.net_mttr_hours],
@@ -280,16 +327,42 @@
     ]
       .map((row) => `<tr><td>${row[0]}</td><td>${row[1]}</td><td>${row[2]}</td></tr>`)
       .join("");
-    drawBars("mttr-chart", [
-      { label: "gross", value: p.gross_mttr_hours, color: "#7eb0e4" },
-      { label: "net", value: p.net_mttr_hours, color: "#8fd6b8" },
-      { label: "assist", value: p.eng_assist_hours, color: COLORS["rec-engine"] },
-      { label: "gross base", value: b.gross_mttr_hours, color: "#5a6e66" },
-    ]);
-    drawBars("vol-chart", [
-      { label: "open", value: p.open_cases, color: "#e05d4f" },
-      { label: "resolved 7d", value: p.resolved_7d, color: "#3dba7a" },
-    ]);
+    drawBars(
+      "cpu-chart",
+      rows.map((s) => ({
+        label: shortName(s.id),
+        value: s.cpu_pct,
+        color: COLORS[s.id] || "#8aa297",
+      })),
+      { max: 100, topPad: 26 }
+    );
+    drawBars(
+      "mem-chart",
+      rows.map((s) => ({
+        label: shortName(s.id),
+        value: memPct(s),
+        color: COLORS[s.id] || "#8aa297",
+      })),
+      { max: 100, topPad: 26 }
+    );
+    drawBars(
+      "mttr-chart",
+      [
+        { label: "gross", value: p.gross_mttr_hours, color: "#7eb0e4" },
+        { label: "net", value: p.net_mttr_hours, color: "#8fd6b8" },
+        { label: "assist", value: p.eng_assist_hours, color: COLORS["rec-engine"] },
+        { label: "base", value: b.gross_mttr_hours, color: "#5a6e66" },
+      ],
+      { topPad: 28, bottomPad: 28 }
+    );
+    drawBars(
+      "vol-chart",
+      [
+        { label: "open", value: p.open_cases, color: "#e05d4f" },
+        { label: "resolved 7d", value: p.resolved_7d, color: "#3dba7a" },
+      ],
+      { topPad: 28, bottomPad: 28 }
+    );
   }
 
   function renderSuitePanel(summary) {
@@ -607,9 +680,14 @@
     renderSecurity();
     renderQuestionBank();
     const perf = state.data.fixtures.performance;
+    const svc = state.data.fixtures.services.services;
+    const hottest = svc.reduce((a, b) => (memPct(a) >= memPct(b) ? a : b));
     $("cases-live").textContent = String(perf.open_cases);
     $("mttr-live").textContent = String(perf.gross_mttr_hours) + " h";
-    $("assist-live").textContent = String(perf.eng_assist_hours) + " h";
+    if ($("mem-live")) {
+      $("mem-live").textContent = shortName(hottest.id) + " " + memPct(hottest) + "%";
+      $("mem-live").parentElement.classList.toggle("degraded", memPct(hottest) >= 90);
+    }
     state.lastSmoke = window.GiqLabRouter.runSuite(state.data, "smoke", null);
     state.lastSanity = window.GiqLabRouter.runSuite(state.data, "sanity", null);
     const snapshot = paintAppHealth();
@@ -631,7 +709,7 @@
         vals.queue +
         "` (simulated, not live production). Quality of GaussIQ 1.0 is " +
         ((snapshot && snapshot.health) || "DEGRADED") +
-        " from the fixture (signal-connector CrashLoopBackOff, CERT-MISMATCH on AJ18991, AUTH-OPEN on case-intel-api). The dashboard above is the quality view — service health, MTTR vs baseline, security, RCA fire/skip. Try: current quality of 1.0, any security issues, why MTTR is high, run API smoke on case-plan APIs.",
+        " from the fixture (signal-connector CrashLoopBackOff, rec-engine MEM-PRESSURE, CERT-MISMATCH on AJ18991, AUTH-OPEN on case-intel-api). Chat is on the left. The right column is platform performance (CPU/memory of each service), then ops MTTR as a smaller note. Try: why CPU/memory is high, how long for RCA on a huge evidence case, add more evidence, any security issues.",
       { source: "fallback:deterministic", route: "hello", tools: [] }
     );
   }
@@ -642,7 +720,7 @@
       if (q) ask(q);
     });
     $("q").addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
+      if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         const q = $("q").value.trim();
         if (q) ask(q);

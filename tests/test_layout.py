@@ -307,6 +307,12 @@ def test_console_has_connect_gate_and_email_tab() -> None:
     assert "MEM-PRESSURE" in text
     assert 'data-testid="try-this"' in text
     assert "Try this out — click here to see how it works." in text
+    assert "Ask the quality agent" in text
+    assert "<textarea" in text
+    assert 'id="ask"' in text
+    css = (ROOT / "docs" / "css" / "console.css").read_text(encoding="utf-8")
+    assert ".composer #ask" in css
+    assert "box-shadow" in css
     js = (ROOT / "docs" / "js" / "console.js").read_text(encoding="utf-8")
     assert 'textContent = "unknown"' not in js
     assert "computeAppHealth" in (ROOT / "docs" / "js" / "router.js").read_text(encoding="utf-8")

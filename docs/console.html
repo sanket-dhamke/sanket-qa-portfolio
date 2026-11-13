@@ -74,16 +74,17 @@
     <div class="layout">
       <section class="panel chat">
         <div class="chat-head">
-          <h2>Hybrid AI Agent for performance testing</h2>
+          <h2>Ask the quality agent <span class="chat-sub">Hybrid AI Agent · DataHub lab</span></h2>
           <button type="button" id="btn-qbank" class="qbank-link" data-testid="qbank-toggle" aria-expanded="false">Questions you can ask</button>
         </div>
-        <div id="qbank" class="qbank hidden" data-testid="qbank" hidden></div>
-        <div class="log" id="log"></div>
-        <div class="canned" id="canned"></div>
-        <div class="composer">
-          <input id="q" type="text" placeholder="Ask, then press Enter — the box clears. Try login, sanity, security, 1M config…" aria-label="Question">
+        <div class="composer" data-testid="composer">
+          <label class="composer-label" for="q">Question</label>
+          <textarea id="q" rows="2" placeholder="Ask about pods, OOM, sanity, security, 1M config…" aria-label="Question"></textarea>
           <button type="button" id="ask">Ask</button>
         </div>
+        <div class="canned" id="canned"></div>
+        <div id="qbank" class="qbank hidden" data-testid="qbank" hidden></div>
+        <div class="log" id="log"></div>
       </section>
 
       <section class="panel dash">

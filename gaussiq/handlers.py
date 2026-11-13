@@ -7,6 +7,7 @@ from typing import Any
 
 from gaussiq.load import load
 from gaussiq import rca_engine, security_engine
+from gaussiq.rca_engine import memory_pct
 
 YES = re.compile(
     r"^\s*(y|yes|yeah|yep|ok|okay|sure|do it|go ahead|please run|run it|run them|run regression)\b",
@@ -52,6 +53,37 @@ def _suites() -> dict[str, Any]:
 
 def _security() -> dict[str, Any]:
     return load("security.json")
+
+
+def _evidence() -> dict[str, Any]:
+    return load("evidence.json")
+
+
+def rec_engine_saturated(services: dict[str, Any] | None = None) -> bool:
+    rows = (services or _services())["services"]
+    rec = next((s for s in rows if s["id"] == "rec-engine"), None)
+    if not rec:
+        return False
+    return memory_pct(rec) >= 90
+
+
+def _evidence_rung(session: dict[str, Any] | None) -> int:
+    pack = _evidence()
+    ladder = pack["ladder"]
+    rung = int((session or {}).get("evidence_rung") or 0)
+    return max(0, min(rung, len(ladder) - 1))
+
+
+def _format_evidence_row(row: dict[str, Any], saturated: bool) -> list[str]:
+    sat = "yes" if saturated else "no"
+    return [
+        f"Case {_evidence()['case_id']}-style plan (demo fixture, not live production).",
+        f"Evidence pack: {row['attachments_mb']} MB attachments, {row['similar_tickets']} similar tickets.",
+        f"Time-to-RCA p50 {row['p50_seconds']} s · p95 {row['p95_seconds']} s.",
+        f"Engineer wait {row['engineer_wait_seconds']} s (queue + rec-engine).",
+        f"rec-engine saturated: {sat}. Memory working set is at or above 90% of its limit in this snapshot.",
+        _evidence()["note"],
+    ]
 
 
 def extract_credentials(question: str) -> dict[str, str | None]:
@@ -397,7 +429,15 @@ def why_mttr(_question: str = "") -> dict[str, Any]:
         if row["id"] in {"CERT-MISMATCH", "CONNECTOR-LAG", "SKILL-GAP-TLS"}:
             lines.append(f"- {row['id']}: {row['title']}")
     lines.append("")
-    lines.append("Checked — not the cause: APP-CODE-500 (the 500 is the cert), CPU-HOT, INSIGHTS-DOWN.")
+    lines.append(
+        "Checked — not the cause: APP-CODE-500 (the 500 is the cert), CPU-HOT "
+        "(rec-engine is memory-bound, not CPU-bound), INSIGHTS-DOWN."
+    )
+    if any(row["id"] == "MEM-PRESSURE" for row in report["fired"]):
+        lines.append(
+            "Platform note: MEM-PRESSURE is firing on rec-engine. That slows recommendations; "
+            "it is not the whole MTTR gap (cert SAN + connector lag still dominate open time)."
+        )
     lines.append("")
     lines.append(format_engine_report(report))
     return {
@@ -502,6 +542,132 @@ def service_health(_question: str = "") -> dict[str, Any]:
         },
         "ui": "health",
         "rca": report,
+        "caveat": caveat(),
+    }
+
+
+def platform_perf(_question: str = "") -> dict[str, Any]:
+    bundle = _services()
+    rows = bundle["services"]
+    report = rca_engine.evaluate()
+    rec = next((s for s in rows if s["id"] == "rec-engine"), rows[0])
+    pct = memory_pct(rec)
+    hottest_cpu = max(rows, key=lambda s: float(s.get("cpu_pct") or 0))
+    lines = [
+        "Platform performance (pods), not ops MTTR. CPU and memory are % of each service limit. "
+        "Fixtures, not a live cluster, not GaussIQ production.",
+        f"`{rec['id']}` memory {rec['memory_mib']}/{rec['memory_limit_mib']} MiB ({pct}% of limit) "
+        f"restarts={rec.get('restarts') or 0} last_reason={rec.get('last_reason') or '-'}.",
+        f"Hottest CPU in this snapshot: `{hottest_cpu['id']}` at {hottest_cpu['cpu_pct']}% of its limit "
+        "(under the 80% CPU-HOT threshold).",
+        "Fire / skip: MEM-PRESSURE fires. CPU-HOT is skipped. CONNECTOR-LAG is the crash-looping "
+        "signal-connector — a different problem from rec-engine memory.",
+        "",
+        format_engine_report(report),
+    ]
+    return {
+        "route": "platform_perf",
+        "source": "handler:platform_perf",
+        "tools": [
+            "read_fixture:gaussiq/fixtures/services.json",
+            "rule_rca:gaussiq/rca_engine.py",
+        ],
+        "answer": "\n".join(lines),
+        "metrics": {
+            "rec_engine_memory_pct": pct,
+            "rec_engine_cpu_pct": rec["cpu_pct"],
+            "hottest_cpu_id": hottest_cpu["id"],
+            "hottest_cpu_pct": hottest_cpu["cpu_pct"],
+            "fired": [r["id"] for r in report["fired"]],
+            "skipped": [r["id"] for r in report["skipped"]],
+        },
+        "ui": "rca",
+        "rca": report,
+        "caveat": caveat(),
+    }
+
+
+def evidence_timing(question: str = "", session: dict[str, Any] | None = None) -> dict[str, Any]:
+    pack = _evidence()
+    ladder = pack["ladder"]
+    session = session or {}
+    rung = _evidence_rung(session)
+    blob = (question or "").lower()
+    if any(token in blob for token in ("create", "large", "huge")):
+        rung = max(rung, int(pack.get("large_rung") or 2))
+    rung = max(0, min(rung, len(ladder) - 1))
+    row = ladder[rung]
+    saturated = rec_engine_saturated()
+    lines = _format_evidence_row(row, saturated)
+    lines.append(
+        "Say “add more evidence” to append the next ladder step to this page session, then ask timing again."
+    )
+    return {
+        "route": "evidence_timing",
+        "source": "handler:evidence_timing",
+        "tools": [
+            "read_fixture:gaussiq/fixtures/evidence.json",
+            "read_fixture:gaussiq/fixtures/services.json",
+        ],
+        "answer": "\n".join(lines),
+        "metrics": {
+            "case_id": pack["case_id"],
+            "attachments_mb": row["attachments_mb"],
+            "similar_tickets": row["similar_tickets"],
+            "p50_seconds": row["p50_seconds"],
+            "p95_seconds": row["p95_seconds"],
+            "engineer_wait_seconds": row["engineer_wait_seconds"],
+            "rec_engine_saturated": saturated,
+            "evidence_rung": rung,
+        },
+        "ui": "evidence",
+        "session_update": {"evidence_rung": rung},
+        "caveat": caveat(),
+    }
+
+
+def add_evidence(_question: str = "", session: dict[str, Any] | None = None) -> dict[str, Any]:
+    pack = _evidence()
+    ladder = pack["ladder"]
+    session = session or {}
+    rung = _evidence_rung(session)
+    nxt = min(rung + 1, len(ladder) - 1)
+    capped = nxt == rung
+    row = ladder[nxt]
+    prev = ladder[rung]
+    saturated = rec_engine_saturated()
+    added_mb = row["attachments_mb"] - prev["attachments_mb"]
+    added_sim = row["similar_tickets"] - prev["similar_tickets"]
+    lines = [
+        (
+            "Evidence snapshot is already at the last fixture rung. Timing below is unchanged."
+            if capped
+            else (
+                f"Appended +{added_mb} MB attachments and +{added_sim} similar tickets to the in-memory "
+                "snapshot (not written to disk, gone on refresh)."
+            )
+        ),
+    ]
+    lines.extend(_format_evidence_row(row, saturated))
+    lines.append("Re-ask “how long for RCA on a huge evidence case?” to read this snapshot again.")
+    return {
+        "route": "add_evidence",
+        "source": "handler:add_evidence",
+        "tools": ["read_fixture:gaussiq/fixtures/evidence.json"],
+        "answer": "\n".join(lines),
+        "metrics": {
+            "case_id": pack["case_id"],
+            "attachments_mb": row["attachments_mb"],
+            "similar_tickets": row["similar_tickets"],
+            "p50_seconds": row["p50_seconds"],
+            "p95_seconds": row["p95_seconds"],
+            "engineer_wait_seconds": row["engineer_wait_seconds"],
+            "rec_engine_saturated": saturated,
+            "evidence_rung": nxt,
+            "capped": capped,
+        },
+        "ui": "evidence",
+        "session_update": {"evidence_rung": nxt},
         "caveat": caveat(),
     }
 
@@ -695,9 +861,9 @@ def fallback(_question: str = "") -> dict[str, Any]:
         "tools": [],
         "answer": (
             "No handler or catalog entry matched that question. This sample does not call a language model, "
-            "so it will not invent MTTR, skill counts, or case totals. Try: current state of GaussIQ 1.0 demo "
-            "services, why AJ18991 returned HTTP 500, gross MTTR, skill gaps, any security issues, login with "
-            "giquser/giqpass, run smoke, run sanity, or run regression."
+            "so it will not invent MTTR, CPU, memory, or RCA times. Try: current quality of GaussIQ 1.0, "
+            "why CPU/memory is high, how long for RCA on a huge evidence case, add more evidence, "
+            "any security issues, why AJ18991 returned HTTP 500, run smoke, run sanity, or run regression."
         ),
         "metrics": None,
         "ui": None,

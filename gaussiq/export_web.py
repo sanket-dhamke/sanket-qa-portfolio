@@ -28,6 +28,7 @@ def build() -> dict:
             "users": load("users.json"),
             "suites": load("suites.json"),
             "kb": load("kb.json"),
+            "evidence": load("evidence.json"),
         },
         "rca_report": evaluate_rca(),
         "security_report": evaluate_security(),

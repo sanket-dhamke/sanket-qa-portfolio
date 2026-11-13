@@ -11,6 +11,13 @@ from typing import Any
 from gaussiq.load import load
 
 
+def memory_pct(service: dict[str, Any]) -> float:
+    limit = float(service.get("memory_limit_mib") or 0)
+    if not limit:
+        return 0.0
+    return round(100.0 * float(service.get("memory_mib") or 0) / limit, 1)
+
+
 def _card(
     rule_id: str,
     severity: str,
@@ -160,6 +167,42 @@ def evaluate(
     else:
         skip("SKILL-GAP-TLS", "TLS / certificate coverage is present in this snapshot.")
 
+    pressure = [
+        s
+        for s in rows
+        if memory_pct(s) >= 90
+        or "oom" in str(s.get("last_reason") or "").lower()
+        or "workingsethigh" in str(s.get("last_reason") or "").lower()
+    ]
+    if pressure:
+        row = pressure[0]
+        pct = memory_pct(row)
+        fired.append(
+            _card(
+                "MEM-PRESSURE",
+                "HIGH",
+                row["id"],
+                "Working set near the memory limit",
+                f"`{row['id']}` memory {row['memory_mib']}/{row['memory_limit_mib']} MiB "
+                f"({pct}% of its limit), restarts={row.get('restarts') or 0}, "
+                f"last_reason={row.get('last_reason') or '-'}.",
+                "Recommendation engine is holding a large evidence working set. "
+                "This is memory pressure, not CPU saturation and not the crash-looping connector.",
+                "Raise the rec-engine memory limit or shrink the evidence pack before expecting fast RCA. "
+                "Do not scale CPU for a memory finding.",
+                [
+                    f"{s['id']} mem={s['memory_mib']}/{s['memory_limit_mib']} MiB "
+                    f"({memory_pct(s)}%) cpu={s['cpu_pct']}% restarts={s.get('restarts') or 0}"
+                    for s in pressure
+                ],
+            )
+        )
+    else:
+        skip(
+            "MEM-PRESSURE",
+            "No sampled GaussIQ 1.0 service is at ≥90% of its memory limit.",
+        )
+
     hot = [s for s in rows if float(s.get("cpu_pct") or 0) >= 80]
     if hot:
         fired.append(
@@ -175,7 +218,11 @@ def evaluate(
             )
         )
     else:
-        skip("CPU-HOT", "No sampled GaussIQ 1.0 service is at ≥80% of its CPU limit.")
+        skip(
+            "CPU-HOT",
+            "Checked — not the cause. No sampled GaussIQ 1.0 service is at ≥80% of its CPU limit. "
+            "rec-engine is memory-bound (MEM-PRESSURE), not CPU-bound.",
+        )
 
     insights = next((s for s in rows if s["id"] == "insights-api"), None)
     if insights and insights.get("ready") and insights.get("status") == "Running":

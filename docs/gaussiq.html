@@ -69,15 +69,62 @@
   <div id="monitor" class="hidden" data-testid="monitor">
     <div class="kpis" id="kpis">
       <div class="kpi"><span>1.0 quality</span><strong id="health-live">—</strong></div>
+      <div class="kpi"><span>Hottest mem</span><strong id="mem-live">—</strong></div>
       <div class="kpi"><span>Gross MTTR</span><strong id="mttr-live">—</strong></div>
-      <div class="kpi"><span>Eng assist</span><strong id="assist-live">—</strong></div>
       <div class="kpi"><span>Open cases</span><strong id="cases-live">—</strong></div>
       <div class="kpi"><span>Last suite</span><strong id="suite-live">idle</strong></div>
     </div>
 
+    <div class="layout">
+    <section class="panel chat" id="chat-panel">
+      <div class="chat-head">
+        <h2>Ask the quality agent</h2>
+        <button type="button" id="btn-qbank" class="qbank-link" data-testid="qbank-toggle" aria-expanded="false">Questions you can ask</button>
+      </div>
+      <div class="composer" data-testid="composer">
+        <label class="composer-label" for="q">Question</label>
+        <textarea id="q" rows="2" placeholder="Ask about quality, why CPU/memory is high, evidence-pack RCA time, security…" aria-label="Question"></textarea>
+        <button type="button" id="ask">Ask</button>
+      </div>
+      <div class="canned" id="canned"></div>
+      <div id="qbank" class="qbank hidden" data-testid="qbank" hidden></div>
+      <div class="log" id="log"></div>
+    </section>
+
     <section id="quality-dash" class="quality-dash" data-testid="quality-dash">
-      <h2 class="dash-title">Quality dashboard <span>service health · MTTR vs baseline · security · RCA fire / skip — then chat</span></h2>
+      <h2 class="dash-title">Quality dashboard <span>chat on the left · platform pods · ops KPIs · security · RCA fire / skip</span></h2>
       <div class="dashboard-grid">
+        <article class="panel">
+          <h2>Platform performance</h2>
+          <p class="hint">CPU % of each service limit, memory vs limit, restarts — same idea as the DataHub lab. Not a live cluster. Not GaussIQ published ranges.</p>
+          <div class="charts-grid">
+            <div class="chart-box">
+              <p>CPU % of service limit</p>
+              <canvas id="cpu-chart"></canvas>
+            </div>
+            <div class="chart-box">
+              <p>Memory % of service limit</p>
+              <canvas id="mem-chart"></canvas>
+            </div>
+          </div>
+          <div class="ops-kpis" data-testid="ops-kpis">
+            <h3>Ops KPIs <span>MTTR / eng assist — support metrics, not pod performance</span></h3>
+            <div class="charts-grid">
+              <div class="chart-box">
+                <p>Hours (now vs baseline) — labels fully visible</p>
+                <canvas id="mttr-chart"></canvas>
+              </div>
+              <div class="chart-box">
+                <p>Open vs resolved (7d)</p>
+                <canvas id="vol-chart"></canvas>
+              </div>
+            </div>
+            <table>
+              <thead><tr><th>Ops KPI</th><th>Now</th><th>Baseline</th></tr></thead>
+              <tbody id="perf-body"></tbody>
+            </table>
+          </div>
+        </article>
         <article class="panel">
           <h2>Service health</h2>
           <p class="hint">24x7 health of GaussIQ 1.0 demo services. CPU is % of each service limit. Not a live cluster.</p>
@@ -88,24 +135,6 @@
               </tr>
             </thead>
             <tbody id="svc-body"></tbody>
-          </table>
-        </article>
-        <article class="panel">
-          <h2>Performance vs baseline</h2>
-          <p class="hint">Original demo-tenant fixtures. Not GaussIQ published outcome ranges. Not live production.</p>
-          <div class="charts-grid">
-            <div class="chart-box">
-              <p>Hours (now vs baseline)</p>
-              <canvas id="mttr-chart"></canvas>
-            </div>
-            <div class="chart-box">
-              <p>Open vs resolved (7d)</p>
-              <canvas id="vol-chart"></canvas>
-            </div>
-          </div>
-          <table>
-            <thead><tr><th>KPI</th><th>Now</th><th>Baseline</th></tr></thead>
-            <tbody id="perf-body"></tbody>
           </table>
         </article>
         <article class="panel">
@@ -120,25 +149,12 @@
         </article>
         <article class="panel">
           <h2>RCA · fire / skip</h2>
-          <p class="hint">HTTP 500 is a symptom. CERT-MISMATCH vs application code are different problems. Skipped rules are part of the diagnosis.</p>
+          <p class="hint">MEM-PRESSURE vs CPU-HOT vs CONNECTOR-LAG are different problems. HTTP 500 is a symptom. Skipped rules are part of the diagnosis.</p>
           <div class="rca-list" id="health-rca-list" data-testid="health-rca"></div>
         </article>
       </div>
     </section>
-
-    <section class="panel chat" id="chat-panel">
-      <div class="chat-head">
-        <h2>Ask the quality agent</h2>
-        <button type="button" id="btn-qbank" class="qbank-link" data-testid="qbank-toggle" aria-expanded="false">Questions you can ask</button>
-      </div>
-      <div id="qbank" class="qbank hidden" data-testid="qbank" hidden></div>
-      <div class="log" id="log"></div>
-      <div class="canned" id="canned"></div>
-      <div class="composer">
-        <input id="q" type="text" placeholder="Ask, then press Enter. Try current quality, security, why MTTR is high, API smoke…" aria-label="Question">
-        <button type="button" id="ask">Ask</button>
-      </div>
-    </section>
+    </div>
 
     <section class="panel extra">
       <div class="tabs" role="tablist">

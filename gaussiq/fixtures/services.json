@@ -15,8 +15,8 @@
       "restarts": 0,
       "last_reason": "",
       "probe": "health check is answering OK",
-      "cpu_pct": 34.0,
-      "memory_mib": 512,
+      "cpu_pct": 61.0,
+      "memory_mib": 640,
       "memory_limit_mib": 1024
     },
     {
@@ -64,11 +64,11 @@
       "product": "Recommend the best execution",
       "status": "Running",
       "ready": true,
-      "restarts": 0,
-      "last_reason": "",
+      "restarts": 1,
+      "last_reason": "WorkingSetHigh",
       "probe": "health check is answering OK",
-      "cpu_pct": 41.0,
-      "memory_mib": 640,
+      "cpu_pct": 47.0,
+      "memory_mib": 986,
       "memory_limit_mib": 1024
     }
   ]

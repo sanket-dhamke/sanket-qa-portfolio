@@ -1233,7 +1233,7 @@ sink:
       if (q) ask(q);
     });
     $("q").addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
+      if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         const q = $("q").value.trim();
         if (q) ask(q);

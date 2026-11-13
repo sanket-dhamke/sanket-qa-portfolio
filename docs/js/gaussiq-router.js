@@ -391,7 +391,14 @@
       }
     });
     lines.push("");
-    lines.push("Checked — not the cause: APP-CODE-500 (the 500 is the cert), CPU-HOT, INSIGHTS-DOWN.");
+    lines.push(
+      "Checked — not the cause: APP-CODE-500 (the 500 is the cert), CPU-HOT (rec-engine is memory-bound, not CPU-bound), INSIGHTS-DOWN."
+    );
+    if ((report.fired || []).some((row) => row.id === "MEM-PRESSURE")) {
+      lines.push(
+        "Platform note: MEM-PRESSURE is firing on rec-engine. That slows recommendations; it is not the whole MTTR gap (cert SAN + connector lag still dominate open time)."
+      );
+    }
     lines.push("");
     lines.push(formatEngineReport(report));
     return {
@@ -515,6 +522,167 @@
       },
       ui: "health",
       rca: data.rca_report,
+      caveat: caveat(),
+    };
+  }
+
+  function memoryPct(service) {
+    const limit = Number((service && service.memory_limit_mib) || 0);
+    if (!limit) return 0;
+    return Math.round((1000 * Number(service.memory_mib || 0)) / limit) / 10;
+  }
+
+  function recEngineSaturated(data) {
+    const rows = (((data.fixtures || {}).services || {}).services) || [];
+    const rec = rows.find((s) => s.id === "rec-engine");
+    return rec ? memoryPct(rec) >= 90 : false;
+  }
+
+  function evidenceRung(session, pack) {
+    const ladder = (pack && pack.ladder) || [];
+    let rung = Number((session && session.evidence_rung) || 0);
+    if (!ladder.length) return 0;
+    return Math.max(0, Math.min(rung, ladder.length - 1));
+  }
+
+  function formatEvidenceRow(pack, row, saturated) {
+    return [
+      "Case " + pack.case_id + "-style plan (demo fixture, not live production).",
+      "Evidence pack: " + row.attachments_mb + " MB attachments, " + row.similar_tickets + " similar tickets.",
+      "Time-to-RCA p50 " + row.p50_seconds + " s · p95 " + row.p95_seconds + " s.",
+      "Engineer wait " + row.engineer_wait_seconds + " s (queue + rec-engine).",
+      "rec-engine saturated: " + (saturated ? "yes" : "no") + ". Memory working set is at or above 90% of its limit in this snapshot.",
+      pack.note,
+    ];
+  }
+
+  function platformPerf(data) {
+    const bundle = data.fixtures.services;
+    const rows = bundle.services;
+    const report = data.rca_report;
+    const rec = rows.find((s) => s.id === "rec-engine") || rows[0];
+    const pct = memoryPct(rec);
+    const hottest = rows.reduce((a, b) => (Number(a.cpu_pct) >= Number(b.cpu_pct) ? a : b));
+    const lines = [
+      "Platform performance (pods), not ops MTTR. CPU and memory are % of each service limit. Fixtures, not a live cluster, not GaussIQ production.",
+      "`" +
+        rec.id +
+        "` memory " +
+        rec.memory_mib +
+        "/" +
+        rec.memory_limit_mib +
+        " MiB (" +
+        pct +
+        "% of limit) restarts=" +
+        (rec.restarts || 0) +
+        " last_reason=" +
+        (rec.last_reason || "-") +
+        ".",
+      "Hottest CPU in this snapshot: `" +
+        hottest.id +
+        "` at " +
+        hottest.cpu_pct +
+        "% of its limit (under the 80% CPU-HOT threshold).",
+      "Fire / skip: MEM-PRESSURE fires. CPU-HOT is skipped. CONNECTOR-LAG is the crash-looping signal-connector — a different problem from rec-engine memory.",
+      "",
+      formatEngineReport(report),
+    ];
+    return {
+      route: "platform_perf",
+      source: "handler:platform_perf",
+      tools: ["read_fixture:gaussiq/fixtures/services.json", "rule_rca:gaussiq/rca_engine.py"],
+      answer: lines.join("\n"),
+      metrics: {
+        rec_engine_memory_pct: pct,
+        rec_engine_cpu_pct: rec.cpu_pct,
+        hottest_cpu_id: hottest.id,
+        hottest_cpu_pct: hottest.cpu_pct,
+        fired: (report.fired || []).map((r) => r.id),
+        skipped: (report.skipped || []).map((r) => r.id),
+      },
+      ui: "rca",
+      rca: report,
+      caveat: caveat(),
+    };
+  }
+
+  function evidenceTiming(data, question, session) {
+    const pack = (data.fixtures || {}).evidence || { ladder: [] };
+    const ladder = pack.ladder || [];
+    let rung = evidenceRung(session, pack);
+    const blob = String(question || "").toLowerCase();
+    if (/create|large|huge/.test(blob)) rung = Math.max(rung, Number(pack.large_rung || 2));
+    if (ladder.length) rung = Math.max(0, Math.min(rung, ladder.length - 1));
+    const row = ladder[rung] || {};
+    const saturated = recEngineSaturated(data);
+    const lines = formatEvidenceRow(pack, row, saturated);
+    lines.push(
+      "Say “add more evidence” to append the next ladder step to this page session, then ask timing again."
+    );
+    return {
+      route: "evidence_timing",
+      source: "handler:evidence_timing",
+      tools: [
+        "read_fixture:gaussiq/fixtures/evidence.json",
+        "read_fixture:gaussiq/fixtures/services.json",
+      ],
+      answer: lines.join("\n"),
+      metrics: {
+        case_id: pack.case_id,
+        attachments_mb: row.attachments_mb,
+        similar_tickets: row.similar_tickets,
+        p50_seconds: row.p50_seconds,
+        p95_seconds: row.p95_seconds,
+        engineer_wait_seconds: row.engineer_wait_seconds,
+        rec_engine_saturated: saturated,
+        evidence_rung: rung,
+      },
+      ui: "evidence",
+      session_update: { evidence_rung: rung },
+      caveat: caveat(),
+    };
+  }
+
+  function addEvidence(data, _question, session) {
+    const pack = (data.fixtures || {}).evidence || { ladder: [] };
+    const ladder = pack.ladder || [];
+    const rung = evidenceRung(session, pack);
+    const nxt = ladder.length ? Math.min(rung + 1, ladder.length - 1) : 0;
+    const capped = nxt === rung;
+    const row = ladder[nxt] || {};
+    const prev = ladder[rung] || row;
+    const saturated = recEngineSaturated(data);
+    const addedMb = Number(row.attachments_mb || 0) - Number(prev.attachments_mb || 0);
+    const addedSim = Number(row.similar_tickets || 0) - Number(prev.similar_tickets || 0);
+    const lines = [
+      capped
+        ? "Evidence snapshot is already at the last fixture rung. Timing below is unchanged."
+        : "Appended +" +
+          addedMb +
+          " MB attachments and +" +
+          addedSim +
+          " similar tickets to the in-memory snapshot (not written to disk, gone on refresh).",
+    ];
+    lines.push.apply(lines, formatEvidenceRow(pack, row, saturated));
+    lines.push("Re-ask “how long for RCA on a huge evidence case?” to read this snapshot again.");
+    return {
+      route: "add_evidence",
+      source: "handler:add_evidence",
+      tools: ["read_fixture:gaussiq/fixtures/evidence.json"],
+      answer: lines.join("\n"),
+      metrics: {
+        case_id: pack.case_id,
+        attachments_mb: row.attachments_mb,
+        similar_tickets: row.similar_tickets,
+        p50_seconds: row.p50_seconds,
+        p95_seconds: row.p95_seconds,
+        engineer_wait_seconds: row.engineer_wait_seconds,
+        rec_engine_saturated: saturated,
+        evidence_rung: nxt,
+        capped: capped,
+      },
+      ui: "evidence",
+      session_update: { evidence_rung: nxt },
       caveat: caveat(),
     };
   }
@@ -703,7 +871,7 @@
       source: "fallback:deterministic",
       tools: [],
       answer:
-        "No handler or catalog entry matched that question. This sample does not call a language model, so it will not invent MTTR, skill counts, or case totals. Try: current state of GaussIQ 1.0 demo services, why AJ18991 returned HTTP 500, gross MTTR, skill gaps, any security issues, login with giquser/giqpass, run smoke, run sanity, or run regression.",
+        "No handler or catalog entry matched that question. This sample does not call a language model, so it will not invent MTTR, CPU, memory, or RCA times. Try: current quality of GaussIQ 1.0, why CPU/memory is high, how long for RCA on a huge evidence case, add more evidence, any security issues, why AJ18991 returned HTTP 500, run smoke, run sanity, or run regression.",
       metrics: null,
       ui: null,
       caveat: caveat(),
@@ -723,6 +891,9 @@
     why_mttr: whyMttr,
     perf_metrics: perfMetrics,
     security_rca: securityRca,
+    platform_perf: platformPerf,
+    evidence_timing: evidenceTiming,
+    add_evidence: addEvidence,
     perf_rca: perfRca,
     service_health: serviceHealth,
     kb_retrieve: kbRetrieve,
@@ -753,7 +924,7 @@
     const rule = matchRule(text, data.rules);
     let result;
     if (!rule) result = fallback();
-    else if (HANDLERS[rule.route]) result = HANDLERS[rule.route](data, text);
+    else if (HANDLERS[rule.route]) result = HANDLERS[rule.route](data, text, session);
     else result = fallback();
     result.question = text;
     result.model_available = false;

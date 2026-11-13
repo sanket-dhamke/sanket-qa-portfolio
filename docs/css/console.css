@@ -115,6 +115,15 @@ body.console {
   flex: 1;
   min-width: 0;
 }
+.chat-sub {
+  display: block;
+  color: var(--brass);
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  font-size: 11px;
+  margin-top: 2px;
+}
 .qbank-link {
   background: transparent;
   color: var(--brass);
@@ -229,15 +238,69 @@ body.console {
   display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 10px;
   border-top: 1px solid var(--line); max-height: 118px; overflow: auto;
 }
-.canned button, .composer button, .ingest-actions button, .confirm button, .tab, .connect-actions button, .email-controls button {
+.canned button, .ingest-actions button, .confirm button, .tab, .connect-actions button, .email-controls button {
   background: #22324a; color: var(--text); border: 1px solid var(--line);
   border-radius: 5px; padding: 6px 9px; font-size: 12px; cursor: pointer;
 }
-.canned button:hover, .composer button:hover, .confirm button:hover, .tab:hover { border-color: var(--brass); }
-.composer { display: flex; gap: 8px; padding: 8px; border-top: 1px solid var(--line); }
-.composer input {
-  flex: 1; background: #0f1826; color: var(--text); border: 1px solid var(--line);
-  border-radius: 6px; padding: 9px 10px;
+.canned button:hover, .confirm button:hover, .tab:hover { border-color: var(--brass); }
+.composer {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas: "label label" "field ask";
+  gap: 8px 10px;
+  padding: 12px;
+  border-bottom: 2px solid var(--brass);
+  background: #152033;
+}
+.composer-label {
+  grid-area: label;
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--brass);
+  font-weight: 600;
+}
+.composer textarea, .composer input {
+  grid-area: field;
+  width: 100%;
+  min-height: 52px;
+  resize: vertical;
+  background: #080e18;
+  color: var(--text);
+  border: 2px solid var(--brass);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-family: "IBM Plex Sans", system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.4;
+}
+.composer textarea::placeholder, .composer input::placeholder {
+  color: #cbb98a;
+  opacity: 1;
+}
+.composer textarea:focus, .composer input:focus {
+  outline: none;
+  border-color: #f0d090;
+  box-shadow: 0 0 0 3px rgba(212, 179, 106, 0.35);
+}
+.composer #ask {
+  grid-area: ask;
+  align-self: stretch;
+  min-width: 96px;
+  background: var(--brass);
+  color: #102033;
+  border: 0;
+  border-radius: 8px;
+  padding: 12px 22px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.composer #ask:hover, .composer #ask:focus {
+  filter: brightness(1.08);
+  outline: 2px solid #f0d090;
+  outline-offset: 2px;
 }
 
 .dash { min-height: calc(100vh - 168px); }
@@ -310,7 +373,7 @@ input[type="text"], input[type="password"], input[type="email"], textarea {
   width: 100%; background: #0f1826; color: var(--text); border: 1px solid var(--line);
   border-radius: 4px; padding: 6px 8px; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px;
 }
-textarea { min-height: 220px; resize: vertical; }
+#recipe-yaml { min-height: 220px; resize: vertical; }
 .gql {
   background: #0f1826; border: 1px solid var(--line); padding: 8px;
   font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 11px;

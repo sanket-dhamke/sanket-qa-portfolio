@@ -130,6 +130,37 @@ def test_canned_questions_take_distinct_sources() -> None:
     assert len(set(sources)) == len(CANNED_QUESTIONS)
 
 
+def test_cpu_memory_uses_platform_perf() -> None:
+    result = route("Why is CPU/memory high?")
+    assert result["source"] == "handler:platform_perf"
+    assert "MEM-PRESSURE" in result["metrics"]["fired"]
+    assert "CPU-HOT" in result["metrics"]["skipped"]
+    assert "CONNECTOR-LAG" in result["metrics"]["fired"]
+    assert result["metrics"]["rec_engine_memory_pct"] >= 90
+    assert "not a live cluster" in result["answer"].lower() or "not a live" in result["answer"].lower()
+
+
+def test_evidence_pack_timing_then_add_more() -> None:
+    huge = route("How long for RCA on a huge evidence case?")
+    assert huge["source"] == "handler:evidence_timing"
+    assert huge["metrics"]["case_id"] == "AJ18991"
+    assert huge["metrics"]["attachments_mb"] == 420
+    assert huge["metrics"]["similar_tickets"] == 28
+    assert huge["metrics"]["p50_seconds"] == 124
+    assert huge["metrics"]["p95_seconds"] == 400
+    assert huge["metrics"]["engineer_wait_seconds"] == 340
+    assert huge["metrics"]["rec_engine_saturated"] is True
+    session = dict(huge.get("session_update") or {})
+    added = route("Add more evidence", session=session)
+    assert added["source"] == "handler:add_evidence"
+    assert added["metrics"]["attachments_mb"] == 540
+    assert added["metrics"]["p50_seconds"] == 152
+    assert "Appended" in added["answer"]
+    create = route("Create large evidence pack")
+    assert create["source"] == "handler:evidence_timing"
+    assert create["metrics"]["attachments_mb"] == 420
+
+
 def test_no_model_flag() -> None:
     result = route("What is net MTTR?")
     assert result["model_available"] is False

@@ -91,7 +91,7 @@ body.giq {
 .page-hero p { margin: 0; color: var(--muted); font-size: 15px; max-width: 68ch; }
 .page-hero .try-this-wrap { padding: 12px 0 0; }
 
-.quality-dash { padding: 10px 12px 0; }
+.quality-dash { padding: 0; }
 .dash-title {
   margin: 0 4px 8px;
   font-size: 13px;
@@ -108,9 +108,9 @@ body.giq {
 
 .layout {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(340px, 420px) 1fr;
   gap: 10px;
-  padding: 10px 12px 16px;
+  padding: 10px 12px 0;
   align-items: start;
 }
 .panel {
@@ -134,10 +134,10 @@ body.giq {
 .chat {
   display: flex;
   flex-direction: column;
-  height: auto;
-  min-height: 360px;
-  max-height: 520px;
-  margin: 10px 12px 0;
+  height: calc(100vh - 168px);
+  min-height: 540px;
+  max-height: none;
+  margin: 0;
 }
 .extra { margin: 10px 12px 16px; }
 .chat-head {
@@ -197,15 +197,69 @@ body.giq {
   display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 10px;
   border-top: 1px solid var(--line); max-height: 118px; overflow: auto;
 }
-.canned button, .composer button, .confirm button, .tab, .connect-actions button {
+.canned button, .confirm button, .tab, .connect-actions button {
   background: #274238; color: var(--text); border: 1px solid var(--line);
   border-radius: 5px; padding: 6px 9px; font-size: 12px; cursor: pointer;
 }
-.canned button:hover, .composer button:hover, .confirm button:hover, .tab:hover { border-color: var(--copper); }
-.composer { display: flex; gap: 8px; padding: 8px; border-top: 1px solid var(--line); }
-.composer input {
-  flex: 1; background: #12241e; color: var(--text); border: 1px solid var(--line);
-  border-radius: 6px; padding: 9px 10px;
+.canned button:hover, .confirm button:hover, .tab:hover { border-color: var(--copper); }
+.composer {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas: "label label" "field ask";
+  gap: 8px 10px;
+  padding: 12px;
+  border-bottom: 2px solid var(--copper);
+  background: #173028;
+}
+.composer-label {
+  grid-area: label;
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--copper);
+  font-weight: 600;
+}
+.composer textarea, .composer input {
+  grid-area: field;
+  width: 100%;
+  min-height: 52px;
+  resize: vertical;
+  background: #0c1814;
+  color: var(--text);
+  border: 2px solid var(--copper);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-family: "IBM Plex Sans", system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.4;
+}
+.composer textarea::placeholder, .composer input::placeholder {
+  color: #c4b08a;
+  opacity: 1;
+}
+.composer textarea:focus, .composer input:focus {
+  outline: none;
+  border-color: #f0c48a;
+  box-shadow: 0 0 0 3px rgba(208, 138, 74, 0.35);
+}
+.composer #ask {
+  grid-area: ask;
+  align-self: stretch;
+  min-width: 96px;
+  background: var(--copper);
+  color: #12211c;
+  border: 0;
+  border-radius: 8px;
+  padding: 12px 22px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.composer #ask:hover, .composer #ask:focus {
+  filter: brightness(1.08);
+  outline: 2px solid #f0c48a;
+  outline-offset: 2px;
 }
 
 .dash { min-height: 0; }
@@ -296,13 +350,31 @@ input[type="text"], input[type="password"] {
 .charts-grid { display: grid; grid-template-columns: 1fr 1fr; }
 .chart-box { padding: 8px 12px 4px; }
 .chart-box p { margin: 0 0 4px; font-size: 12px; color: var(--muted); }
-canvas { width: 100%; height: 148px; display: block; background: #12241e; border-radius: 6px; }
+canvas { width: 100%; height: 168px; display: block; background: #12241e; border-radius: 6px; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 12px 8px; font-size: 11px; color: var(--muted); }
+.legend i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 4px; }
+.ops-kpis {
+  margin: 4px 12px 12px;
+  padding: 8px 10px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #12241e;
+}
+.ops-kpis h3 {
+  margin: 0 0 6px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.ops-kpis h3 span { color: var(--copper); font-weight: 400; margin-left: 8px; text-transform: none; letter-spacing: 0; }
+.ops-kpis canvas { height: 132px; }
 
 @media (max-width: 1100px) {
   .kpis { grid-template-columns: repeat(2, 1fr); }
   .layout, .dashboard-grid { grid-template-columns: 1fr; }
   .chat, .dash { height: auto; min-height: 0; }
-  .chat { max-height: 560px; }
+  .chat { max-height: none; min-height: 480px; }
   .connect-grid, .charts-grid { grid-template-columns: 1fr; }
   .page-hero h1 { font-size: 22px; }
 }

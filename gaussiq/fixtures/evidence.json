@@ -1,0 +1,47 @@
+{
+  "case_id": "AJ18991",
+  "note": "Fixture for Case Intelligence evidence-pack timing. Not live GaussIQ. A model must not invent these numbers. Chat can append to an in-memory snapshot, then re-read this ladder.",
+  "large_rung": 2,
+  "defaults": {
+    "attachments_mb": 180,
+    "similar_tickets": 12
+  },
+  "add_step": {
+    "attachments_mb": 120,
+    "similar_tickets": 8
+  },
+  "ladder": [
+    {
+      "attachments_mb": 180,
+      "similar_tickets": 12,
+      "p50_seconds": 76,
+      "p95_seconds": 260,
+      "engineer_wait_seconds": 242,
+      "rec_engine_saturated": true
+    },
+    {
+      "attachments_mb": 300,
+      "similar_tickets": 20,
+      "p50_seconds": 98,
+      "p95_seconds": 324,
+      "engineer_wait_seconds": 287,
+      "rec_engine_saturated": true
+    },
+    {
+      "attachments_mb": 420,
+      "similar_tickets": 28,
+      "p50_seconds": 124,
+      "p95_seconds": 400,
+      "engineer_wait_seconds": 340,
+      "rec_engine_saturated": true
+    },
+    {
+      "attachments_mb": 540,
+      "similar_tickets": 36,
+      "p50_seconds": 152,
+      "p95_seconds": 481,
+      "engineer_wait_seconds": 397,
+      "rec_engine_saturated": true
+    }
+  ]
+}

@@ -24,9 +24,20 @@ def test_gaussiq_page_disclaimer_and_no_github_repo() -> None:
     assert "GitHub repo" not in text
     assert 'id="connect-gate"' in text
     assert 'id="quality-dash"' in text
-    assert text.find('id="quality-dash"') < text.find('id="log"')
+    assert 'id="chat-panel"' in text
+    assert text.find('id="chat-panel"') < text.find('id="quality-dash"')
+    assert "Ask the quality agent" in text
+    assert 'id="ask"' in text
+    assert "<textarea" in text
+    assert "Platform performance" in text
+    assert "Ops KPIs" in text
+    assert "cpu-chart" in text
+    assert "mem-chart" in text
     assert 'data-testid="qbank-toggle"' in text
     assert "Questions you can ask" in text
+    css = (ROOT / "docs" / "css" / "gaussiq.css").read_text(encoding="utf-8")
+    assert ".composer #ask" in css
+    assert "box-shadow" in css
     assert "rocket-pack-lab" in text
     assert "Try this out" in text
     assert "Why is MTTR high" in (ROOT / "gaussiq" / "router.py").read_text(encoding="utf-8")

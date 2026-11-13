@@ -15,8 +15,13 @@ def test_cert_mismatch_fires_app_code_skipped() -> None:
     assert "APP-CODE-500" in skipped
     assert "CONNECTOR-LAG" in fired
     assert "SKILL-GAP-TLS" in fired
+    assert "MEM-PRESSURE" in fired
     assert "CPU-HOT" in skipped
     assert "INSIGHTS-DOWN" in skipped
+    mem = next(r for r in report["fired"] if r["id"] == "MEM-PRESSURE")
+    assert mem["component"] == "rec-engine"
+    cpu = next(r for r in report["skipped"] if r["id"] == "CPU-HOT")
+    assert "memory-bound" in cpu["why"].lower() or "not the cause" in cpu["why"].lower()
     assert "not fired" not in report.get("skipped_heading", "").lower()
     assert "Checked — not the cause" in report["skipped_heading"]
 

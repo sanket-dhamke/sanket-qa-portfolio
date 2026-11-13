@@ -12,8 +12,10 @@ from gaussiq import handlers
 
 CANNED_QUESTIONS = [
     "What is the current quality of GaussIQ 1.0?",
+    "Why is CPU/memory high?",
+    "How long for RCA on a huge evidence case?",
+    "Add more evidence",
     "any security issues?",
-    "Why is MTTR high?",
     "Run API smoke on case-plan APIs",
 ]
 
@@ -37,8 +39,26 @@ QUESTION_BANK = [
         ],
     },
     {
+        "id": "platform",
+        "title": "Platform performance (pods)",
+        "questions": [
+            "Why is CPU/memory high?",
+            "Why is rec-engine memory high?",
+            "Is this CPU-HOT or MEM-PRESSURE?",
+        ],
+    },
+    {
+        "id": "evidence",
+        "title": "Evidence pack / time-to-RCA",
+        "questions": [
+            "Create large evidence pack",
+            "How long for RCA on a huge evidence case?",
+            "Add more evidence",
+        ],
+    },
+    {
         "id": "performance",
-        "title": "Performance (MTTR / eng assist)",
+        "title": "Ops KPIs (MTTR / eng assist)",
         "questions": [
             "Why is MTTR high?",
             "What is gross MTTR in this fixture?",
@@ -193,6 +213,47 @@ RULES: list[dict[str, Any]] = [
         ],
     },
     {
+        "route": "add_evidence",
+        "source": "handler:add_evidence",
+        "handler": handlers.add_evidence,
+        "any": [
+            "add more evidence",
+            "append evidence",
+            "add evidence",
+        ],
+    },
+    {
+        "route": "evidence_timing",
+        "source": "handler:evidence_timing",
+        "handler": handlers.evidence_timing,
+        "any": [
+            "large evidence",
+            "evidence pack",
+            "huge evidence",
+            "how long for rca",
+            "time to rca",
+            "time-to-rca",
+            "create large evidence",
+        ],
+    },
+    {
+        "route": "platform_perf",
+        "source": "handler:platform_perf",
+        "handler": handlers.platform_perf,
+        "any": [
+            "why is cpu",
+            "why is memory",
+            "cpu/memory",
+            "cpu / memory",
+            "memory high",
+            "cpu high",
+            "memory pressure",
+            "mem-pressure",
+            "why is rec-engine",
+            "is this cpu-hot",
+        ],
+    },
+    {
         "route": "why_mttr",
         "source": "handler:why_mttr",
         "handler": handlers.why_mttr,
@@ -257,8 +318,6 @@ RULES: list[dict[str, Any]] = [
             "service health",
             "crashloop",
             "connector",
-            "cpu",
-            "memory",
         ],
     },
     {
@@ -345,7 +404,10 @@ def route(
     if rule is None:
         result = handlers.fallback(text)
     else:
-        result = rule["handler"](text)
+        if rule["route"] in {"evidence_timing", "add_evidence"}:
+            result = rule["handler"](text, session)
+        else:
+            result = rule["handler"](text)
         result["route"] = rule["route"]
         if rule["route"] not in {"kb_retrieve", "run_suite", "login_api"}:
             result["source"] = rule["source"]
