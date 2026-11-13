@@ -1,0 +1,60 @@
+{
+  "tenant": "rocket-pack-lab",
+  "note": "Invented support-case fixtures. Ticket ids AJ18991 / AJ18268 / AJ18600 and Jetsons names appear on GaussIQ public marketing as DEMO examples — not a live customer.",
+  "generated_at": "2026-11-13T06:00:00Z",
+  "open": 3,
+  "resolved_7d": 41,
+  "items": [
+    {
+      "id": "AJ18991",
+      "customer": "George Jetson",
+      "org": "Rocket Pack Express",
+      "product": "Spaceley Sprocket migration tool",
+      "severity": "Business Critical",
+      "region": "EMEA",
+      "status": "open",
+      "owner": "George Jetson",
+      "hops": 4,
+      "symptom": "HTTP 500 / internal server error during sandbox migration",
+      "component": "SFM wizard certificate validation",
+      "likely_cause": "Sandbox vs production certificate SAN mismatch",
+      "similar": ["AJ18268", "AJ18600"],
+      "kb_discarded": ["generic HTTP 500 runbook — wrong topic for this cert path"],
+      "verification": "No 500 after the sandbox cert is reissued with the matching SAN; job record shows success."
+    },
+    {
+      "id": "AJ19014",
+      "customer": "Cosmo Spacely",
+      "org": "Spacely Sprockets",
+      "product": "Case ingest from Salesforce API",
+      "severity": "High",
+      "region": "EMEA",
+      "status": "open",
+      "owner": "unassigned",
+      "hops": 2,
+      "symptom": "Salesforce API timeout while opening a case",
+      "component": "Skills routing",
+      "likely_cause": "Only one engineer on this shift has recent Salesforce API closures",
+      "similar": ["AJ18711"],
+      "kb_discarded": [],
+      "verification": "Case assigned to someone with recent Salesforce API proficiency; ingest completes under 2 minutes."
+    },
+    {
+      "id": "AJ18802",
+      "customer": "Rosie Robot",
+      "org": "Rocket Pack Express",
+      "product": "Signal connector",
+      "severity": "High",
+      "region": "EMEA",
+      "status": "open",
+      "owner": "Rosie Robot",
+      "hops": 1,
+      "symptom": "Case Intelligence plan is empty — evidence index lag",
+      "component": "signal-connector",
+      "likely_cause": "Ticketing connector crash-loop; historical cases are not landing in the evidence index",
+      "similar": [],
+      "kb_discarded": ["rec-engine CPU — already under 50% of limit"],
+      "verification": "signal-connector stays Running; Case Intelligence cites similar tickets again."
+    }
+  ]
+}

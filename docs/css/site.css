@@ -59,7 +59,7 @@ nav a[aria-current="page"], nav a:hover { color: #fff; border-bottom: 2px solid 
 .lede { font-size: 18px; max-width: 62ch; }
 .links { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 12px; }
 
-.cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; padding-bottom: 40px; }
+.cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; padding-bottom: 40px; }
 .card {
   background: var(--card);
   border: 1px solid var(--line);

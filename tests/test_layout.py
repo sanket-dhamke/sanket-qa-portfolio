@@ -217,6 +217,11 @@ def test_home_cards_split_api_and_ui() -> None:
     assert 'data-testid="try-this-hybrid"' in hybrid
     assert 'data-testid="try-this-api"' in api_card
     assert 'data-testid="try-this-ui"' in ui_card
+    gq_card = cards.split("GaussIQ QA lab (demo)", 1)[1].split("</article>", 1)[0]
+    assert 'href="gaussiq.html"' in gq_card
+    assert 'data-testid="try-this-gaussiq"' in gq_card
+    assert cta in gq_card
+    assert "Not affiliated with GaussIQ" in gq_card
     assert 'href="about.html">About</a>' in text
     assert "GitHub repo" not in text
     assert "github.com/sanket-dhamke" not in text
@@ -238,6 +243,7 @@ def test_public_html_has_no_github_repo_links() -> None:
         "api-framework.html",
         "ui-framework.html",
         "404.html",
+        "gaussiq.html",
     )
     for name in pages:
         text = (ROOT / "docs" / name).read_text(encoding="utf-8")

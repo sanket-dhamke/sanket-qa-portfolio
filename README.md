@@ -8,8 +8,9 @@ Site (GitHub Pages, after publish): https://sanket-dhamke.github.io/sanket-qa-po
 
 ## What you can open
 
-- [Home](docs/index.html) — Lead SDET; Hybrid AI Agent for performance testing; three cards. No city in the copy.
+- [Home](docs/index.html) — Lead SDET; Hybrid AI Agent for performance testing; DataHub cards plus a GaussIQ QA lab (demo) card. No city in the copy.
 - [Lab console](docs/console.html) — Connect / Apply first (dummy cluster + AWS fields, memory-only). Then Hybrid AI Agent for performance testing: source **kind** chips, CPU/memory as **% of pod limit**, Tools, suites, rule RCA, Email report tab (simulated preview to `sanket.dhamke@gmail.com`, no SMTP).
+- [GaussIQ QA lab](docs/gaussiq.html) — separate Pages URL. Quality-monitoring dashboard for GaussIQ Execution Intelligence 1.0 (personal lab). Same hybrid router, original fixtures. Not affiliated with GaussIQ. Not their product. No hosted model call from GitHub Pages.
 - [Architecture](docs/architecture.html) — keyword/hybrid router, handlers, KB, suite catalog, rule RCA. A model does not choose tools, collect metrics, or set RCA.
 - [API automation](docs/api-framework.html) — pytest + requests, smoke/sanity/regression tree under `tests/api/`. [Allure report](docs/reports/allure-api/index.html).
 - [UI automation](docs/ui-framework.html) — Playwright + pytest page objects in `ui/`. [Allure report](docs/reports/allure-ui/index.html).
@@ -21,7 +22,8 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 python -m agent.export_web
-pytest -p no:playwright tests/test_routing.py tests/test_hybrid_agent.py tests/test_rca_engine.py tests/test_layout.py tests/test_app_health.py tests/api -m "not lab_issue"
+python -m gaussiq.export_web
+pytest -p no:playwright tests/test_routing.py tests/test_hybrid_agent.py tests/test_rca_engine.py tests/test_layout.py tests/test_app_health.py tests/test_gaussiq_routing.py tests/test_gaussiq_rca.py tests/test_gaussiq_layout.py tests/gaussiq_suites tests/api -m "not lab_issue"
 # Allure HTML (needs the Allure CLI):
 # scripts/generate_allure.sh
 python -m http.server 8765 --directory docs

@@ -1,0 +1,17 @@
+{
+  "tenant": "rocket-pack-lab",
+  "note": "Mocked security fixture — not a live scan, no exploits. Secrets are already redacted.",
+  "generated_at": "2026-11-13T06:00:00Z",
+  "case_api": {
+    "url": "https://case-intel.rocket-pack-lab.example/v1/graphql",
+    "auth_required": false,
+    "anonymous_graphql": true,
+    "tls": true
+  },
+  "secret_in_log": {
+    "token_like": true,
+    "component": "rec-engine",
+    "line": "Authorization: Bearer giq_lab_****redacted****"
+  },
+  "live_scan": false
+}

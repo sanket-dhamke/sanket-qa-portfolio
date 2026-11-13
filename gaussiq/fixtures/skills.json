@@ -1,0 +1,32 @@
+{
+  "tenant": "rocket-pack-lab",
+  "note": "Invented Skills Intelligence-style gaps for the demo tenant. Inferred skills in a real product need human approval — this lab only reads fixtures.",
+  "generated_at": "2026-11-13T06:00:00Z",
+  "high_impact_gaps": 2,
+  "items": [
+    {
+      "skill": "TLS / certificate troubleshooting",
+      "demand": "High",
+      "coverage": 0,
+      "people": 0,
+      "recency_days": 240,
+      "why": "AJ18991 needs a cert SAN check. Nobody on this EMEA shift has closed a cert case in 240 days."
+    },
+    {
+      "skill": "Salesforce API",
+      "demand": "High",
+      "coverage": 1,
+      "people": 1,
+      "recency_days": 12,
+      "why": "AJ19014 is waiting. One person closed Salesforce API work recently; that person is already on two other cases."
+    },
+    {
+      "skill": "Connector ingest",
+      "demand": "Medium",
+      "coverage": 2,
+      "people": 2,
+      "recency_days": 4,
+      "why": "Coverage exists. Not the bottleneck for AJ18991."
+    }
+  ]
+}

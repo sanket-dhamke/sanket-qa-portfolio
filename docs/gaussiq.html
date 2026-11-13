@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quality monitoring — GaussIQ Execution Intelligence 1.0 (demo)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/gaussiq.css">
+</head>
+<body class="giq">
+  <header class="giq-header">
+    <div class="title">Quality monitoring · GaussIQ Execution Intelligence (1.0) <span>personal lab · hybrid QA agent · fixtures only</span></div>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="console.html">DataHub lab</a>
+      <a href="architecture.html">Architecture</a>
+      <a href="about.html">About</a>
+    </nav>
+  </header>
+  <div class="banner">
+    Personal quality-monitoring lab for GaussIQ Execution Intelligence 1.0 — performance, security, case-plan health, suite runs.
+    Keyword/rule router. No hosted model call from this page. Numbers are fixtures, not live production.
+    Not affiliated with GaussIQ. Not their product. Not employment.
+  </div>
+
+  <section class="page-hero" data-testid="giq-hero">
+    <p class="kicker">Personal QA lab · not affiliated</p>
+    <h1>Quality monitoring for GaussIQ Execution Intelligence (1.0)</h1>
+    <p>Performance, security, case-plan health, and suite runs — Sanket’s hybrid agent configured for this domain so a CTO can see QA on <em>this</em> product problem. Dummy tenant. Fixtures, not live production.</p>
+    <p class="try-this-wrap">
+      <a class="try-this" href="#connect-gate" data-testid="try-this">Try this out — click here to see how it works.</a>
+    </p>
+  </section>
+
+  <section id="connect-gate" class="connect-gate" data-testid="connect-gate">
+    <div class="panel connect-card">
+      <h2>Connect / Apply</h2>
+      <p class="hint">Dummy GaussIQ 1.0 lab only. Fields are pre-filled fake values you can edit. Credentials stay in this page’s memory — a hard refresh returns here. Nothing is sent to GaussIQ, a cluster, or an SMTP host.</p>
+      <div class="connect-grid">
+        <label>Demo tenant
+          <input id="c-tenant" type="text" value="rocket-pack-lab" autocomplete="off">
+        </label>
+        <label>Support queue
+          <input id="c-queue" type="text" value="emea-support" autocomplete="off">
+        </label>
+        <label>Region
+          <input id="c-region" type="text" value="us-east-1" autocomplete="off">
+        </label>
+        <label>Signal pack
+          <input id="c-pack" type="text" value="mock-ticketing" autocomplete="off">
+        </label>
+        <label>Lab token
+          <input id="c-token" type="password" value="giq_lab_demo_not_a_secret" autocomplete="off">
+        </label>
+        <label>Lab user
+          <input id="c-user" type="text" value="giquser" autocomplete="off">
+        </label>
+      </div>
+      <div class="connect-actions">
+        <button type="button" id="btn-connect">Connect</button>
+        <span class="connect-help">Click Connect to open the quality-monitoring dashboard for this GaussIQ 1.0 demo tenant (fixtures only — no live GaussIQ call).</span>
+      </div>
+      <ol id="connect-log" class="connect-log" hidden></ol>
+    </div>
+  </section>
+
+  <div id="monitor" class="hidden" data-testid="monitor">
+    <div class="kpis" id="kpis">
+      <div class="kpi"><span>1.0 quality</span><strong id="health-live">—</strong></div>
+      <div class="kpi"><span>Gross MTTR</span><strong id="mttr-live">—</strong></div>
+      <div class="kpi"><span>Eng assist</span><strong id="assist-live">—</strong></div>
+      <div class="kpi"><span>Open cases</span><strong id="cases-live">—</strong></div>
+      <div class="kpi"><span>Last suite</span><strong id="suite-live">idle</strong></div>
+    </div>
+
+    <section id="quality-dash" class="quality-dash" data-testid="quality-dash">
+      <h2 class="dash-title">Quality dashboard <span>service health · MTTR vs baseline · security · RCA fire / skip — then chat</span></h2>
+      <div class="dashboard-grid">
+        <article class="panel">
+          <h2>Service health</h2>
+          <p class="hint">24x7 health of GaussIQ 1.0 demo services. CPU is % of each service limit. Not a live cluster.</p>
+          <table id="svc-table" data-testid="svc-table">
+            <thead>
+              <tr>
+                <th>Service</th><th>Product lens</th><th>Status</th><th>Restarts</th><th>CPU % limit</th><th>Memory</th>
+              </tr>
+            </thead>
+            <tbody id="svc-body"></tbody>
+          </table>
+        </article>
+        <article class="panel">
+          <h2>Performance vs baseline</h2>
+          <p class="hint">Original demo-tenant fixtures. Not GaussIQ published outcome ranges. Not live production.</p>
+          <div class="charts-grid">
+            <div class="chart-box">
+              <p>Hours (now vs baseline)</p>
+              <canvas id="mttr-chart"></canvas>
+            </div>
+            <div class="chart-box">
+              <p>Open vs resolved (7d)</p>
+              <canvas id="vol-chart"></canvas>
+            </div>
+          </div>
+          <table>
+            <thead><tr><th>KPI</th><th>Now</th><th>Baseline</th></tr></thead>
+            <tbody id="perf-body"></tbody>
+          </table>
+        </article>
+        <article class="panel">
+          <h2>Security findings</h2>
+          <p class="hint">Mocked fixture — not a live scan, no exploits. Secrets are redacted.</p>
+          <div id="sec-findings" data-testid="sec-findings"></div>
+          <div class="perf-rca" id="sec-rca" data-testid="sec-rca">
+            <h2>Root cause</h2>
+            <p class="hint">Fired rules vs Checked — not the cause. TLS on GaussIQ itself is not why GraphQL is open.</p>
+            <div class="rca-list" id="sec-rca-list"></div>
+          </div>
+        </article>
+        <article class="panel">
+          <h2>RCA · fire / skip</h2>
+          <p class="hint">HTTP 500 is a symptom. CERT-MISMATCH vs application code are different problems. Skipped rules are part of the diagnosis.</p>
+          <div class="rca-list" id="health-rca-list" data-testid="health-rca"></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel chat" id="chat-panel">
+      <div class="chat-head">
+        <h2>Ask the quality agent</h2>
+        <button type="button" id="btn-qbank" class="qbank-link" data-testid="qbank-toggle" aria-expanded="false">Questions you can ask</button>
+      </div>
+      <div id="qbank" class="qbank hidden" data-testid="qbank" hidden></div>
+      <div class="log" id="log"></div>
+      <div class="canned" id="canned"></div>
+      <div class="composer">
+        <input id="q" type="text" placeholder="Ask, then press Enter. Try current quality, security, why MTTR is high, API smoke…" aria-label="Question">
+        <button type="button" id="ask">Ask</button>
+      </div>
+    </section>
+
+    <section class="panel extra">
+      <div class="tabs" role="tablist">
+        <button type="button" class="tab on" data-tab="cases" aria-selected="true">Cases</button>
+        <button type="button" class="tab" data-tab="skills" aria-selected="false">Skills</button>
+        <button type="button" class="tab" data-tab="suites" aria-selected="false">Suites</button>
+        <button type="button" class="tab" data-tab="rca" aria-selected="false">RCA detail</button>
+      </div>
+      <div class="tab-panel on" id="tab-cases">
+        <p class="hint">Invented support cases. AJ18991 and Jetsons names appear on GaussIQ public marketing as DEMO examples — not a live customer.</p>
+        <div id="case-table"></div>
+      </div>
+      <div class="tab-panel" id="tab-skills">
+        <p class="hint">Skills Intelligence-style gaps for this shift. This lab does not infer skills from a model.</p>
+        <div id="skill-table"></div>
+      </div>
+      <div class="tab-panel" id="tab-suites">
+        <p class="hint" id="suite-hint">Ask the agent to run smoke, sanity, or regression. Catalog replay — not a live pytest run.</p>
+        <div class="charts-grid">
+          <div class="chart-box">
+            <p>Last suite pass / fail</p>
+            <canvas id="suite-chart"></canvas>
+          </div>
+          <div class="chart-box">
+            <p>Layer mix</p>
+            <canvas id="layer-chart"></canvas>
+          </div>
+        </div>
+        <div id="suite-table"></div>
+      </div>
+      <div class="tab-panel" id="tab-rca">
+        <div class="rca-list" id="rca-list"></div>
+      </div>
+    </section>
+  </div>
+  <footer class="site-footer">
+    <p class="note">This is not GaussIQ’s product. It is Sanket Dhamke’s hybrid QA agent configured for Execution Intelligence so a CTO can see quality and agents on <em>this</em> problem — not on DataHub. Personal lab. Not affiliated with GaussIQ. Not employment. Metrics, cases, and suite runs are simulated fixtures, not live production. Demo names such as AJ18991 / George Jetson appear on GaussIQ public marketing; this page does not copy their UI.</p>
+  </footer>
+  <script src="js/gaussiq-router.js"></script>
+  <script src="js/gaussiq-lab.js"></script>
+</body>
+</html>

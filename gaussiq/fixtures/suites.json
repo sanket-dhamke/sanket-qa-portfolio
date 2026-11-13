@@ -1,0 +1,117 @@
+{
+  "note": "Tiny pytest-shaped catalog for the GaussIQ 1.0 demo tenant. Pages replays this JSON. Python tests under tests/gaussiq_suites/ own the live checks.",
+  "cases": [
+    {
+      "id": "test_case_intel_health",
+      "name": "Case Intelligence API health is 200",
+      "layer": "api",
+      "suites": ["smoke", "sanity", "regression"],
+      "status": "pass",
+      "duration_ms": 42
+    },
+    {
+      "id": "test_skills_intel_health",
+      "name": "Skills Intelligence API health is 200",
+      "layer": "api",
+      "suites": ["smoke", "sanity", "regression"],
+      "status": "pass",
+      "duration_ms": 38
+    },
+    {
+      "id": "test_insights_health",
+      "name": "Management Insights API health is 200",
+      "layer": "api",
+      "suites": ["smoke", "sanity", "regression"],
+      "status": "pass",
+      "duration_ms": 40
+    },
+    {
+      "id": "test_signal_connector_ready",
+      "name": "Signal connector stays Running so evidence is current",
+      "layer": "api",
+      "suites": ["sanity", "regression"],
+      "status": "fail",
+      "duration_ms": 88,
+      "actual": "signal-connector CrashLoopBackOff, 5 restarts",
+      "rca": {
+        "id": "CONNECTOR-LAG",
+        "symptom": "Case Intelligence plans arrive empty because similar-case evidence is stale.",
+        "cause": "The ticketing signal connector is crash-looping. Historical cases are not landing in the evidence index.",
+        "fix": "Restore signal-connector before trusting AJ18991 similar-case matches. Do not treat empty evidence as a missing KB article.",
+        "evidence": ["signal-connector status=CrashLoopBackOff restarts=5"]
+      }
+    },
+    {
+      "id": "test_case_aj18991_cert_plan",
+      "name": "AJ18991 plan names cert SAN mismatch, not generic HTTP 500",
+      "layer": "api",
+      "suites": ["sanity", "regression"],
+      "status": "fail",
+      "duration_ms": 110,
+      "actual": "HTTP 500 still open; cert SAN sandbox vs production",
+      "rca": {
+        "id": "CERT-MISMATCH",
+        "symptom": "AJ18991 — Spaceley Sprocket migration tool returns HTTP 500 in the EMEA sandbox.",
+        "cause": "Certificate SAN does not match the sandbox host. The 500 is the symptom, not application code.",
+        "fix": "Reissue the sandbox certificate with the matching SAN, then re-run the migration job. Do not patch the SFM wizard for a generic 500.",
+        "evidence": ["AJ18991", "similar AJ18268, AJ18600", "component=SFM wizard certificate validation"]
+      }
+    },
+    {
+      "id": "test_mttr_snapshot_present",
+      "name": "Gross and net MTTR exist in the performance fixture",
+      "layer": "performance",
+      "suites": ["sanity", "regression"],
+      "status": "pass",
+      "duration_ms": 21
+    },
+    {
+      "id": "test_skills_gap_tls",
+      "name": "TLS / certificate skill gap is listed for this shift",
+      "layer": "api",
+      "suites": ["sanity", "regression"],
+      "status": "pass",
+      "duration_ms": 19
+    },
+    {
+      "id": "test_case_api_requires_auth",
+      "name": "Case Intelligence GraphQL requires a session",
+      "layer": "security",
+      "suites": ["regression"],
+      "status": "fail",
+      "duration_ms": 55,
+      "actual": "anonymous GraphQL 200",
+      "rca": {
+        "id": "AUTH-OPEN",
+        "symptom": "Case Intelligence GraphQL answered without a session cookie.",
+        "cause": "Auth is not required on this demo endpoint. Anyone who can reach it can read case plans. Fixture finding, not a live exploit.",
+        "fix": "Require a session on case-intel-api before serving case plans. A 200 from /health is not proof that auth is on.",
+        "evidence": ["auth_required=false", "anonymous_graphql=true"]
+      }
+    },
+    {
+      "id": "test_no_secret_in_rec_engine_logs",
+      "name": "Recommendation engine logs do not echo Authorization",
+      "layer": "security",
+      "suites": ["regression"],
+      "status": "fail",
+      "duration_ms": 48,
+      "actual": "Authorization Bearer redacted token in rec-engine log",
+      "rca": {
+        "id": "SECRET-IN-LOG",
+        "symptom": "A token-like value appeared in rec-engine logs.",
+        "cause": "The recommendation engine echoed an Authorization header. Shown redacted: giq_lab_****redacted****.",
+        "fix": "Stop logging Authorization headers. Rotate the lab token.",
+        "evidence": ["Authorization: Bearer giq_lab_****redacted****"]
+      }
+    },
+    {
+      "id": "test_eng_assist_hours",
+      "name": "Engineer assist hours are present in the fixture",
+      "layer": "performance",
+      "suites": ["regression"],
+      "status": "pass",
+      "duration_ms": 16
+    }
+  ]
+}

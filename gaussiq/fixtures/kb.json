@@ -1,0 +1,33 @@
+{
+  "note": "Paraphrased public GaussIQ product concepts for this QA demo. Not their screenshots, CSS, or proprietary copy.",
+  "entries": [
+    {
+      "id": "case-intelligence",
+      "title": "Case Intelligence (public concept)",
+      "keywords": ["case intelligence", "likely root cause", "next-best-action", "next best action", "evidence-backed", "aj18991"],
+      "summary": "Public product idea: for one support case, recommend a likely root cause, next actions, verification, and the evidence (including knowledge you should ignore). This lab does not clone that UI. It stores AJ18991 as a fixture and runs named RCA rules.",
+      "citation": "public:gaussiq.com/product (paraphrased)"
+    },
+    {
+      "id": "skills-intelligence",
+      "title": "Skills Intelligence (public concept)",
+      "keywords": ["skills intelligence", "skill gap", "proficiency", "recency", "assignment"],
+      "summary": "Public product idea: infer demonstrated skills, proficiency, and recency from closed work, then show coverage gaps. Human approval is called out before inferred skills become policy. This lab only lists fixture gaps — it does not infer skills from a model.",
+      "citation": "public:gaussiq.com/product (paraphrased)"
+    },
+    {
+      "id": "management-insights",
+      "title": "Management Insights (public concept)",
+      "keywords": ["management insights", "execution intelligence", "leader", "mttr", "eng assist"],
+      "summary": "Public product idea: turn operational evidence into a ranked backlog of what to change (staffing, AI vs human split, broken resolution paths). This lab shows original MTTR / eng-assist fixtures for a demo tenant, not GaussIQ published outcome ranges.",
+      "citation": "public:gaussiq.com/product (paraphrased)"
+    },
+    {
+      "id": "connect-signals",
+      "title": "Connect signals (public concept)",
+      "keywords": ["connect signals", "ticketing", "telemetry", "work history", "connector"],
+      "summary": "Public how-it-works step: connect ticketing, knowledge, CRM, telemetry, and work history, then recommend an execution path. This lab mocks one ticketing connector as CrashLoopBackOff so Case Intelligence evidence goes stale.",
+      "citation": "public:gaussiq.com (paraphrased)"
+    }
+  ]
+}

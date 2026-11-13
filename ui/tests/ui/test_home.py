@@ -10,7 +10,7 @@ pytestmark = pytest.mark.ui
 
 
 @pytest.mark.smoke
-def test_home_has_name_and_three_cards(page, site_url: str) -> None:
+def test_home_has_name_and_cards(page, site_url: str) -> None:
     home = HomePage(page)
     home.open(site_url)
     home.expect_lead_sdet()

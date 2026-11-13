@@ -1,0 +1,75 @@
+{
+  "tenant": "rocket-pack-lab",
+  "product": "GaussIQ 1.0 (demo)",
+  "queue": "emea-support",
+  "region": "us-east-1",
+  "generated_at": "2026-11-13T06:00:00Z",
+  "note": "Original 24x7 health fixture for a fictional demo tenant. Not a live GaussIQ cluster.",
+  "services": [
+    {
+      "id": "case-intel-api",
+      "name": "Case Intelligence API",
+      "product": "Case Intelligence",
+      "status": "Running",
+      "ready": true,
+      "restarts": 0,
+      "last_reason": "",
+      "probe": "health check is answering OK",
+      "cpu_pct": 34.0,
+      "memory_mib": 512,
+      "memory_limit_mib": 1024
+    },
+    {
+      "id": "skills-intel-api",
+      "name": "Skills Intelligence API",
+      "product": "Skills Intelligence",
+      "status": "Running",
+      "ready": true,
+      "restarts": 0,
+      "last_reason": "",
+      "probe": "health check is answering OK",
+      "cpu_pct": 22.0,
+      "memory_mib": 380,
+      "memory_limit_mib": 768
+    },
+    {
+      "id": "insights-api",
+      "name": "Management Insights API",
+      "product": "Management Insights",
+      "status": "Running",
+      "ready": true,
+      "restarts": 1,
+      "last_reason": "",
+      "probe": "health check is answering OK",
+      "cpu_pct": 18.0,
+      "memory_mib": 290,
+      "memory_limit_mib": 768
+    },
+    {
+      "id": "signal-connector",
+      "name": "Signal connector (ticketing)",
+      "product": "Connect signals",
+      "status": "CrashLoopBackOff",
+      "ready": false,
+      "restarts": 5,
+      "last_reason": "Error",
+      "probe": "health check got no response because the process was already down",
+      "cpu_pct": 8.0,
+      "memory_mib": 140,
+      "memory_limit_mib": 512
+    },
+    {
+      "id": "rec-engine",
+      "name": "Recommendation engine",
+      "product": "Recommend the best execution",
+      "status": "Running",
+      "ready": true,
+      "restarts": 0,
+      "last_reason": "",
+      "probe": "health check is answering OK",
+      "cpu_pct": 41.0,
+      "memory_mib": 640,
+      "memory_limit_mib": 1024
+    }
+  ]
+}

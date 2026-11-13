@@ -1,0 +1,11 @@
+{
+  "note": "Fictional lab users only.",
+  "accounts": [
+    {
+      "username": "giquser",
+      "password": "giqpass",
+      "displayName": "Lab engineer",
+      "role": "support-engineer"
+    }
+  ]
+}

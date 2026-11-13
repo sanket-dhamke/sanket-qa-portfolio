@@ -1,0 +1,16 @@
+{
+  "tenant": "rocket-pack-lab",
+  "window": "last 30 days (demo fixture)",
+  "generated_at": "2026-11-13T06:00:00Z",
+  "note": "Original demo-tenant numbers. Not GaussIQ published outcome ranges. A model must not invent these.",
+  "gross_mttr_hours": 34.2,
+  "net_mttr_hours": 25.1,
+  "eng_assist_hours": 9.4,
+  "open_cases": 3,
+  "resolved_7d": 41,
+  "baseline": {
+    "gross_mttr_hours": 31.0,
+    "net_mttr_hours": 21.4,
+    "eng_assist_hours": 8.1
+  }
+}

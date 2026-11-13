@@ -1,0 +1,822 @@
+{
+  "canned": [
+    "What is the current quality of GaussIQ 1.0?",
+    "any security issues?",
+    "Why is MTTR high?",
+    "Run API smoke on case-plan APIs"
+  ],
+  "questions": [
+    {
+      "id": "health",
+      "title": "24x7 health",
+      "questions": [
+        "What is the current quality of GaussIQ 1.0?",
+        "What is the current state of GaussIQ 1.0 demo services?",
+        "Which GaussIQ 1.0 services are down?"
+      ]
+    },
+    {
+      "id": "cases",
+      "title": "Case Intelligence / RCA",
+      "questions": [
+        "Why did AJ18991 return HTTP 500?",
+        "Is AJ18991 a code defect?",
+        "What is the likely root cause for AJ18991?"
+      ]
+    },
+    {
+      "id": "performance",
+      "title": "Performance (MTTR / eng assist)",
+      "questions": [
+        "Why is MTTR high?",
+        "What is gross MTTR in this fixture?",
+        "What is net MTTR?",
+        "How many engineer assist hours?"
+      ]
+    },
+    {
+      "id": "skills",
+      "title": "Skills Intelligence",
+      "questions": [
+        "Which skill gaps are high impact?",
+        "Who can troubleshoot certificates?"
+      ]
+    },
+    {
+      "id": "security",
+      "title": "Security",
+      "questions": [
+        "any security issues?",
+        "why is case-intel-api exposed?",
+        "Is there a secret in the logs?",
+        "Is TLS the cause?"
+      ]
+    },
+    {
+      "id": "suites",
+      "title": "Smoke / sanity / regression",
+      "questions": [
+        "Run API smoke on case-plan APIs",
+        "Run smoke suite",
+        "Run sanity suite",
+        "Run regression suite",
+        "Run security regression"
+      ]
+    },
+    {
+      "id": "login",
+      "title": "Lab login",
+      "questions": [
+        "Test the login with username as giquser and password as giqpass"
+      ]
+    },
+    {
+      "id": "kb",
+      "title": "Public product concepts",
+      "questions": [
+        "What is Case Intelligence?",
+        "What is Skills Intelligence?",
+        "What is Management Insights?"
+      ]
+    }
+  ],
+  "rules": [
+    {
+      "route": "login_api",
+      "source": "handler:login_api",
+      "any": [
+        "test the login",
+        "test login",
+        "run login",
+        "log in with",
+        "login with",
+        "username as",
+        "password as"
+      ]
+    },
+    {
+      "route": "suite_explain",
+      "source": "handler:suite_explain",
+      "any": [
+        "why did smoke",
+        "why did sanity",
+        "why did regression",
+        "how many smoke",
+        "how many sanity",
+        "how many regression"
+      ]
+    },
+    {
+      "route": "run_suite",
+      "source": "handler:run_suite",
+      "any": [
+        "sanity suite",
+        "smoke suite",
+        "run smoke",
+        "run sanity",
+        "run regression",
+        "regression suite",
+        "run api tests",
+        "run api smoke",
+        "api smoke",
+        "case-plan",
+        "case plan api",
+        "security smoke",
+        "security sanity",
+        "run security",
+        "security regression"
+      ]
+    },
+    {
+      "route": "app_status",
+      "source": "handler:app_status",
+      "any": [
+        "current state of",
+        "current status of",
+        "application status",
+        "app status",
+        "health of",
+        "current quality",
+        "quality of gaussiq",
+        "quality of 1.0",
+        "demo services",
+        "24x7",
+        "24 x 7",
+        "gaussiq 1.0"
+      ]
+    },
+    {
+      "route": "case_rca",
+      "source": "handler:case_rca",
+      "any": [
+        "aj18991",
+        "http 500",
+        "cert mismatch",
+        "certificate",
+        "jetson",
+        "likely root cause",
+        "code defect",
+        "sfm wizard"
+      ]
+    },
+    {
+      "route": "skills_gaps",
+      "source": "handler:skills_gaps",
+      "any": [
+        "skill gap",
+        "skill gaps",
+        "skills intelligence",
+        "who can",
+        "coverage",
+        "salesforce api"
+      ]
+    },
+    {
+      "route": "why_mttr",
+      "source": "handler:why_mttr",
+      "any": [
+        "why is mttr",
+        "why mttr",
+        "mttr high",
+        "mttr is high",
+        "why is resolution"
+      ]
+    },
+    {
+      "route": "perf_metrics",
+      "source": "handler:perf_metrics",
+      "any": [
+        "gross mttr",
+        "net mttr",
+        "mttr",
+        "eng assist",
+        "engineer assist",
+        "performance"
+      ]
+    },
+    {
+      "route": "security_rca",
+      "source": "handler:security_rca",
+      "any": [
+        "any security issues",
+        "security issues",
+        "security",
+        "secret",
+        "exposed",
+        "tls",
+        "auth",
+        "why is case-intel",
+        "unauthenticated"
+      ]
+    },
+    {
+      "route": "perf_rca",
+      "source": "handler:perf_rca",
+      "any": [
+        "root cause",
+        "root-cause",
+        "what is wrong",
+        "what's wrong",
+        "diagnose",
+        "why is the connector",
+        "signal connector"
+      ]
+    },
+    {
+      "route": "service_health",
+      "source": "handler:service_health",
+      "any": [
+        "which service",
+        "services are down",
+        "service health",
+        "crashloop",
+        "connector",
+        "cpu",
+        "memory"
+      ]
+    },
+    {
+      "route": "kb_retrieve",
+      "source": "kb",
+      "any": [
+        "case intelligence",
+        "skills intelligence",
+        "management insights",
+        "execution intelligence",
+        "connect signals",
+        "what is case",
+        "what is skills",
+        "what is management"
+      ]
+    }
+  ],
+  "fixtures": {
+    "services": {
+      "tenant": "rocket-pack-lab",
+      "product": "GaussIQ 1.0 (demo)",
+      "queue": "emea-support",
+      "region": "us-east-1",
+      "generated_at": "2026-11-13T06:00:00Z",
+      "note": "Original 24x7 health fixture for a fictional demo tenant. Not a live GaussIQ cluster.",
+      "services": [
+        {
+          "id": "case-intel-api",
+          "name": "Case Intelligence API",
+          "product": "Case Intelligence",
+          "status": "Running",
+          "ready": true,
+          "restarts": 0,
+          "last_reason": "",
+          "probe": "health check is answering OK",
+          "cpu_pct": 34.0,
+          "memory_mib": 512,
+          "memory_limit_mib": 1024
+        },
+        {
+          "id": "skills-intel-api",
+          "name": "Skills Intelligence API",
+          "product": "Skills Intelligence",
+          "status": "Running",
+          "ready": true,
+          "restarts": 0,
+          "last_reason": "",
+          "probe": "health check is answering OK",
+          "cpu_pct": 22.0,
+          "memory_mib": 380,
+          "memory_limit_mib": 768
+        },
+        {
+          "id": "insights-api",
+          "name": "Management Insights API",
+          "product": "Management Insights",
+          "status": "Running",
+          "ready": true,
+          "restarts": 1,
+          "last_reason": "",
+          "probe": "health check is answering OK",
+          "cpu_pct": 18.0,
+          "memory_mib": 290,
+          "memory_limit_mib": 768
+        },
+        {
+          "id": "signal-connector",
+          "name": "Signal connector (ticketing)",
+          "product": "Connect signals",
+          "status": "CrashLoopBackOff",
+          "ready": false,
+          "restarts": 5,
+          "last_reason": "Error",
+          "probe": "health check got no response because the process was already down",
+          "cpu_pct": 8.0,
+          "memory_mib": 140,
+          "memory_limit_mib": 512
+        },
+        {
+          "id": "rec-engine",
+          "name": "Recommendation engine",
+          "product": "Recommend the best execution",
+          "status": "Running",
+          "ready": true,
+          "restarts": 0,
+          "last_reason": "",
+          "probe": "health check is answering OK",
+          "cpu_pct": 41.0,
+          "memory_mib": 640,
+          "memory_limit_mib": 1024
+        }
+      ]
+    },
+    "cases": {
+      "tenant": "rocket-pack-lab",
+      "note": "Invented support-case fixtures. Ticket ids AJ18991 / AJ18268 / AJ18600 and Jetsons names appear on GaussIQ public marketing as DEMO examples \u2014 not a live customer.",
+      "generated_at": "2026-11-13T06:00:00Z",
+      "open": 3,
+      "resolved_7d": 41,
+      "items": [
+        {
+          "id": "AJ18991",
+          "customer": "George Jetson",
+          "org": "Rocket Pack Express",
+          "product": "Spaceley Sprocket migration tool",
+          "severity": "Business Critical",
+          "region": "EMEA",
+          "status": "open",
+          "owner": "George Jetson",
+          "hops": 4,
+          "symptom": "HTTP 500 / internal server error during sandbox migration",
+          "component": "SFM wizard certificate validation",
+          "likely_cause": "Sandbox vs production certificate SAN mismatch",
+          "similar": [
+            "AJ18268",
+            "AJ18600"
+          ],
+          "kb_discarded": [
+            "generic HTTP 500 runbook \u2014 wrong topic for this cert path"
+          ],
+          "verification": "No 500 after the sandbox cert is reissued with the matching SAN; job record shows success."
+        },
+        {
+          "id": "AJ19014",
+          "customer": "Cosmo Spacely",
+          "org": "Spacely Sprockets",
+          "product": "Case ingest from Salesforce API",
+          "severity": "High",
+          "region": "EMEA",
+          "status": "open",
+          "owner": "unassigned",
+          "hops": 2,
+          "symptom": "Salesforce API timeout while opening a case",
+          "component": "Skills routing",
+          "likely_cause": "Only one engineer on this shift has recent Salesforce API closures",
+          "similar": [
+            "AJ18711"
+          ],
+          "kb_discarded": [],
+          "verification": "Case assigned to someone with recent Salesforce API proficiency; ingest completes under 2 minutes."
+        },
+        {
+          "id": "AJ18802",
+          "customer": "Rosie Robot",
+          "org": "Rocket Pack Express",
+          "product": "Signal connector",
+          "severity": "High",
+          "region": "EMEA",
+          "status": "open",
+          "owner": "Rosie Robot",
+          "hops": 1,
+          "symptom": "Case Intelligence plan is empty \u2014 evidence index lag",
+          "component": "signal-connector",
+          "likely_cause": "Ticketing connector crash-loop; historical cases are not landing in the evidence index",
+          "similar": [],
+          "kb_discarded": [
+            "rec-engine CPU \u2014 already under 50% of limit"
+          ],
+          "verification": "signal-connector stays Running; Case Intelligence cites similar tickets again."
+        }
+      ]
+    },
+    "performance": {
+      "tenant": "rocket-pack-lab",
+      "window": "last 30 days (demo fixture)",
+      "generated_at": "2026-11-13T06:00:00Z",
+      "note": "Original demo-tenant numbers. Not GaussIQ published outcome ranges. A model must not invent these.",
+      "gross_mttr_hours": 34.2,
+      "net_mttr_hours": 25.1,
+      "eng_assist_hours": 9.4,
+      "open_cases": 3,
+      "resolved_7d": 41,
+      "baseline": {
+        "gross_mttr_hours": 31.0,
+        "net_mttr_hours": 21.4,
+        "eng_assist_hours": 8.1
+      }
+    },
+    "skills": {
+      "tenant": "rocket-pack-lab",
+      "note": "Invented Skills Intelligence-style gaps for the demo tenant. Inferred skills in a real product need human approval \u2014 this lab only reads fixtures.",
+      "generated_at": "2026-11-13T06:00:00Z",
+      "high_impact_gaps": 2,
+      "items": [
+        {
+          "skill": "TLS / certificate troubleshooting",
+          "demand": "High",
+          "coverage": 0,
+          "people": 0,
+          "recency_days": 240,
+          "why": "AJ18991 needs a cert SAN check. Nobody on this EMEA shift has closed a cert case in 240 days."
+        },
+        {
+          "skill": "Salesforce API",
+          "demand": "High",
+          "coverage": 1,
+          "people": 1,
+          "recency_days": 12,
+          "why": "AJ19014 is waiting. One person closed Salesforce API work recently; that person is already on two other cases."
+        },
+        {
+          "skill": "Connector ingest",
+          "demand": "Medium",
+          "coverage": 2,
+          "people": 2,
+          "recency_days": 4,
+          "why": "Coverage exists. Not the bottleneck for AJ18991."
+        }
+      ]
+    },
+    "security": {
+      "tenant": "rocket-pack-lab",
+      "note": "Mocked security fixture \u2014 not a live scan, no exploits. Secrets are already redacted.",
+      "generated_at": "2026-11-13T06:00:00Z",
+      "case_api": {
+        "url": "https://case-intel.rocket-pack-lab.example/v1/graphql",
+        "auth_required": false,
+        "anonymous_graphql": true,
+        "tls": true
+      },
+      "secret_in_log": {
+        "token_like": true,
+        "component": "rec-engine",
+        "line": "Authorization: Bearer giq_lab_****redacted****"
+      },
+      "live_scan": false
+    },
+    "users": {
+      "note": "Fictional lab users only.",
+      "accounts": [
+        {
+          "username": "giquser",
+          "password": "giqpass",
+          "displayName": "Lab engineer",
+          "role": "support-engineer"
+        }
+      ]
+    },
+    "suites": {
+      "note": "Tiny pytest-shaped catalog for the GaussIQ 1.0 demo tenant. Pages replays this JSON. Python tests under tests/gaussiq_suites/ own the live checks.",
+      "cases": [
+        {
+          "id": "test_case_intel_health",
+          "name": "Case Intelligence API health is 200",
+          "layer": "api",
+          "suites": [
+            "smoke",
+            "sanity",
+            "regression"
+          ],
+          "status": "pass",
+          "duration_ms": 42
+        },
+        {
+          "id": "test_skills_intel_health",
+          "name": "Skills Intelligence API health is 200",
+          "layer": "api",
+          "suites": [
+            "smoke",
+            "sanity",
+            "regression"
+          ],
+          "status": "pass",
+          "duration_ms": 38
+        },
+        {
+          "id": "test_insights_health",
+          "name": "Management Insights API health is 200",
+          "layer": "api",
+          "suites": [
+            "smoke",
+            "sanity",
+            "regression"
+          ],
+          "status": "pass",
+          "duration_ms": 40
+        },
+        {
+          "id": "test_signal_connector_ready",
+          "name": "Signal connector stays Running so evidence is current",
+          "layer": "api",
+          "suites": [
+            "sanity",
+            "regression"
+          ],
+          "status": "fail",
+          "duration_ms": 88,
+          "actual": "signal-connector CrashLoopBackOff, 5 restarts",
+          "rca": {
+            "id": "CONNECTOR-LAG",
+            "symptom": "Case Intelligence plans arrive empty because similar-case evidence is stale.",
+            "cause": "The ticketing signal connector is crash-looping. Historical cases are not landing in the evidence index.",
+            "fix": "Restore signal-connector before trusting AJ18991 similar-case matches. Do not treat empty evidence as a missing KB article.",
+            "evidence": [
+              "signal-connector status=CrashLoopBackOff restarts=5"
+            ]
+          }
+        },
+        {
+          "id": "test_case_aj18991_cert_plan",
+          "name": "AJ18991 plan names cert SAN mismatch, not generic HTTP 500",
+          "layer": "api",
+          "suites": [
+            "sanity",
+            "regression"
+          ],
+          "status": "fail",
+          "duration_ms": 110,
+          "actual": "HTTP 500 still open; cert SAN sandbox vs production",
+          "rca": {
+            "id": "CERT-MISMATCH",
+            "symptom": "AJ18991 \u2014 Spaceley Sprocket migration tool returns HTTP 500 in the EMEA sandbox.",
+            "cause": "Certificate SAN does not match the sandbox host. The 500 is the symptom, not application code.",
+            "fix": "Reissue the sandbox certificate with the matching SAN, then re-run the migration job. Do not patch the SFM wizard for a generic 500.",
+            "evidence": [
+              "AJ18991",
+              "similar AJ18268, AJ18600",
+              "component=SFM wizard certificate validation"
+            ]
+          }
+        },
+        {
+          "id": "test_mttr_snapshot_present",
+          "name": "Gross and net MTTR exist in the performance fixture",
+          "layer": "performance",
+          "suites": [
+            "sanity",
+            "regression"
+          ],
+          "status": "pass",
+          "duration_ms": 21
+        },
+        {
+          "id": "test_skills_gap_tls",
+          "name": "TLS / certificate skill gap is listed for this shift",
+          "layer": "api",
+          "suites": [
+            "sanity",
+            "regression"
+          ],
+          "status": "pass",
+          "duration_ms": 19
+        },
+        {
+          "id": "test_case_api_requires_auth",
+          "name": "Case Intelligence GraphQL requires a session",
+          "layer": "security",
+          "suites": [
+            "regression"
+          ],
+          "status": "fail",
+          "duration_ms": 55,
+          "actual": "anonymous GraphQL 200",
+          "rca": {
+            "id": "AUTH-OPEN",
+            "symptom": "Case Intelligence GraphQL answered without a session cookie.",
+            "cause": "Auth is not required on this demo endpoint. Anyone who can reach it can read case plans. Fixture finding, not a live exploit.",
+            "fix": "Require a session on case-intel-api before serving case plans. A 200 from /health is not proof that auth is on.",
+            "evidence": [
+              "auth_required=false",
+              "anonymous_graphql=true"
+            ]
+          }
+        },
+        {
+          "id": "test_no_secret_in_rec_engine_logs",
+          "name": "Recommendation engine logs do not echo Authorization",
+          "layer": "security",
+          "suites": [
+            "regression"
+          ],
+          "status": "fail",
+          "duration_ms": 48,
+          "actual": "Authorization Bearer redacted token in rec-engine log",
+          "rca": {
+            "id": "SECRET-IN-LOG",
+            "symptom": "A token-like value appeared in rec-engine logs.",
+            "cause": "The recommendation engine echoed an Authorization header. Shown redacted: giq_lab_****redacted****.",
+            "fix": "Stop logging Authorization headers. Rotate the lab token.",
+            "evidence": [
+              "Authorization: Bearer giq_lab_****redacted****"
+            ]
+          }
+        },
+        {
+          "id": "test_eng_assist_hours",
+          "name": "Engineer assist hours are present in the fixture",
+          "layer": "performance",
+          "suites": [
+            "regression"
+          ],
+          "status": "pass",
+          "duration_ms": 16
+        }
+      ]
+    },
+    "kb": {
+      "note": "Paraphrased public GaussIQ product concepts for this QA demo. Not their screenshots, CSS, or proprietary copy.",
+      "entries": [
+        {
+          "id": "case-intelligence",
+          "title": "Case Intelligence (public concept)",
+          "keywords": [
+            "case intelligence",
+            "likely root cause",
+            "next-best-action",
+            "next best action",
+            "evidence-backed",
+            "aj18991"
+          ],
+          "summary": "Public product idea: for one support case, recommend a likely root cause, next actions, verification, and the evidence (including knowledge you should ignore). This lab does not clone that UI. It stores AJ18991 as a fixture and runs named RCA rules.",
+          "citation": "public:gaussiq.com/product (paraphrased)"
+        },
+        {
+          "id": "skills-intelligence",
+          "title": "Skills Intelligence (public concept)",
+          "keywords": [
+            "skills intelligence",
+            "skill gap",
+            "proficiency",
+            "recency",
+            "assignment"
+          ],
+          "summary": "Public product idea: infer demonstrated skills, proficiency, and recency from closed work, then show coverage gaps. Human approval is called out before inferred skills become policy. This lab only lists fixture gaps \u2014 it does not infer skills from a model.",
+          "citation": "public:gaussiq.com/product (paraphrased)"
+        },
+        {
+          "id": "management-insights",
+          "title": "Management Insights (public concept)",
+          "keywords": [
+            "management insights",
+            "execution intelligence",
+            "leader",
+            "mttr",
+            "eng assist"
+          ],
+          "summary": "Public product idea: turn operational evidence into a ranked backlog of what to change (staffing, AI vs human split, broken resolution paths). This lab shows original MTTR / eng-assist fixtures for a demo tenant, not GaussIQ published outcome ranges.",
+          "citation": "public:gaussiq.com/product (paraphrased)"
+        },
+        {
+          "id": "connect-signals",
+          "title": "Connect signals (public concept)",
+          "keywords": [
+            "connect signals",
+            "ticketing",
+            "telemetry",
+            "work history",
+            "connector"
+          ],
+          "summary": "Public how-it-works step: connect ticketing, knowledge, CRM, telemetry, and work history, then recommend an execution path. This lab mocks one ticketing connector as CrashLoopBackOff so Case Intelligence evidence goes stale.",
+          "citation": "public:gaussiq.com (paraphrased)"
+        }
+      ]
+    }
+  },
+  "rca_report": {
+    "principle": "HTTP 500 is a symptom. Name the component. CERT-MISMATCH fires when the sandbox certificate SAN does not match; APP-CODE-500 is skipped in that case. A skipped rule is part of the diagnosis.",
+    "fired": [
+      {
+        "id": "CERT-MISMATCH",
+        "severity": "HIGH",
+        "component": "SFM wizard certificate validation",
+        "title": "AJ18991 HTTP 500 is a certificate SAN mismatch",
+        "observation": "HTTP 500 / internal server error during sandbox migration on Spaceley Sprocket migration tool (customer George Jetson, Rocket Pack Express).",
+        "symptom": "HTTP 500 / internal server error during sandbox migration on Spaceley Sprocket migration tool (customer George Jetson, Rocket Pack Express).",
+        "cause": "Sandbox vs production certificate SAN mismatch. Similar DEMO tickets AJ18268, AJ18600 point at the same cert path. Discarded KB: generic HTTP 500 runbook \u2014 wrong topic for this cert path.",
+        "likely_cause": "Sandbox vs production certificate SAN mismatch. Similar DEMO tickets AJ18268, AJ18600 point at the same cert path. Discarded KB: generic HTTP 500 runbook \u2014 wrong topic for this cert path.",
+        "recommendation": "Reissue the sandbox certificate with the matching SAN, then re-run the migration. Do not patch the wizard for a generic 500.",
+        "suggested": "Reissue the sandbox certificate with the matching SAN, then re-run the migration. Do not patch the wizard for a generic 500.",
+        "fix": "Reissue the sandbox certificate with the matching SAN, then re-run the migration. Do not patch the wizard for a generic 500.",
+        "evidence": [
+          "id=AJ18991 severity=Business Critical region=EMEA",
+          "component=SFM wizard certificate validation",
+          "similar=AJ18268, AJ18600"
+        ]
+      },
+      {
+        "id": "CONNECTOR-LAG",
+        "severity": "HIGH",
+        "component": "signal-connector",
+        "title": "Signal connector is not running",
+        "observation": "1 of 5 GaussIQ 1.0 demo services are not ready: signal-connector.",
+        "symptom": "1 of 5 GaussIQ 1.0 demo services are not ready: signal-connector.",
+        "cause": "Ticketing signals are not landing, so Case Intelligence similar-case evidence goes stale (see AJ18802).",
+        "likely_cause": "Ticketing signals are not landing, so Case Intelligence similar-case evidence goes stale (see AJ18802).",
+        "recommendation": "Restore signal-connector before trusting empty case plans. Empty evidence is not a missing KB article.",
+        "suggested": "Restore signal-connector before trusting empty case plans. Empty evidence is not a missing KB article.",
+        "fix": "Restore signal-connector before trusting empty case plans. Empty evidence is not a missing KB article.",
+        "evidence": [
+          "signal-connector status=CrashLoopBackOff restarts=5 last_reason=Error"
+        ]
+      },
+      {
+        "id": "SKILL-GAP-TLS",
+        "severity": "HIGH",
+        "component": "skills-intel-api",
+        "title": "No one on this shift has recent cert troubleshooting",
+        "observation": "TLS / certificate troubleshooting demand=High coverage=0 recency_days=240.",
+        "symptom": "TLS / certificate troubleshooting demand=High coverage=0 recency_days=240.",
+        "cause": "AJ18991 needs a cert SAN check. Nobody on this EMEA shift has closed a cert case in 240 days.",
+        "likely_cause": "AJ18991 needs a cert SAN check. Nobody on this EMEA shift has closed a cert case in 240 days.",
+        "recommendation": "Pair AJ18991 with someone who has closed a cert case, or treat this as a training gap. Do not auto-assign from a model.",
+        "suggested": "Pair AJ18991 with someone who has closed a cert case, or treat this as a training gap. Do not auto-assign from a model.",
+        "fix": "Pair AJ18991 with someone who has closed a cert case, or treat this as a training gap. Do not auto-assign from a model.",
+        "evidence": [
+          "AJ18991 needs a cert SAN check. Nobody on this EMEA shift has closed a cert case in 240 days."
+        ]
+      }
+    ],
+    "skipped": [
+      {
+        "id": "APP-CODE-500",
+        "why": "Checked \u2014 not the cause. The 500 is the TLS SAN mismatch on AJ18991, not a defect in the SFM wizard code."
+      },
+      {
+        "id": "CPU-HOT",
+        "why": "No sampled GaussIQ 1.0 service is at \u226580% of its CPU limit."
+      },
+      {
+        "id": "INSIGHTS-DOWN",
+        "why": "Checked \u2014 not the cause. Management Insights API is Running. Stale case plans come from the connector, not Insights being down."
+      }
+    ],
+    "counts": {
+      "HIGH": 3
+    },
+    "service_count": 5,
+    "unhealthy": 1,
+    "skipped_heading": "Checked \u2014 not the cause"
+  },
+  "security_report": {
+    "principle": "Security findings are fixture-only. No live scan, no exploit. AUTH-OPEN is missing login, not missing TLS. Secrets in logs are shown redacted.",
+    "fired": [
+      {
+        "id": "AUTH-OPEN",
+        "severity": "HIGH",
+        "component": "case-intel-api",
+        "title": "Case Intelligence API is reachable without signing in",
+        "observation": "Mocked case-intel-api GraphQL answered without a session cookie.",
+        "symptom": "Mocked case-intel-api GraphQL answered without a session cookie.",
+        "cause": "Auth is not required on this demo endpoint. Anyone who can reach it can read case plans. This is a fixture finding, not a live exploit.",
+        "likely_cause": "Auth is not required on this demo endpoint. Anyone who can reach it can read case plans. This is a fixture finding, not a live exploit.",
+        "recommendation": "Require a session on case-intel-api before serving case plans. A 200 from /health is not proof that auth is on.",
+        "suggested": "Require a session on case-intel-api before serving case plans. A 200 from /health is not proof that auth is on.",
+        "fix": "Require a session on case-intel-api before serving case plans. A 200 from /health is not proof that auth is on.",
+        "evidence": [
+          "url=https://case-intel.rocket-pack-lab.example/v1/graphql",
+          "anonymous_graphql=True",
+          "source=gaussiq/fixtures/security.json"
+        ]
+      },
+      {
+        "id": "SECRET-IN-LOG",
+        "severity": "MEDIUM",
+        "component": "rec-engine",
+        "title": "Token-like value in a service log (redacted)",
+        "observation": "A token-like value appeared in `rec-engine` logs. Shown redacted: Authorization: Bearer giq_lab_****redacted****.",
+        "symptom": "A token-like value appeared in `rec-engine` logs. Shown redacted: Authorization: Bearer giq_lab_****redacted****.",
+        "cause": "The recommendation engine echoed an Authorization header. The raw value is never shown in this lab.",
+        "likely_cause": "The recommendation engine echoed an Authorization header. The raw value is never shown in this lab.",
+        "recommendation": "Stop logging Authorization headers. Rotate the lab token.",
+        "suggested": "Stop logging Authorization headers. Rotate the lab token.",
+        "fix": "Stop logging Authorization headers. Rotate the lab token.",
+        "evidence": [
+          "Authorization: Bearer giq_lab_****redacted****",
+          "source=gaussiq/fixtures/security.json"
+        ]
+      }
+    ],
+    "skipped": [
+      {
+        "id": "TLS-MISSING",
+        "why": "Checked \u2014 not the cause. case-intel-api already has TLS in this fixture. Open GraphQL is an auth gap, not a missing certificate on GaussIQ itself. AJ18991 is a customer sandbox SAN mismatch, a different finding."
+      },
+      {
+        "id": "LIVE-SCAN",
+        "why": "Checked \u2014 not the cause. This lab never scans the internet. Findings come only from the security fixture."
+      }
+    ],
+    "counts": {
+      "HIGH": 1,
+      "MEDIUM": 1
+    },
+    "skipped_heading": "Checked \u2014 not the cause"
+  },
+  "caveat": "In-browser demo is a vanilla JS port of the Python router. Python plus tests/test_gaussiq_routing.py are the source of truth. Fictional GaussIQ 1.0 demo tenant. Not affiliated with GaussIQ. Not their product."
+}
