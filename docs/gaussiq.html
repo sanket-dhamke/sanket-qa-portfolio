@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/gaussiq.css?v=chat8">
+  <link rel="stylesheet" href="css/gaussiq.css?v=chat9">
 </head>
 <body class="giq">
   <header class="giq-header">
@@ -93,6 +93,23 @@
       </div>
       <div class="kpi kpi-jump" data-jump="suites" data-testid="kpi-last-suite" role="button" tabindex="0" title="Open the Suites tab">
         <span>Last suite</span><strong id="suite-live">idle</strong>
+      </div>
+    </div>
+    <div class="kpis kpi-nav" id="tab-jumps" data-testid="tab-jumps" role="navigation" aria-label="Open lab sections">
+      <div class="kpi kpi-jump" data-jump="cases" role="button" tabindex="0" title="Open the Cases tab">
+        <span>Cases</span><strong>open</strong>
+      </div>
+      <div class="kpi kpi-jump" data-jump="skills" role="button" tabindex="0" title="Open the Skills tab">
+        <span>Skills</span><strong>gaps</strong>
+      </div>
+      <div class="kpi kpi-jump" data-jump="suites" role="button" tabindex="0" title="Open the Suites tab">
+        <span>Suites</span><strong>runs</strong>
+      </div>
+      <div class="kpi kpi-jump" data-jump="rca" role="button" tabindex="0" title="Open the RCA tab">
+        <span>RCA</span><strong>fire/skip</strong>
+      </div>
+      <div class="kpi kpi-jump kpi-email" data-jump="email" data-testid="kpi-email" role="button" tabindex="0" title="Open the Email report tab">
+        <span>Email report</span><strong>preview</strong>
       </div>
     </div>
     <section id="quality-dash" class="quality-dash" data-testid="quality-dash">
@@ -237,7 +254,7 @@
   <footer class="site-footer">
     <p class="note">This is not GaussIQ’s product. It is Sanket Dhamke’s hybrid QA agent configured for Execution Intelligence so a CTO can see quality and agents on <em>this</em> problem — not on DataHub. Personal lab. Not affiliated with GaussIQ. Not employment. Metrics, cases, and suite runs are simulated fixtures, not live production. Demo names such as AJ18991 / George Jetson appear on GaussIQ public marketing; this page does not copy their UI.</p>
   </footer>
-  <script src="js/gaussiq-router.js?v=chat8"></script>
-  <script src="js/gaussiq-lab.js?v=chat8"></script>
+  <script src="js/gaussiq-router.js?v=chat9"></script>
+  <script src="js/gaussiq-lab.js?v=chat9"></script>
 </body>
 </html>

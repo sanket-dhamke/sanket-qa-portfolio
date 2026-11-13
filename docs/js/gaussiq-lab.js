@@ -525,6 +525,11 @@
     extra.querySelectorAll(".tab-panel").forEach((p) => {
       p.classList.toggle("on", p.id === "tab-" + id);
     });
+    document.querySelectorAll(".kpi-nav .kpi-jump").forEach((el) => {
+      const on = el.dataset.jump === id;
+      el.classList.toggle("on", on);
+      el.setAttribute("aria-current", on ? "true" : "false");
+    });
   }
 
   function jumpTab(id) {

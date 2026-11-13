@@ -107,7 +107,12 @@ def test_gaussiq_page_disclaimer_and_no_github_repo() -> None:
     assert ".table-scroll" in css
     assert "allure-open" in css
     assert "kpi-jump" in css
-    assert "v=chat8" in text
+    assert "v=chat9" in text
+    assert 'data-testid="tab-jumps"' in text
+    assert 'data-testid="kpi-email"' in text
+    assert 'data-jump="email"' in text
+    assert 'data-jump="skills"' in text
+    assert 'data-jump="rca"' in text
     assert 'data-tab="email"' in text
     assert 'id="tab-email"' in text
     assert 'id="btn-email-preview"' in text
