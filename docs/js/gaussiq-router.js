@@ -123,7 +123,7 @@
     const dest = reportLayer(layer);
     if (ALLURE_LAYERS.indexOf(dest) === -1) return null;
     if (ALLURE_SUITES.indexOf(suite) === -1) return null;
-    return "reports/allure-gaussiq-" + dest + "-" + suite + "/index.html";
+    return "reports/allure-gaussiq-" + dest + "-" + suite + "/index.html?v=a2";
   }
 
   function allureLinks(summary) {

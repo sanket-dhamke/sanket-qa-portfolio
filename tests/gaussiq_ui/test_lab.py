@@ -9,14 +9,14 @@ pytestmark = pytest.mark.ui
 
 
 def _connect(page, site_url: str) -> None:
-    page.goto(site_url + "/gaussiq.html?v=chat6", wait_until="networkidle")
+    page.goto(site_url + "/gaussiq.html?v=chat7", wait_until="networkidle")
     page.get_by_role("button", name="Connect").click()
     page.locator("#chat-panel").wait_for(state="visible")
 
 
 @pytest.mark.smoke
 def test_gaussiq_lab_loads_without_forbidden_brands(page, site_url: str) -> None:
-    page.goto(site_url + "/gaussiq.html?v=chat6", wait_until="networkidle")
+    page.goto(site_url + "/gaussiq.html?v=chat7", wait_until="networkidle")
     expect(page.locator("#connect-gate")).to_be_visible()
     body = page.locator("body").inner_text()
     assert "Not affiliated with GaussIQ" in body
@@ -49,7 +49,7 @@ def test_api_smoke_chip_opens_smoke_only_allure(page, site_url: str) -> None:
     page.locator("#canned button").filter(has_text="API smoke").click()
     link = page.locator('[data-testid="allure-link"]')
     expect(link).to_be_visible()
-    expect(link).to_have_attribute("href", "reports/allure-gaussiq-api-smoke/index.html")
+    expect(link).to_have_attribute("href", "reports/allure-gaussiq-api-smoke/index.html?v=a2")
     expect(link).to_contain_text("Open Allure report")
     expect(page.locator('[data-testid="suite-headline"]')).to_contain_text("API smoke passed (3/3)")
 

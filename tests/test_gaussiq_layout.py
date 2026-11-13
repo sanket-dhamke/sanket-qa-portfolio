@@ -107,7 +107,7 @@ def test_gaussiq_page_disclaimer_and_no_github_repo() -> None:
     assert ".table-scroll" in css
     assert "allure-open" in css
     assert "kpi-jump" in css
-    assert "v=chat6" in text
+    assert "v=chat7" in text
     assert "Product lens" not in text
     for layer, suite in (
         ("api", "smoke"),

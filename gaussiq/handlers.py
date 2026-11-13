@@ -32,7 +32,7 @@ def allure_href(layer: str | None, suite: str | None) -> str | None:
     if dest not in ALLURE_LAYERS:
         return None
     if suite in ALLURE_SUITES:
-        return f"reports/allure-gaussiq-{dest}-{suite}/index.html"
+        return f"reports/allure-gaussiq-{dest}-{suite}/index.html?v=a2"
     return None
 
 
