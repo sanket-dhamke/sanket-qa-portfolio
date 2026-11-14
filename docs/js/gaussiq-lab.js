@@ -833,11 +833,15 @@
   function addMsg(kind, text, result) {
     const el = document.createElement("div");
     el.className = "msg " + kind;
+    const isProduct =
+      result && (result.ui === "product_suite" || result.route === "product_suite");
     const isSuite =
       result &&
       result.report &&
       (result.ui === "suite_report" || result.ui === "suite_explain" || result.route === "run_suite");
-    if (kind === "bot" && isSuite && window.GiqLabRouter && window.GiqLabRouter.renderSuiteCard) {
+    if (kind === "bot" && isProduct && window.GiqLabRouter && window.GiqLabRouter.renderProductCard) {
+      window.GiqLabRouter.renderProductCard(el, result);
+    } else if (kind === "bot" && isSuite && window.GiqLabRouter && window.GiqLabRouter.renderSuiteCard) {
       window.GiqLabRouter.renderSuiteCard(el, result);
     } else {
       const body = document.createElement("div");
@@ -845,7 +849,7 @@
       body.textContent = text;
       el.appendChild(body);
     }
-    if (result && !isSuite) {
+    if (result && !isSuite && !isProduct) {
       const chips = document.createElement("div");
       chips.className = "chips";
       const kindChip = document.createElement("span");
@@ -909,7 +913,7 @@
     const result = window.GiqLabRouter.route(state.data, q, state.session);
     applySession(result);
     addMsg("bot", result.answer, result);
-    if (result.ui === "suite_report") {
+    if (result.ui === "suite_report" || result.ui === "product_suite") {
       renderSuitePanel(result.report);
       if (result.report && result.report.suite === "smoke") state.lastSmoke = result.report;
       if (result.report && result.report.suite === "sanity") state.lastSanity = result.report;
@@ -1080,7 +1084,7 @@
   }
 
   async function main() {
-    const res = await fetch("js/gaussiq-data.json");
+    const res = await fetch("js/gaussiq-data.json?v=chat11");
     state.data = await res.json();
     bind();
   }

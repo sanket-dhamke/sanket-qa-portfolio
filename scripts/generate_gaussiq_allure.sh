@@ -30,7 +30,7 @@ if [[ "$api_rc" -ne 0 && "$api_rc" -ne 1 ]]; then
 fi
 
 python3 scripts/split_allure_by_suite.py "$API_RESULTS" "$SPLIT_ROOT/api"
-for suite in smoke sanity regression; do
+for suite in smoke sanity regression product; do
   run_allure generate "$SPLIT_ROOT/api/$suite" -o "docs/reports/allure-gaussiq-api-${suite}" --clean --single-file --name "GaussIQ API ${suite}"
 done
 
@@ -52,4 +52,4 @@ for leftover in docs/reports/allure-gaussiq-security-* docs/reports/allure-gauss
   rm -rf "$leftover"
 done
 
-echo "Wrote docs/reports/allure-gaussiq-api-{smoke,sanity,regression} and allure-gaussiq-ui-{smoke,sanity,regression}"
+echo "Wrote docs/reports/allure-gaussiq-api-{smoke,sanity,regression,product} and allure-gaussiq-ui-{smoke,sanity,regression}"

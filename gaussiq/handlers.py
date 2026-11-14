@@ -17,7 +17,7 @@ NO = re.compile(r"^\s*(n|no|nope|skip|not now|later|don't|dont)\b", re.I)
 
 SUITE_FOOTNOTE = "Catalog replay — not a live pytest run."
 ALLURE_LAYERS = ("api", "ui")
-ALLURE_SUITES = ("smoke", "sanity", "regression")
+ALLURE_SUITES = ("smoke", "sanity", "regression", "product")
 
 
 def report_layer(layer: str | None) -> str:
@@ -32,7 +32,8 @@ def allure_href(layer: str | None, suite: str | None) -> str | None:
     if dest not in ALLURE_LAYERS:
         return None
     if suite in ALLURE_SUITES:
-        return f"reports/allure-gaussiq-{dest}-{suite}/index.html?v=a2"
+        ver = "a3" if suite == "product" else "a2"
+        return f"reports/allure-gaussiq-{dest}-{suite}/index.html?v={ver}"
     return None
 
 
@@ -161,7 +162,15 @@ def infer_suite(question: str) -> tuple[str | None, str | None]:
     elif "security" in q:
         layer = "security"
     suite = None
-    if "regression" in q:
+    if (
+        "golden" in q
+        or "product suite" in q
+        or "product-feature" in q
+        or "product feature" in q
+        or "product functionality" in q
+    ):
+        suite = "product"
+    elif "regression" in q:
         suite = "regression"
     elif "sanity" in q:
         suite = "sanity"
@@ -853,9 +862,160 @@ def kb_retrieve(question: str = "") -> dict[str, Any]:
     }
 
 
+def build_product_checks() -> list[dict[str, Any]]:
+    """Ingest AJ18991 golden data, then assert Case Intelligence outcomes."""
+    aj = next(c for c in _cases()["items"] if c["id"] == "AJ18991")
+    tls = next(g for g in _skills()["items"] if "certificate" in g["skill"].lower())
+    report = rca_engine.evaluate()
+    fired = {row["id"]: row for row in (report.get("fired") or [])}
+    skipped = {row["id"]: str(row.get("why") or "") for row in (report.get("skipped") or [])}
+
+    rca_ok = "CERT-MISMATCH" in fired and "not the cause" in skipped.get(
+        "APP-CODE-500", ""
+    ).lower()
+    rca_actual = str(aj.get("likely_cause") or "unknown") + ". Ruled out: application code."
+
+    people = int(tls.get("people") or 0)
+    assign_ok = people == 0 and str(tls.get("demand") or "") == "High"
+    assign_actual = (
+        f"{tls['skill']} — {people} people this shift. Gap flagged; pairing with a "
+        "cert-experienced engineer recommended. Not auto-assigned."
+    )
+
+    expected_details = (
+        "AJ18991 · George Jetson · Rocket Pack Express · "
+        "Spaceley Sprocket migration tool · Business Critical · EMEA"
+    )
+    actual_details = (
+        f"{aj['id']} · {aj['customer']} · {aj['org']} · {aj['product']} · "
+        f"{aj['severity']} · {aj['region']}"
+    )
+    details_ok = actual_details == expected_details
+
+    expected_similar = ["AJ18268", "AJ18600"]
+    actual_similar = [str(x) for x in (aj.get("similar") or [])]
+    similar_ok = actual_similar == expected_similar
+
+    return [
+        {
+            "id": "rca",
+            "check": "RCA",
+            "ingested": f"{aj['id']} · {aj['symptom']}",
+            "expected": "Certificate SAN mismatch. Ruled out: application code.",
+            "actual": rca_actual,
+            "status": "pass" if rca_ok else "fail",
+        },
+        {
+            "id": "assignment",
+            "check": "Assignment",
+            "ingested": f"{aj['id']} needs {tls['skill']}; {people} people this shift",
+            "expected": "Human-approved TLS / certificate skill. Flag the gap; do not auto-assign.",
+            "actual": assign_actual,
+            "status": "pass" if assign_ok else "fail",
+        },
+        {
+            "id": "details",
+            "check": "Case details",
+            "ingested": expected_details,
+            "expected": "Case record matches the ingested golden fields.",
+            "actual": actual_details,
+            "status": "pass" if details_ok else "fail",
+        },
+        {
+            "id": "similar",
+            "check": "Similar history",
+            "ingested": ", ".join(expected_similar),
+            "expected": "Return those ticket IDs.",
+            "actual": ", ".join(actual_similar) if actual_similar else "none",
+            "status": "pass" if similar_ok else "fail",
+        },
+    ]
+
+
+def format_product_suite(summary: dict[str, Any], checks: list[dict[str, Any]]) -> str:
+    failed_n = sum(1 for c in checks if c.get("status") != "pass")
+    passed_n = len(checks) - failed_n
+    verb = "passed" if failed_n == 0 else "failed"
+    ms = int(summary.get("duration_ms") or 0)
+    approx = f"~{round(ms / 10) * 10} ms" if ms >= 50 else f"{ms} ms"
+    lines = [
+        f"Golden-case product suite {verb} ({passed_n}/{len(checks)}) in {approx}",
+        "",
+        "Ingested fixture AJ18991 — George Jetson / Rocket Pack Express / "
+        "Spaceley Sprocket migration tool (HTTP 500 in the EMEA sandbox).",
+        "",
+    ]
+    for row in checks:
+        mark = "PASS" if row.get("status") == "pass" else "FAIL"
+        lines.append(f"{row['check']} — {mark}")
+        lines.append(f"  Ingested: {row['ingested']}")
+        lines.append(f"  Expected: {row['expected']}")
+        lines.append(f"  Actual: {row['actual']}")
+        lines.append("")
+    if failed_n == 0:
+        lines.append(
+            "Verdict: Case Intelligence matched the golden record on RCA, assignment, "
+            "details, and similar-history IDs."
+        )
+    else:
+        lines.append("Verdict: Golden record did not match on every check.")
+    links = allure_links({"suite": "product", "layer": "api", "cases": summary.get("cases") or []})
+    if links:
+        lines.append("")
+        for link in links:
+            lines.append(link["label"])
+    lines.append("")
+    lines.append(SUITE_FOOTNOTE)
+    return "\n".join(lines)
+
+
+def product_suite(_question: str = "") -> dict[str, Any]:
+    summary = run_suite("product")
+    checks = build_product_checks()
+    failed = [c for c in checks if c.get("status") != "pass"]
+    passed_n = len(checks) - len(failed)
+    verdict = "FAIL" if failed else "PASS"
+    summary = dict(summary)
+    summary["verdict"] = verdict
+    summary["failed"] = len(failed)
+    summary["passed"] = passed_n
+    summary["total"] = len(checks)
+    return {
+        "route": "product_suite",
+        "source": "handler:run_suite:product",
+        "tools": [
+            "read_fixture:gaussiq/fixtures/cases.json",
+            "read_fixture:gaussiq/fixtures/skills.json",
+            "read_fixture:gaussiq/fixtures/suites.json",
+        ],
+        "answer": format_product_suite(summary, checks),
+        "metrics": {
+            "suite": "product",
+            "layer": "api",
+            "passed": passed_n,
+            "failed": len(failed),
+            "total": len(checks),
+            "verdict": verdict,
+            "failed_ids": [c["id"] for c in failed],
+            "case_id": "AJ18991",
+        },
+        "ui": "product_suite",
+        "report": summary,
+        "checks": checks,
+        "allure": allure_links(
+            {"suite": "product", "layer": "api", "cases": summary.get("cases") or []}
+        ),
+        "session_update": {"awaiting_regression": False},
+        "awaiting_regression": False,
+        "caveat": caveat(),
+    }
+
+
 def run_named_suite(question: str, suite: str | None = None, layer: str | None = None) -> dict[str, Any]:
     if not suite:
         suite, layer = infer_suite(question)
+    if suite == "product":
+        return product_suite(question)
     if not suite and layer:
         suite = "sanity"
     if not suite:
@@ -948,8 +1108,8 @@ def fallback(_question: str = "") -> dict[str, Any]:
             "No handler or catalog entry matched that question. This sample does not call a language model, "
             "so it will not invent MTTR, CPU, memory, or RCA times. Try: current quality of GaussIQ 1.0, "
             "why CPU/memory is high, how long for RCA on a huge evidence case, add more evidence, "
-            "any security issues, why AJ18991 returned HTTP 500, run smoke, run sanity, "
-            "run regression, or send an email preview."
+            "any security issues, why AJ18991 returned HTTP 500, run golden-case product suite, "
+            "run smoke, run sanity, run regression, or send an email preview."
         ),
         "metrics": None,
         "ui": None,

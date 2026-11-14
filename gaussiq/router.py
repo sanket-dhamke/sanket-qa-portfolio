@@ -11,6 +11,7 @@ from typing import Any
 from gaussiq import handlers
 
 CANNED_QUESTIONS = [
+    "Run golden-case product suite",
     "What is the current quality of GaussIQ 1.0?",
     "Why is CPU/memory high?",
     "How long for RCA on a huge evidence case?",
@@ -85,6 +86,16 @@ QUESTION_BANK = [
         ],
     },
     {
+        "id": "product",
+        "title": "Product / golden case",
+        "questions": [
+            "Run golden-case product suite",
+            "Ingest fixtures and test RCA",
+            "Test assignment and similar history",
+            "Check case details against the ingested record",
+        ],
+    },
+    {
         "id": "suites",
         "title": "Smoke / sanity / regression",
         "questions": [
@@ -136,6 +147,29 @@ RULES: list[dict[str, Any]] = [
             "login with",
             "username as",
             "password as",
+        ],
+    },
+    {
+        "route": "product_suite",
+        "source": "handler:run_suite:product",
+        "handler": handlers.product_suite,
+        "any": [
+            "golden-case",
+            "golden case",
+            "run golden",
+            "product suite",
+            "product-feature",
+            "product feature",
+            "product functionality",
+            "ingest fixtures",
+            "ingest fixture",
+            "test rca",
+            "test assignment",
+            "test similar",
+            "similar history",
+            "similar-case",
+            "similar case history",
+            "case details",
         ],
     },
     {
@@ -382,7 +416,10 @@ def annotate_source(result: dict[str, Any]) -> dict[str, Any]:
     route_name = str(result.get("route") or "")
     if source.startswith("kb:") or route_name == "kb_retrieve":
         kind, label = "kb", "Knowledge base · cited catalog"
-    elif route_name == "run_suite" or source.startswith("handler:run_suite"):
+    elif (
+        route_name in {"run_suite", "product_suite"}
+        or source.startswith("handler:run_suite")
+    ):
         kind, label = "suite", "Suite catalog · pytest markers"
     elif source.startswith("fallback") or route_name == "fallback":
         kind, label = "fallback", "Fallback · no match"
@@ -430,7 +467,7 @@ def route(
         else:
             result = rule["handler"](text)
         result["route"] = rule["route"]
-        if rule["route"] not in {"kb_retrieve", "run_suite", "login_api"}:
+        if rule["route"] not in {"kb_retrieve", "run_suite", "login_api", "product_suite"}:
             result["source"] = rule["source"]
 
     result["question"] = text

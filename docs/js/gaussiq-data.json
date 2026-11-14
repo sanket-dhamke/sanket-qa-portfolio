@@ -1,5 +1,6 @@
 {
   "canned": [
+    "Run golden-case product suite",
     "What is the current quality of GaussIQ 1.0?",
     "Why is CPU/memory high?",
     "How long for RCA on a huge evidence case?",
@@ -73,6 +74,16 @@
       ]
     },
     {
+      "id": "product",
+      "title": "Product / golden case",
+      "questions": [
+        "Run golden-case product suite",
+        "Ingest fixtures and test RCA",
+        "Test assignment and similar history",
+        "Check case details against the ingested record"
+      ]
+    },
+    {
       "id": "suites",
       "title": "Smoke / sanity / regression",
       "questions": [
@@ -120,6 +131,28 @@
         "login with",
         "username as",
         "password as"
+      ]
+    },
+    {
+      "route": "product_suite",
+      "source": "handler:run_suite:product",
+      "any": [
+        "golden-case",
+        "golden case",
+        "run golden",
+        "product suite",
+        "product-feature",
+        "product feature",
+        "product functionality",
+        "ingest fixtures",
+        "ingest fixture",
+        "test rca",
+        "test assignment",
+        "test similar",
+        "similar history",
+        "similar-case",
+        "similar case history",
+        "case details"
       ]
     },
     {
@@ -548,7 +581,7 @@
       ]
     },
     "suites": {
-      "note": "Tiny pytest-shaped catalog for the GaussIQ 1.0 demo tenant. Pages replays this JSON. Python tests under tests/gaussiq_suites/ own the live checks.",
+      "note": "Tiny pytest-shaped catalog for the GaussIQ 1.0 demo tenant. Pages replays this JSON. Python tests under tests/gaussiq_suites/ own the live checks. product = golden-case Case Intelligence (ingest fixtures, assert expected outcomes).",
       "cases": [
         {
           "id": "test_case_intel_health",
@@ -702,6 +735,46 @@
           ],
           "status": "pass",
           "duration_ms": 16
+        },
+        {
+          "id": "test_golden_aj18991_rca",
+          "name": "AJ18991 RCA is cert SAN mismatch, not a code defect",
+          "layer": "api",
+          "suites": [
+            "product"
+          ],
+          "status": "pass",
+          "duration_ms": 48
+        },
+        {
+          "id": "test_golden_aj18991_assignment",
+          "name": "AJ18991 assignment uses human-approved TLS skill",
+          "layer": "api",
+          "suites": [
+            "product"
+          ],
+          "status": "pass",
+          "duration_ms": 44
+        },
+        {
+          "id": "test_golden_aj18991_details",
+          "name": "AJ18991 case details match the ingested record",
+          "layer": "api",
+          "suites": [
+            "product"
+          ],
+          "status": "pass",
+          "duration_ms": 36
+        },
+        {
+          "id": "test_golden_aj18991_similar",
+          "name": "AJ18991 similar-history returns AJ18268 and AJ18600",
+          "layer": "api",
+          "suites": [
+            "product"
+          ],
+          "status": "pass",
+          "duration_ms": 41
         }
       ]
     },

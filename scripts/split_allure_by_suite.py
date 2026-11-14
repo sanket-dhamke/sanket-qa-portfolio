@@ -8,7 +8,7 @@ import json
 import shutil
 from pathlib import Path
 
-SUITES = ("smoke", "sanity", "regression")
+SUITES = ("smoke", "sanity", "regression", "product")
 
 
 def suite_of(result: dict) -> str | None:

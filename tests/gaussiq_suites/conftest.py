@@ -11,7 +11,7 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
     allure.dynamic.epic("GaussIQ API")
     allure.dynamic.tag("gaussiq")
     allure.dynamic.tag("api")
-    for mark in ("smoke", "sanity", "regression"):
+    for mark in ("smoke", "sanity", "regression", "product"):
         if item.get_closest_marker(mark):
             allure.dynamic.feature(mark)
             allure.dynamic.suite(mark)

@@ -84,10 +84,12 @@ def test_gaussiq_page_disclaimer_and_no_github_repo() -> None:
     sanity = ROOT / "docs" / "reports" / "allure-gaussiq-api-sanity" / "index.html"
     regression = ROOT / "docs" / "reports" / "allure-gaussiq-api-regression" / "index.html"
     ui_smoke = ROOT / "docs" / "reports" / "allure-gaussiq-ui-smoke" / "index.html"
+    product = ROOT / "docs" / "reports" / "allure-gaussiq-api-product" / "index.html"
     assert smoke.is_file()
     assert sanity.is_file()
     assert regression.is_file()
     assert ui_smoke.is_file()
+    assert product.is_file()
     smoke_html = smoke.read_text(encoding="utf-8", errors="ignore")
     smoke_head = smoke_html.split("<script", 1)[0]
     assert "github.com/sanket-dhamke" not in smoke_html
@@ -100,14 +102,19 @@ def test_gaussiq_page_disclaimer_and_no_github_repo() -> None:
     assert "<table>" not in smoke_html.split("<body", 1)[-1][:800]
     decoded_smoke = _allure_decoded(smoke)
     decoded_sanity = _allure_decoded(sanity)
+    decoded_product = _allure_decoded(product)
     assert "test_case_intel_health" in decoded_smoke
     assert "test_signal_connector_not_ready_in_fixture" not in decoded_smoke
     assert "test_signal_connector_not_ready_in_fixture" in decoded_sanity
+    product_html = product.read_text(encoding="utf-8", errors="ignore")
+    assert "<title>GaussIQ API product</title>" in product_html
+    assert "test_golden_aj18991_rca" in decoded_product
+    assert "test_signal_connector_not_ready_in_fixture" not in decoded_product
     css = (ROOT / "docs" / "css" / "gaussiq.css").read_text(encoding="utf-8")
     assert ".table-scroll" in css
     assert "allure-open" in css
     assert "kpi-jump" in css
-    assert "v=chat9" in text
+    assert "v=chat11" in text
     assert 'data-testid="tab-jumps"' in text
     assert 'data-testid="kpi-email"' in text
     assert 'data-jump="email"' in text
@@ -167,7 +174,7 @@ def test_about_says_not_gaussiq_product() -> None:
     assert "not GaussIQ" in text
     assert "Not employment" in text or "not employment" in text.lower()
     assert "not live production" in text.lower()
-    assert 'href="gaussiq.html"' in text
+    assert "gaussiq.html?v=chat11" in text
     assert "github.com/sanket-dhamke" not in text
 
 
@@ -178,7 +185,7 @@ def test_home_has_gaussiq_card_and_keeps_datahub_hero() -> None:
     assert "GaussIQ QA lab (demo)" in text
     cards = text.split('class="cards"', 1)[1]
     gq = cards.split("GaussIQ QA lab (demo)", 1)[1].split("</article>", 1)[0]
-    assert 'href="gaussiq.html"' in gq
+    assert "gaussiq.html?v=chat11" in gq
     assert "Try this out" in gq
     assert 'data-testid="try-this-gaussiq"' in gq
     hero = text.split('class="hero"', 1)[1].split("</section>", 1)[0]

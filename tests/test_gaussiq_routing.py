@@ -183,6 +183,39 @@ def test_no_model_flag() -> None:
     assert result["model_available"] is False
 
 
+def test_golden_case_product_suite() -> None:
+    result = route("Run golden-case product suite")
+    assert result["route"] == "product_suite"
+    assert result["source"] == "handler:run_suite:product"
+    assert result["source_kind"] == "suite"
+    assert result["metrics"]["verdict"] == "PASS"
+    assert result["metrics"]["passed"] == 4
+    assert result["metrics"]["total"] == 4
+    assert result["metrics"]["case_id"] == "AJ18991"
+    assert "Ingested fixture AJ18991" in result["answer"]
+    assert "Certificate SAN mismatch" in result["answer"]
+    assert "Ruled out" in result["answer"]
+    assert "AJ18268" in result["answer"]
+    assert "AJ18600" in result["answer"]
+    assert "AUTH-OPEN" not in result["answer"]
+    assert "CERT-MISMATCH" not in result["answer"]
+    assert "Pages cannot spawn" not in result["answer"]
+    assert "handler:run_suite" not in result["answer"]
+    assert "Open Allure report" in result["answer"]
+    assert result["allure"][0]["href"] == "reports/allure-gaussiq-api-product/index.html?v=a3"
+    assert result["allure"][0]["label"] == "Open Allure report"
+    for phrase in (
+        "ingest fixtures",
+        "test RCA",
+        "test assignment",
+        "similar history",
+        "case details",
+        "product functionality",
+    ):
+        hit = route(phrase)
+        assert hit["route"] == "product_suite", phrase
+
+
 def test_email_preview_is_simulated() -> None:
     result = route("Send an email preview")
     assert result["source"] == "handler:email_report"

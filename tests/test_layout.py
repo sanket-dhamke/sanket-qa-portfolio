@@ -218,7 +218,7 @@ def test_home_cards_split_api_and_ui() -> None:
     assert 'data-testid="try-this-api"' in api_card
     assert 'data-testid="try-this-ui"' in ui_card
     gq_card = cards.split("GaussIQ QA lab (demo)", 1)[1].split("</article>", 1)[0]
-    assert 'href="gaussiq.html"' in gq_card
+    assert "gaussiq.html?v=chat11" in gq_card
     assert 'data-testid="try-this-gaussiq"' in gq_card
     assert cta in gq_card
     assert "Not affiliated with GaussIQ" in gq_card

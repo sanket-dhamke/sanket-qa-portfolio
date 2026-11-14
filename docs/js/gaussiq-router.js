@@ -38,7 +38,15 @@
     else if (q.includes("performance")) layer = "performance";
     else if (q.includes("security")) layer = "security";
     let suite = null;
-    if (q.includes("regression")) suite = "regression";
+    if (
+      q.includes("golden") ||
+      q.includes("product suite") ||
+      q.includes("product-feature") ||
+      q.includes("product feature") ||
+      q.includes("product functionality")
+    ) {
+      suite = "product";
+    } else if (q.includes("regression")) suite = "regression";
     else if (q.includes("sanity")) suite = "sanity";
     else if (q.includes("smoke")) suite = "smoke";
     return { suite, layer };
@@ -113,7 +121,7 @@
 
   const SUITE_FOOTNOTE = "Catalog replay — not a live pytest run.";
   const ALLURE_LAYERS = ["api", "ui"];
-  const ALLURE_SUITES = ["smoke", "sanity", "regression"];
+  const ALLURE_SUITES = ["smoke", "sanity", "regression", "product"];
 
   function reportLayer(layer) {
     return layer === "ui" ? "ui" : "api";
@@ -123,7 +131,8 @@
     const dest = reportLayer(layer);
     if (ALLURE_LAYERS.indexOf(dest) === -1) return null;
     if (ALLURE_SUITES.indexOf(suite) === -1) return null;
-    return "reports/allure-gaussiq-" + dest + "-" + suite + "/index.html?v=a2";
+    const ver = suite === "product" ? "a3" : "a2";
+    return "reports/allure-gaussiq-" + dest + "-" + suite + "/index.html?v=" + ver;
   }
 
   function allureLinks(summary) {
@@ -184,7 +193,11 @@
     if (source.indexOf("kb:") === 0 || routeName === "kb_retrieve") {
       kind = "kb";
       label = "Knowledge base · cited catalog";
-    } else if (routeName === "run_suite" || source.indexOf("handler:run_suite") === 0) {
+    } else if (
+      routeName === "run_suite" ||
+      routeName === "product_suite" ||
+      source.indexOf("handler:run_suite") === 0
+    ) {
       kind = "suite";
       label = "Suite catalog · pytest markers";
     } else if (source.indexOf("fallback") === 0 || routeName === "fallback") {
@@ -859,6 +872,161 @@
     };
   }
 
+  function buildProductChecks(data) {
+    const items = ((((data || {}).fixtures || {}).cases || {}).items) || [];
+    const gaps = ((((data || {}).fixtures || {}).skills || {}).items) || [];
+    const aj = items.find((c) => c.id === "AJ18991") || items[0] || {};
+    const tls = gaps.find((g) => /certificate/i.test(g.skill || "")) || {};
+    const report = (data && data.rca_report) || { fired: [], skipped: [] };
+    const fired = {};
+    (report.fired || []).forEach((row) => {
+      fired[row.id] = row;
+    });
+    const skipped = {};
+    (report.skipped || []).forEach((row) => {
+      skipped[row.id] = String(row.why || "");
+    });
+    const rcaOk =
+      Object.prototype.hasOwnProperty.call(fired, "CERT-MISMATCH") &&
+      /not the cause/i.test(skipped["APP-CODE-500"] || "");
+    const rcaActual = String(aj.likely_cause || "unknown") + ". Ruled out: application code.";
+    const people = Number(tls.people || 0);
+    const assignOk = people === 0 && String(tls.demand || "") === "High";
+    const assignActual =
+      String(tls.skill || "TLS / certificate troubleshooting") +
+      " — " +
+      people +
+      " people this shift. Gap flagged; pairing with a cert-experienced engineer recommended. Not auto-assigned.";
+    const expectedDetails =
+      "AJ18991 · George Jetson · Rocket Pack Express · Spaceley Sprocket migration tool · Business Critical · EMEA";
+    const actualDetails = [aj.id, aj.customer, aj.org, aj.product, aj.severity, aj.region]
+      .map((x) => String(x || ""))
+      .join(" · ");
+    const detailsOk = actualDetails === expectedDetails;
+    const expectedSimilar = ["AJ18268", "AJ18600"];
+    const actualSimilar = (aj.similar || []).map(String);
+    const similarOk =
+      actualSimilar.length === expectedSimilar.length &&
+      expectedSimilar.every((id, i) => actualSimilar[i] === id);
+    return [
+      {
+        id: "rca",
+        check: "RCA",
+        ingested: (aj.id || "AJ18991") + " · " + (aj.symptom || ""),
+        expected: "Certificate SAN mismatch. Ruled out: application code.",
+        actual: rcaActual,
+        status: rcaOk ? "pass" : "fail",
+      },
+      {
+        id: "assignment",
+        check: "Assignment",
+        ingested:
+          (aj.id || "AJ18991") +
+          " needs " +
+          (tls.skill || "TLS / certificate troubleshooting") +
+          "; " +
+          people +
+          " people this shift",
+        expected: "Human-approved TLS / certificate skill. Flag the gap; do not auto-assign.",
+        actual: assignActual,
+        status: assignOk ? "pass" : "fail",
+      },
+      {
+        id: "details",
+        check: "Case details",
+        ingested: expectedDetails,
+        expected: "Case record matches the ingested golden fields.",
+        actual: actualDetails,
+        status: detailsOk ? "pass" : "fail",
+      },
+      {
+        id: "similar",
+        check: "Similar history",
+        ingested: expectedSimilar.join(", "),
+        expected: "Return those ticket IDs.",
+        actual: actualSimilar.length ? actualSimilar.join(", ") : "none",
+        status: similarOk ? "pass" : "fail",
+      },
+    ];
+  }
+
+  function formatProductSuite(summary, checks) {
+    const failedN = (checks || []).filter((c) => c.status !== "pass").length;
+    const passedN = (checks || []).length - failedN;
+    const verb = failedN === 0 ? "passed" : "failed";
+    const ms = Number((summary && summary.duration_ms) || 0);
+    const approx = ms >= 50 ? "~" + Math.round(ms / 10) * 10 + " ms" : ms + " ms";
+    const lines = [
+      "Golden-case product suite " + verb + " (" + passedN + "/" + (checks || []).length + ") in " + approx,
+      "",
+      "Ingested fixture AJ18991 — George Jetson / Rocket Pack Express / Spaceley Sprocket migration tool (HTTP 500 in the EMEA sandbox).",
+      "",
+    ];
+    (checks || []).forEach((row) => {
+      lines.push(row.check + " — " + (row.status === "pass" ? "PASS" : "FAIL"));
+      lines.push("  Ingested: " + row.ingested);
+      lines.push("  Expected: " + row.expected);
+      lines.push("  Actual: " + row.actual);
+      lines.push("");
+    });
+    lines.push(
+      failedN === 0
+        ? "Verdict: Case Intelligence matched the golden record on RCA, assignment, details, and similar-history IDs."
+        : "Verdict: Golden record did not match on every check."
+    );
+    const links = allureLinks({
+      suite: "product",
+      layer: "api",
+      cases: (summary && summary.cases) || [],
+    });
+    if (links.length) {
+      lines.push("");
+      links.forEach((a) => lines.push(a.label));
+    }
+    lines.push("");
+    lines.push(SUITE_FOOTNOTE);
+    return lines.join("\n");
+  }
+
+  function productSuite(data) {
+    const summary = Object.assign({}, runSuite(data, "product", null));
+    const checks = buildProductChecks(data);
+    const failed = checks.filter((c) => c.status !== "pass");
+    const passedN = checks.length - failed.length;
+    const verdict = failed.length ? "FAIL" : "PASS";
+    summary.verdict = verdict;
+    summary.failed = failed.length;
+    summary.passed = passedN;
+    summary.total = checks.length;
+    return {
+      route: "product_suite",
+      source: "handler:run_suite:product",
+      tools: [
+        "read_fixture:gaussiq/fixtures/cases.json",
+        "read_fixture:gaussiq/fixtures/skills.json",
+        "read_fixture:gaussiq/fixtures/suites.json",
+      ],
+      answer: formatProductSuite(summary, checks),
+      metrics: {
+        suite: "product",
+        layer: "api",
+        passed: passedN,
+        failed: failed.length,
+        total: checks.length,
+        verdict: verdict,
+        failed_ids: failed.map((c) => c.id),
+        case_id: "AJ18991",
+      },
+      ui: "product_suite",
+      report: summary,
+      checks: checks,
+      allure: allureLinks({ suite: "product", layer: "api", cases: summary.cases || [] }),
+      session_update: { awaiting_regression: false },
+      awaiting_regression: false,
+      caveat: caveat(),
+    };
+  }
+
   function runNamedSuite(data, question, suite, layer) {
     if (suite && typeof suite !== "string") {
       suite = null;
@@ -869,6 +1037,7 @@
       suite = inferred.suite;
       layer = inferred.layer;
     }
+    if (suite === "product") return productSuite(data, question);
     if (!suite && layer) suite = "sanity";
     if (!suite) return fallback();
     const summary = runSuite(data, suite, layer || null);
@@ -945,7 +1114,7 @@
       source: "fallback:deterministic",
       tools: [],
       answer:
-        "No handler or catalog entry matched that question. This sample does not call a language model, so it will not invent MTTR, CPU, memory, or RCA times. Try: current quality of GaussIQ 1.0, why CPU/memory is high, how long for RCA on a huge evidence case, add more evidence, any security issues, why AJ18991 returned HTTP 500, run smoke, run sanity, run regression, or send an email preview.",
+        "No handler or catalog entry matched that question. This sample does not call a language model, so it will not invent MTTR, CPU, memory, or RCA times. Try: current quality of GaussIQ 1.0, why CPU/memory is high, how long for RCA on a huge evidence case, add more evidence, any security issues, why AJ18991 returned HTTP 500, run golden-case product suite, run smoke, run sanity, run regression, or send an email preview.",
       metrics: null,
       ui: null,
       caveat: caveat(),
@@ -957,6 +1126,7 @@
 
   const HANDLERS = {
     login_api: loginApi,
+    product_suite: productSuite,
     suite_explain: suiteExplain,
     run_suite: runNamedSuite,
     app_status: healthStatus,
@@ -1051,5 +1221,92 @@
     target.appendChild(card);
   }
 
-  root.GiqLabRouter = { route, runSuite, computeAppHealth, renderSuiteCard };
+  function renderProductCard(target, result) {
+    const summary = (result && result.report) || {};
+    const checks = (result && result.checks) || [];
+    const card = document.createElement("div");
+    card.className = "suite-card product-card";
+    card.setAttribute("data-testid", "product-card");
+    const h = document.createElement("p");
+    h.className = "suite-headline";
+    h.setAttribute("data-testid", "product-headline");
+    h.textContent = formatProductSuite(summary, checks).split("\n")[0] || "Golden-case product suite";
+    card.appendChild(h);
+    const ingest = document.createElement("p");
+    ingest.className = "product-ingest";
+    ingest.setAttribute("data-testid", "product-ingest");
+    ingest.textContent =
+      "Ingested fixture AJ18991 — George Jetson / Rocket Pack Express / Spaceley Sprocket migration tool (HTTP 500 in the EMEA sandbox).";
+    card.appendChild(ingest);
+    const verdict = document.createElement("p");
+    verdict.className = "product-verdict";
+    verdict.setAttribute("data-testid", "product-verdict");
+    const failedN = checks.filter((c) => c.status !== "pass").length;
+    verdict.textContent =
+      failedN === 0
+        ? "Verdict: Case Intelligence matched the golden record on RCA, assignment, details, and similar-history IDs."
+        : "Verdict: Golden record did not match on every check.";
+    card.appendChild(verdict);
+    const links = (result && result.allure) || allureLinks({ suite: "product", layer: "api" });
+    links.forEach((a) => {
+      const link = document.createElement("a");
+      link.className = "allure-open";
+      link.setAttribute("data-testid", "allure-link");
+      link.href = a.href;
+      link.target = "_blank";
+      link.rel = "noopener";
+      link.textContent = a.label;
+      card.appendChild(link);
+    });
+    const wrap = document.createElement("div");
+    wrap.className = "product-table-wrap";
+    const table = document.createElement("table");
+    table.className = "product-table";
+    table.setAttribute("data-testid", "product-table");
+    table.innerHTML = "<thead><tr><th>Check</th><th>Result</th></tr></thead>";
+    const tbody = document.createElement("tbody");
+    checks.forEach((row) => {
+      const tr = document.createElement("tr");
+      const name = document.createElement("td");
+      name.textContent = row.check;
+      const mark = document.createElement("td");
+      mark.className = "badge " + (row.status === "pass" ? "pass" : "fail");
+      mark.textContent = row.status === "pass" ? "PASS" : "FAIL";
+      tr.appendChild(name);
+      tr.appendChild(mark);
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    wrap.appendChild(table);
+    card.appendChild(wrap);
+    const details = document.createElement("ul");
+    details.className = "product-details";
+    details.setAttribute("data-testid", "product-details");
+    checks.forEach((row) => {
+      const li = document.createElement("li");
+      const title = document.createElement("strong");
+      title.textContent = row.check + " — " + (row.status === "pass" ? "PASS" : "FAIL");
+      li.appendChild(title);
+      ["Ingested", "Expected", "Actual"].forEach((label) => {
+        const p = document.createElement("div");
+        const key = label.toLowerCase();
+        p.innerHTML = "";
+        const lab = document.createElement("span");
+        lab.className = "product-k";
+        lab.textContent = label + ": ";
+        p.appendChild(lab);
+        p.appendChild(document.createTextNode(row[key] || ""));
+        li.appendChild(p);
+      });
+      details.appendChild(li);
+    });
+    card.appendChild(details);
+    const foot = document.createElement("p");
+    foot.className = "suite-footnote";
+    foot.textContent = SUITE_FOOTNOTE;
+    card.appendChild(foot);
+    target.appendChild(card);
+  }
+
+  root.GiqLabRouter = { route, runSuite, computeAppHealth, renderSuiteCard, renderProductCard };
 })(window);

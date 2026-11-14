@@ -40,7 +40,9 @@ class HomePage:
         expect(cards.nth(2).locator("a.try-this")).to_have_attribute(
             "href", "ui-framework.html"
         )
-        expect(cards.nth(3).locator("a.try-this")).to_have_attribute("href", "gaussiq.html")
+        expect(cards.nth(3).locator("a.try-this")).to_have_attribute(
+            "href", "gaussiq.html?v=chat11"
+        )
         expect(cards.nth(1)).not_to_contain_text("Playwright")
         expect(cards.nth(2)).to_contain_text("Playwright")
         cta = "Try this out — click here to see how it works."

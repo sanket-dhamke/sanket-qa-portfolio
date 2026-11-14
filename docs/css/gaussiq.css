@@ -247,10 +247,43 @@ body.giq {
   border-radius: 4px;
 }
 .msg .allure-open:hover { filter: brightness(1.08); }
+.msg .product-card { white-space: normal; }
+.msg .product-ingest { margin: 0 0 8px; font-size: 13px; color: var(--text); }
+.msg .product-verdict { margin: 0 0 8px; font-weight: 600; }
+.msg .product-table-wrap { overflow-x: auto; margin: 8px 0 10px; }
+.msg .product-table {
+  width: auto;
+  min-width: 180px;
+  border-collapse: collapse;
+  font-size: 12px;
+  line-height: 1.35;
+}
+.msg .product-table th, .msg .product-table td {
+  border: 1px solid var(--line);
+  padding: 5px 10px;
+  vertical-align: top;
+  text-align: left;
+}
+.msg .product-table th {
+  color: var(--muted);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.msg .product-details {
+  margin: 0 0 8px;
+  padding-left: 16px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+.msg .product-details li { margin: 8px 0; }
+.msg .product-details strong { display: block; margin-bottom: 2px; }
+.msg .product-k { color: var(--muted); }
 
 .canned {
   display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 12px;
-  border-bottom: 1px solid var(--line); max-height: 88px; overflow: auto;
+  border-bottom: 1px solid var(--line); max-height: 120px; overflow: auto;
   flex: 0 0 auto;
 }
 .canned button, .confirm button, .tab, .connect-actions button, .email-controls button {

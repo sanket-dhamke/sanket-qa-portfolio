@@ -9,14 +9,14 @@ pytestmark = pytest.mark.ui
 
 
 def _connect(page, site_url: str) -> None:
-    page.goto(site_url + "/gaussiq.html?v=chat7", wait_until="networkidle")
+    page.goto(site_url + "/gaussiq.html?v=chat11", wait_until="networkidle")
     page.get_by_role("button", name="Connect").click()
     page.locator("#chat-panel").wait_for(state="visible")
 
 
 @pytest.mark.smoke
 def test_gaussiq_lab_loads_without_forbidden_brands(page, site_url: str) -> None:
-    page.goto(site_url + "/gaussiq.html?v=chat7", wait_until="networkidle")
+    page.goto(site_url + "/gaussiq.html?v=chat11", wait_until="networkidle")
     expect(page.locator("#connect-gate")).to_be_visible()
     body = page.locator("body").inner_text()
     assert "Not affiliated with GaussIQ" in body
@@ -41,6 +41,29 @@ def test_open_cases_kpi_selects_cases_tab(page, site_url: str) -> None:
     page.locator('[data-testid="kpi-open-cases"]').click()
     expect(page.locator('.extra .tab[data-tab="cases"]')).to_have_attribute("aria-selected", "true")
     expect(page.locator("#tab-cases")).to_be_visible()
+
+
+@pytest.mark.sanity
+def test_golden_case_chip_shows_product_table(page, site_url: str) -> None:
+    _connect(page, site_url)
+    page.locator("#canned button").filter(has_text="golden-case").click()
+    card = page.locator('[data-testid="product-card"]')
+    expect(card).to_be_visible()
+    expect(page.locator('[data-testid="product-headline"]')).to_contain_text(
+        "Golden-case product suite passed (4/4)"
+    )
+    table = page.locator('[data-testid="product-table"]')
+    expect(table).to_contain_text("RCA")
+    expect(table).to_contain_text("Assignment")
+    expect(table).to_contain_text("PASS")
+    expect(page.locator('[data-testid="product-details"]')).to_contain_text("AJ18268")
+    expect(page.locator('[data-testid="product-verdict"]')).to_contain_text(
+        "matched the golden record"
+    )
+    link = page.locator('[data-testid="allure-link"]')
+    expect(link).to_have_attribute("href", "reports/allure-gaussiq-api-product/index.html?v=a3")
+    log = page.locator("#log")
+    expect(log.locator(".msg").first).to_contain_text("Golden-case product suite")
 
 
 @pytest.mark.sanity

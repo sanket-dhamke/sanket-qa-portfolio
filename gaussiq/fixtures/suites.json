@@ -1,5 +1,5 @@
 {
-  "note": "Tiny pytest-shaped catalog for the GaussIQ 1.0 demo tenant. Pages replays this JSON. Python tests under tests/gaussiq_suites/ own the live checks.",
+  "note": "Tiny pytest-shaped catalog for the GaussIQ 1.0 demo tenant. Pages replays this JSON. Python tests under tests/gaussiq_suites/ own the live checks. product = golden-case Case Intelligence (ingest fixtures, assert expected outcomes).",
   "cases": [
     {
       "id": "test_case_intel_health",
@@ -112,6 +112,38 @@
       "suites": ["regression"],
       "status": "pass",
       "duration_ms": 16
+    },
+    {
+      "id": "test_golden_aj18991_rca",
+      "name": "AJ18991 RCA is cert SAN mismatch, not a code defect",
+      "layer": "api",
+      "suites": ["product"],
+      "status": "pass",
+      "duration_ms": 48
+    },
+    {
+      "id": "test_golden_aj18991_assignment",
+      "name": "AJ18991 assignment uses human-approved TLS skill",
+      "layer": "api",
+      "suites": ["product"],
+      "status": "pass",
+      "duration_ms": 44
+    },
+    {
+      "id": "test_golden_aj18991_details",
+      "name": "AJ18991 case details match the ingested record",
+      "layer": "api",
+      "suites": ["product"],
+      "status": "pass",
+      "duration_ms": 36
+    },
+    {
+      "id": "test_golden_aj18991_similar",
+      "name": "AJ18991 similar-history returns AJ18268 and AJ18600",
+      "layer": "api",
+      "suites": ["product"],
+      "status": "pass",
+      "duration_ms": 41
     }
   ]
 }
