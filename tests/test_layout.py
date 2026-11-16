@@ -234,6 +234,22 @@ def test_home_cards_split_api_and_ui() -> None:
     assert "about-band" not in text
 
 
+def test_architecture_html_links_are_cache_busted() -> None:
+    pages = (
+        "index.html",
+        "about.html",
+        "console.html",
+        "architecture.html",
+        "api-framework.html",
+        "ui-framework.html",
+        "gaussiq.html",
+    )
+    for name in pages:
+        text = (ROOT / "docs" / name).read_text(encoding="utf-8")
+        assert "architecture.html?v=arch1" in text, name
+        assert re.search(r'href="architecture.html"', text) is None, name
+
+
 def test_public_html_has_no_github_repo_links() -> None:
     pages = (
         "index.html",

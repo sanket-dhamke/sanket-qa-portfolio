@@ -7,16 +7,16 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/site.css">
+  <link rel="stylesheet" href="css/site.css?v=arch1">
 </head>
-<body>
+<body class="arch-page">
   <header class="site-header">
     <div class="wrap">
       <a class="brand" href="index.html">Sanket Dhamke <small>Lead SDET</small></a>
       <nav>
         <a href="index.html">Home</a>
         <a href="console.html">Lab console</a>
-        <a href="architecture.html" aria-current="page">Architecture</a>
+        <a href="architecture.html?v=arch1" aria-current="page">Architecture</a>
         <a href="api-framework.html">API tests</a>
         <a href="ui-framework.html">UI tests</a>
         <a href="about.html">About</a>
@@ -29,6 +29,98 @@
       <a class="try-this" href="console.html" data-testid="try-this">Try this out — click here to see how it works.</a>
     </p>
     <p>Keyword/hybrid router — not an LLM inventing metrics. A question hits a keyword/rule table. The first match wins. That is the whole router. There is no embedding index and no hosted model in this sample. If a model were plugged in later, it would only be allowed to rephrase text that a handler or the KB already produced — <strong>a model never produces a number</strong>.</p>
+    <figure class="arch-flow" data-testid="architecture-diagram">
+      <figcaption class="arch-flow-caption">Model never picks the tool or the metric.</figcaption>
+      <div class="arch-flow-grid">
+        <div class="arch-flow-stage">Ask</div>
+        <div class="arch-flow-row arch-flow-ask">
+          <article class="arch-node root">
+            <strong>Lab console — root</strong>
+            Performance, security, API, and UI stay here. Child pages are scoped; this console is the parent.
+            <span class="arch-chip">User question / chat</span>
+          </article>
+          <span class="arch-flow-join horiz" aria-hidden="true"></span>
+          <article class="arch-node router">
+            <strong>Keyword / hybrid router</strong>
+            Ordered keyword rules. First match wins. No embeddings. No LLM picking tools.
+            <span class="arch-chip">first match wins</span>
+            <span class="arch-chip">no LLM picking tools</span>
+          </article>
+        </div>
+
+        <div class="arch-flow-stage">Route</div>
+        <div class="arch-flow-row arch-flow-routes">
+          <article class="arch-node">
+            <strong>Handlers + fixture JSON</strong>
+            Measured values only: metrics, cluster, ingestion (plus RCA and alerts fixtures).
+            <span class="arch-chip handler">Handler · fixtures only</span>
+          </article>
+          <article class="arch-node">
+            <strong>KB + API catalog</strong>
+            Cited DataHub GraphQL / REST entries. Explicit questions run the mock API and print status + body.
+            <span class="arch-chip kb">Knowledge base · cited catalog</span>
+          </article>
+          <article class="arch-node">
+            <strong>Suite executor</strong>
+            smoke / sanity / regression · API + UI + perf + security. Pages replays <code>suites.json</code>. pytest owns live checks.
+            <span class="arch-chip suite">Suite catalog · pytest markers</span>
+          </article>
+          <article class="arch-node">
+            <strong>Rule RCA + security engine</strong>
+            Named rules fire or skip. Security uses the same pattern (AUTH-OPEN, SECRET-IN-LOG, DEP-CVE).
+            <span class="arch-chip">fire / skip</span>
+          </article>
+          <article class="arch-node">
+            <strong>Deterministic fallback</strong>
+            If nothing matches: refuse. No invented CPU, assets, or passwords.
+            <span class="arch-chip fallback">Fallback · no match</span>
+          </article>
+        </div>
+
+        <div class="arch-flow-stage">Decide</div>
+        <div class="arch-flow-row">
+          <article class="arch-node verdict">
+            <strong>App verdict, then ask</strong>
+            Pods + RCA + smoke + sanity + AUTH-OPEN. Then the agent asks before full regression. Yes runs it; no skips.
+            <span class="arch-chip ok">ask before full regression</span>
+          </article>
+        </div>
+
+        <div class="arch-flow-stage">Scoped</div>
+        <div class="arch-flow-row arch-flow-children">
+          <article class="arch-node">
+            <strong>Child API agent</strong>
+            API page hosts a scoped child of this router. Answers only that layer’s suites. Console stays the root.
+          </article>
+          <article class="arch-node">
+            <strong>Child UI agent</strong>
+            UI page hosts a scoped child of this router. Answers only that layer’s suites. Console stays the root.
+          </article>
+        </div>
+
+        <div class="arch-flow-stage">Answer</div>
+        <div class="arch-flow-row arch-flow-answer">
+          <article class="arch-node">
+            <strong>Source chips on every answer</strong>
+            Each reply paints <code>source</code> plus a kind chip so you can see which path ran.
+            <span class="arch-chip handler">Handler</span>
+            <span class="arch-chip kb">KB · cited</span>
+            <span class="arch-chip suite">Suite · pytest</span>
+            <span class="arch-chip fallback">Fallback</span>
+          </article>
+          <article class="arch-node">
+            <strong>Optional model last hop</strong>
+            Rephrase only. Never numbers. Never tools. Off or on, the same measured values return.
+            <span class="arch-chip">rephrase only</span>
+          </article>
+          <article class="arch-node">
+            <strong>Email notification</strong>
+            Simulated preview from the console (no SMTP). Smoke is always attached; sanity or regression only if you check them.
+            <span class="arch-chip">preview only</span>
+          </article>
+        </div>
+      </div>
+    </figure>
     <div class="arch">
       <div><strong>1. Intent router</strong> Ordered keyword rules in <code>agent/router.py</code>. Vanilla JS port for GitHub Pages.</div>
       <div><strong>2. Handlers</strong> Read fixture JSON: cluster, metrics, ingestion, RCA, alerts, app config. Return measured values only. Chip: <code>Handler · fixtures only</code>.</div>

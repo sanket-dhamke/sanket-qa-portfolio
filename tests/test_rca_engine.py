@@ -83,6 +83,18 @@ def test_architecture_states_ai_boundary() -> None:
     assert "Does not set RCA" in text
     assert "Try this out — click here to see how it works." in text
     assert 'href="console.html"' in text
+    assert 'data-testid="architecture-diagram"' in text
+    assert "Model never picks the tool or the metric." in text
+    assert "User question / chat" in text
+    assert "first match wins" in text
+    assert "no LLM picking tools" in text
+    assert "pytest owns live" in text
+    assert "ask before full regression" in text
+    assert "Child API agent" in text
+    assert "Child UI agent" in text
+    assert "Optional model last hop" in text
+    assert "Email notification" in text
+    assert "gaussiq" not in text.lower()
     cpu = (ROOT / "docs" / "console.html").read_text(encoding="utf-8")
     assert "CPU % of pod limit (not node)" in cpu
     assert 'data-tab="tools"' in cpu
